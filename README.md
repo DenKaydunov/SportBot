@@ -8,19 +8,12 @@ Originally built using SendPulse & Google Sheets, now migrated to a full Java ba
 Web-site: https://pushupswardengzbot.tg.pulse.is/
 
 ## Features
-- User registration via Telegram
-- Daily input of reps
-- Leaderboard and weekly statistics
-- Challenge goals (e.g. 1K reps)
-- Calories burned calculator
-- Motivational quotes and scheduled messages
-
-- ✅ Ввод результатов 
-- 📊 Статистика по дням, неделям, месяцам
-- 🏆 Лидерборд по участникам
-- 🔄 Автоматический подсчет прогресса
-- 💬 Мотивационные цитаты
-- 📅 Поддержка челленджей и проверок максимума
+✅ Input results
+📊 Statistics by days, weeks, months
+🏆 Leaderboard by members
+🔄 Automatic progress counting
+💬 Motivational quotes
+📅 Support challenge and maximum checks
 
 ## Tech Stack
 - Java 17
