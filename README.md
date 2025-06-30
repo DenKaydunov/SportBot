@@ -1,6 +1,10 @@
-# Sport Bot 💪 (Java Edition)
+# Sport Bot 💪 (Java Edition)  
 Java-based Telegram bot for tracking fitness challenges (push-ups, squats, pull-ups).  
 Originally built using SendPulse & Google Sheets, now migrated to a full Java backend.
+
+## Telegram Bot
+Запусти бота 👉 [@PushupsWardengzBot](https://t.me/PushupsWardengzBot)
+Web-site: https://pushupswardengzbot.tg.pulse.is/
 
 ## Features
 - User registration via Telegram
@@ -9,6 +13,13 @@ Originally built using SendPulse & Google Sheets, now migrated to a full Java ba
 - Challenge goals (e.g. 1K reps)
 - Calories burned calculator
 - Motivational quotes and scheduled messages
+
+- ✅ Ввод результатов 
+- 📊 Статистика по дням, неделям, месяцам
+- 🏆 Лидерборд по участникам
+- 🔄 Автоматический подсчет прогресса
+- 💬 Мотивационные цитаты
+- 📅 Поддержка челленджей и проверок максимума
 
 ## Tech Stack
 - Java 17
