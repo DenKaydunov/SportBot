@@ -1,6 +1,5 @@
-package com.github.sportbot.sportbot;
+package com.github.sportbot;
 
-import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest

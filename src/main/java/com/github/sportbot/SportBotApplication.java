@@ -1,4 +1,4 @@
-package com.github.sportbot.sportbot;
+package com.github.sportbot;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
