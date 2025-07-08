@@ -1,1 +1,13 @@
-spring.application.name=SportBot
+spring:
+  application:
+    name: SportBot
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sportbot_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
