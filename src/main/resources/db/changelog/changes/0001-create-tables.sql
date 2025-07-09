@@ -14,6 +14,7 @@ CREATE TABLE user_profiles (
                                id          SERIAL PRIMARY KEY,
                                user_id     INTEGER NOT NULL,
                                full_name   VARCHAR(255) NOT NULL,
+                               referrer_telegram_id INTEGER,
                                remind_time TIME,
                                CONSTRAINT fk_user_profiles_user
                                    FOREIGN KEY (user_id)

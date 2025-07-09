@@ -9,7 +9,7 @@ import java.time.LocalTime;
 
 
 @Entity
-@Table(name = "user_profile")
+@Table(name = "user_profiles")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,7 +17,7 @@ public class UserProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @OneToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -30,7 +30,7 @@ public class UserProfile {
      * Telegram ID пользователя, пригласившего этого юзера.
      */
     @Column(name = "referrer_telegram_id")
-    private Long referrerTelegramId;
+    private Integer referrerTelegramId;
 
     private LocalTime remindTime;
 }
