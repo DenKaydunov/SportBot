@@ -6,18 +6,25 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "motivation")
+@Table(name = "user_programs")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Motivation {
+public class UserProgram {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @ManyToOne
+    @MapsId("userId")
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
+    @MapsId("exerciseTypeId")
     @JoinColumn(name = "exercise_type_id")
     private ExerciseType exerciseType;
 
-    private String message;
+    private Integer currentMax;
+    private Integer dayNumber;
 }

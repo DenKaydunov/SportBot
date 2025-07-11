@@ -1,27 +1,23 @@
 package com.github.sportbot.model;
 
-import com.github.sportbot.model.exercise.Exercise;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import lombok.Data;
-
-import java.util.List;
-
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.*;
 
 @Entity
+@Table(name = "users")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
-
     @Id
-    Long id;
-    String username;
-    String fullName;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-    int age;
-    double weight;
-
-    @OneToMany
-    List<Exercise> exercises;
-
+    private Integer telegramId;
+    private String sendPulseId;
+    private Boolean isSubscribed;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
+

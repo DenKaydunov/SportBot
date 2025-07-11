@@ -5,19 +5,26 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Entity
-@Table(name = "motivation")
+@Table(name = "workout_history")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Motivation {
+public class WorkoutHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "exercise_type_id")
     private ExerciseType exerciseType;
 
-    private String message;
+    private Integer count;
+    private LocalDate date;
 }

@@ -5,19 +5,18 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
-@Table(name = "motivation")
+@Table(name = "exercise_types")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Motivation {
+public class ExerciseType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "exercise_type_id")
-    private ExerciseType exerciseType;
-
-    private String message;
+    private String code;
+    private String title;
 }
