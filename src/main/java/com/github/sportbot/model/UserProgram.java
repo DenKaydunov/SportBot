@@ -16,12 +16,10 @@ public class UserProgram {
     private Long id;
 
     @ManyToOne
-    @MapsId("userId")
     @JoinColumn(name = "user_id")
     private User user;
 
     @ManyToOne
-    @MapsId("exerciseTypeId")
     @JoinColumn(name = "exercise_type_id")
     private ExerciseType exerciseType;
 
