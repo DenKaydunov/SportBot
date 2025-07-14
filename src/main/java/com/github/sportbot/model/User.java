@@ -20,20 +20,5 @@ public class User {
     private Boolean isSubscribed;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    @OneToMany(mappedBy = "user")
-    private List<UserEvent> userEvents;
-
-    @OneToOne(mappedBy = "user")
-    private UserProfile profile;
-
-    @OneToMany(mappedBy = "user")
-    private List<UserProgram> programs;
-
-    @OneToMany(mappedBy = "user")
-    private List<WorkoutHistory> workoutHistory;
-
-    @OneToMany(mappedBy = "user")
-    private List<UserMaxHistory> maxHistory;
 }
 

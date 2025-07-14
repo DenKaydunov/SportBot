@@ -15,6 +15,11 @@ public class UserProgram {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Integer currentMax;
-    private Integer dayNumber;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "exercise_type_id")
+    private ExerciseType exerciseType;
 }

@@ -19,16 +19,4 @@ public class ExerciseType {
 
     private String code;
     private String title;
-
-    @OneToMany(mappedBy = "exerciseType")
-    private List<UserProgram> userPrograms;
-
-    @OneToMany(mappedBy = "exerciseType")
-    private List<WorkoutHistory> workoutHistory;
-
-    @OneToMany(mappedBy = "exerciseType")
-    private List<Motivation> motivations;
-
-    @OneToMany(mappedBy = "exerciseType")
-    private List<UserMaxHistory> maxHistory;
 }
