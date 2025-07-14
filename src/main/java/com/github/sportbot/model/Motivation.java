@@ -15,9 +15,5 @@ public class Motivation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "exercise_type_id")
-    private ExerciseType exerciseType;
-
     private String message;
 }
