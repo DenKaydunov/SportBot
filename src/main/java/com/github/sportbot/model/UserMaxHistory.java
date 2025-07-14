@@ -17,14 +17,6 @@ public class UserMaxHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @ManyToOne
-    @JoinColumn(name = "exercise_type_id")
-    private ExerciseType exerciseType;
-
     private Integer maxValue;
     private LocalDate date;
 }
