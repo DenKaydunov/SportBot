@@ -3,7 +3,7 @@ package com.github.sportbot.model;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.*;
-import java.util.*;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
