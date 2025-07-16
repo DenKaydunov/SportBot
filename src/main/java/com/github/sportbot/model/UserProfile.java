@@ -19,15 +19,11 @@ public class UserProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
     @Column(nullable = false)
     private String fullName;
 
     /**
-     * Telegram ID пользователя, пригласившего этого юзера.
+     * Telegram user ID, wich invited current user.
      */
     @Column(name = "referrer_telegram_id")
     private Integer referrerTelegramId;
