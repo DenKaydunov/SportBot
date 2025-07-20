@@ -1,6 +1,7 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.dto.ExerciseEntryRequest;
+import com.github.sportbot.exception.DaoException;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +20,10 @@ public class ExerciseService {
     @Transactional
     public void saveExerciseEntry(ExerciseEntryRequest req) {
         User user = userRepository.findByTelegramId(req.telegramId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new DaoException("User not found"));
 
         ExerciseType exerciseType = exerciseTypeRepository.findByCode(req.exerciseType())
-                .orElseThrow(() -> new IllegalArgumentException("Unknown exercise code"));
+                .orElseThrow(() -> new DaoException("Unknown exercise code"));
 
         WorkoutHistory exercise = WorkoutHistory.builder()
                 .user(user)
