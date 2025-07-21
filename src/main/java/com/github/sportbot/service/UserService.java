@@ -22,12 +22,13 @@ public class UserService {
     @Transactional
     public void registerUser(RegistrationRequest request) {
         userRepository.findByTelegramId(request.telegramId())
-                .ifPresent(_ -> new DaoException("User already exists"));
+                .ifPresent(_ -> { throw new DaoException("User already exists"); });
+
 
         User user = User.builder()
                 .telegramId(request.telegramId())
                 .sendPulseId(request.sendPulseId())
-                .isSubscribed(true)
+                .isSubscribed(request.isSubscribed())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
