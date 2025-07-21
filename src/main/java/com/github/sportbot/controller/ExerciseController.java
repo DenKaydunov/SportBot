@@ -22,4 +22,9 @@ public class ExerciseController {
     public void saveEntry(@RequestBody @Valid ExerciseEntryRequest req) {
         exerciseService.saveExerciseEntry(req);
     }
+
+    @PostMapping("/max")
+    public void saveMax(@RequestBody @Valid ExerciseEntryRequest req) {
+        exerciseService.saveMaxEntry(req);
+    }
 }
