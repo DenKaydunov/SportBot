@@ -35,4 +35,24 @@ public class ExerciseService {
         user.getWorkoutHistory().add(exercise);
         userRepository.save(user);
     }
+
+    @Transactional
+    public void saveMaxEntry(ExerciseEntryRequest req) {
+        User user = userRepository.findByTelegramId(req.telegramId())
+                .orElseThrow(() -> new DaoException("User not found"));
+
+        ExerciseType exerciseType = exerciseTypeRepository.findByCode(req.exerciseType())
+                .orElseThrow(() -> new DaoException("Unknown exercise code"));
+
+        UserMaxHistory max =  UserMaxHistory.builder()
+                .user(user)
+                .exerciseType(exerciseType)
+                .maxValue(req.count())
+                .date(LocalDate.now())
+                .build();
+
+
+        user.getMaxHistory().add(max);
+        userRepository.save(user);
+    }
 }
