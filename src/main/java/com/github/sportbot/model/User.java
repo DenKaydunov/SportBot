@@ -11,9 +11,11 @@ import java.util.List;
 
 
 @Entity
-@Data
+@Getter
+@Setter
 @Table(name = "users")
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @EqualsAndHashCode(of = "id")
 public class User {
@@ -24,7 +26,7 @@ public class User {
     @Column(name = "telegram_id", nullable = false, unique = true)
     private Integer telegramId;
     @Column(name = "sendpulse_id")
-    private String sendpulseId;
+    private String sendPulseId;
     @Column(nullable = false)
     private Boolean isSubscribed = Boolean.TRUE;
     @CreationTimestamp
@@ -35,7 +37,7 @@ public class User {
     private LocalDateTime updatedAt;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @JoinColumn(name = "id", referencedColumnName = "user_id")
     private UserProfile profile;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)

@@ -2,6 +2,7 @@ package com.github.sportbot.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,17 +14,22 @@ import java.time.LocalTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(nullable = false)
     private String fullName;
 
     /**
-     * Telegram user ID, wich invited current user.
+     * Telegram user ID, which invited current user.
      */
     @Column(name = "referrer_telegram_id")
     private Integer referrerTelegramId;
