@@ -17,7 +17,7 @@ public class Motivation {
 
     private String message;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_type_id", nullable = false)
     private ExerciseType exerciseType;
 }
