@@ -4,7 +4,7 @@
 CREATE TABLE users (
                        id                SERIAL PRIMARY KEY,
                        telegram_id       INTEGER NOT NULL UNIQUE,
-                       sendpulse_id      VARCHAR(255),
+                       send_pulse_id      VARCHAR(255),
                        is_subscribed     BOOLEAN NOT NULL DEFAULT TRUE,
                        created_at        TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
                        updated_at        TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
@@ -26,7 +26,7 @@ CREATE TABLE user_events (
                              id          BIGSERIAL PRIMARY KEY,
                              user_id     INTEGER NOT NULL,
                              event_type  VARCHAR(100) NOT NULL,
-                             payload     JSONB,
+                             payload     VARCHAR,
                              timestamp   TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
                              CONSTRAINT fk_user_events_user
                                  FOREIGN KEY (user_id)
