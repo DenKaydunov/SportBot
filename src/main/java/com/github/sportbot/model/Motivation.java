@@ -16,4 +16,8 @@ public class Motivation {
     private Integer id;
 
     private String message;
+
+    @ManyToOne
+    @JoinColumn(name = "exercise_type_id", nullable = false)
+    private ExerciseType exerciseType;
 }

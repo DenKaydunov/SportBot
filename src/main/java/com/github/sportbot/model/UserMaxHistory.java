@@ -2,7 +2,7 @@ package com.github.sportbot.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDate;
 
@@ -24,7 +24,7 @@ public class UserMaxHistory {
     private User user;
 
     private Integer maxValue;
-    @CreationTimestamp
+    @CreatedDate
     private LocalDate date;
 
     @ManyToOne
