@@ -14,7 +14,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class UserProgramId implements Serializable {
     @Column(name = "user_id")
-    private Integer userId;
+    private Long userId;
     @Column(name = "exercise_type_id")
-    private Integer exerciseTypeId;
+    private Long exerciseTypeId;
 }
