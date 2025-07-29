@@ -8,6 +8,8 @@ import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserMaxHistory;
 import com.github.sportbot.model.WorkoutHistory;
 import com.github.sportbot.repository.ExerciseTypeRepository;
+import com.github.sportbot.repository.UserMaxHistoryRepository;
+import com.github.sportbot.repository.UserProgramRepository;
 import com.github.sportbot.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,6 +42,10 @@ class ExerciseServiceTest {
     private User testUser;
     private ExerciseType testExerciseType;
     private ExerciseEntryRequest testRequest;
+
+
+    @Mock private UserProgramRepository userProgramRepository;
+    @Mock private UserMaxHistoryRepository userMaxHistoryRepository;
 
     @BeforeEach
     void setUp() {
@@ -157,16 +164,23 @@ class ExerciseServiceTest {
         // Given
         when(userRepository.findByTelegramId(123456)).thenReturn(Optional.of(testUser));
         when(exerciseTypeRepository.findByCode("pushup")).thenReturn(Optional.of(testExerciseType));
+
+        // Если сервис проверяет наличие программы — вернем "не найдено", чтобы он обработал путь по умолчанию
+        when(userProgramRepository.findById(any())).thenReturn(Optional.empty());
+        lenient().when(userMaxHistoryRepository.findByUserAndExerciseType(any(), any()))
+                .thenReturn(Collections.emptyList());
+
+        // Обычно сервис сохраняет пользователя; важно замокать
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
         // When
         exerciseService.saveExerciseMaxResult(testRequest);
+        exerciseService.saveMaxEntry(testRequest);
 
-        // Then
         verify(userRepository).findByTelegramId(123456);
         verify(exerciseTypeRepository).findByCode("pushup");
         verify(userRepository).save(testUser);
-        
+
         assertEquals(1, testUser.getMaxHistory().size());
         UserMaxHistory savedMax = testUser.getMaxHistory().getFirst();
         assertEquals(testUser, savedMax.getUser());
