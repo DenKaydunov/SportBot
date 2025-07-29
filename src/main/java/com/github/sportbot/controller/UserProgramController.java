@@ -2,8 +2,7 @@ package com.github.sportbot.controller;
 
 import com.github.sportbot.dto.UpdateProgramRequest;
 import com.github.sportbot.dto.WorkoutPlanResponse;
-import com.github.sportbot.service.program.UserProgramFetchService;
-import com.github.sportbot.service.program.UserProgramUpdateService;
+import com.github.sportbot.service.UserProgramService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -16,14 +15,13 @@ import org.springframework.web.bind.annotation.*;
 public class UserProgramController {
 
     private static final Logger log = LoggerFactory.getLogger(UserProgramController.class);
-    private final UserProgramFetchService userProgramFetchService;
-    private final UserProgramUpdateService userProgramUpdateService;
+    private final UserProgramService userProgramService;
 
     @GetMapping
     public WorkoutPlanResponse getWorkoutPlan(
             @RequestParam Integer telegramId,
             @RequestParam String exerciseType) {
-        return userProgramFetchService.getWorkoutPlan(telegramId, exerciseType);
+        return userProgramService.getWorkoutPlan(telegramId, exerciseType);
     }
 
     @PutMapping
@@ -31,7 +29,7 @@ public class UserProgramController {
         log.info("Received update request: telegramId={}, exerciseType={}",
                 request.telegramId(), request.exerciseType());
 
-        userProgramUpdateService.updateProgram(
+        userProgramService.updateProgram(
                 request.telegramId(),
                 request.exerciseType()
         );
