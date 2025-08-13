@@ -1,7 +1,7 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.dto.RegistrationRequest;
-import com.github.sportbot.exception.DaoException;
+import com.github.sportbot.exception.UserAlreadyExistsException;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserProfile;
 import com.github.sportbot.repository.UserProfileRepository;
@@ -22,8 +22,7 @@ public class UserService {
     @Transactional
     public void registerUser(RegistrationRequest request) {
         userRepository.findByTelegramId(request.telegramId())
-                .ifPresent(_ -> { throw new DaoException("User already exists"); });
-
+                .ifPresent(_ -> { throw new UserAlreadyExistsException();});
 
         User user = User.builder()
                 .telegramId(request.telegramId())

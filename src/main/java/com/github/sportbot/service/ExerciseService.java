@@ -1,7 +1,8 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.dto.ExerciseEntryRequest;
-import com.github.sportbot.exception.DaoException;
+import com.github.sportbot.exception.UnknownExerciseCodeException;
+import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,10 @@ public class ExerciseService {
     @Transactional
     public void saveExerciseEntry(ExerciseEntryRequest req) {
         User user = userRepository.findByTelegramId(req.telegramId())
-                .orElseThrow(() -> new DaoException("User not found"));
+                .orElseThrow(UserNotFoundException::new);
 
         ExerciseType exerciseType = exerciseTypeRepository.findByCode(req.exerciseType())
-                .orElseThrow(() -> new DaoException("Unknown exercise code"));
+                .orElseThrow(UnknownExerciseCodeException::new);
 
         WorkoutHistory exercise = WorkoutHistory.builder()
                 .user(user)
@@ -39,10 +40,10 @@ public class ExerciseService {
     @Transactional
     public void saveMaxEntry(ExerciseEntryRequest req) {
         User user = userRepository.findByTelegramId(req.telegramId())
-                .orElseThrow(() -> new DaoException("User not found"));
+                .orElseThrow(UserNotFoundException::new);
 
         ExerciseType exerciseType = exerciseTypeRepository.findByCode(req.exerciseType())
-                .orElseThrow(() -> new DaoException("Unknown exercise code"));
+                .orElseThrow(UnknownExerciseCodeException::new);
 
         UserMaxHistory max =  UserMaxHistory.builder()
                 .user(user)
