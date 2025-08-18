@@ -15,6 +15,8 @@ Web-site: https://pushupswardengzbot.tg.pulse.is/
 💬 Motivational quotes  
 📅 Support challenge and maximum checks  
 
+## Новые изменения 
+- 
 ### Tech Stack
 - Java 23
 - Telegram Bot API
