@@ -22,12 +22,13 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
     @Column(name = "telegram_id", nullable = false, unique = true)
     private Integer telegramId;
     @Column(name = "send_pulse_id")
     private String sendPulseId;
     @Column(nullable = false)
+    @Builder.Default
     private Boolean isSubscribed = Boolean.TRUE;
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -42,15 +43,19 @@ public class User {
 
     @OneToMany
     @JoinColumn(name = "user_id")
+    @Builder.Default
     private List<UserEvent> events = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<UserProgram> programs = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<WorkoutHistory> workoutHistory = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id")
+    @Builder.Default
     private List<UserMaxHistory> maxHistory = new ArrayList<>();
 }

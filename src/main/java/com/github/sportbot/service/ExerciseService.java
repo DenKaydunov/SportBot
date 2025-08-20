@@ -23,8 +23,7 @@ public class ExerciseService {
         User user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
 
-        ExerciseType exerciseType = exerciseTypeRepository.findByCode(req.exerciseType())
-                .orElseThrow(UnknownExerciseCodeException::new);
+        ExerciseType exerciseType = getExerciseType(req);
 
         WorkoutHistory exercise = WorkoutHistory.builder()
                 .user(user)
@@ -37,13 +36,21 @@ public class ExerciseService {
         userRepository.save(user);
     }
 
+    public ExerciseType getExerciseType(ExerciseEntryRequest req) {
+        return getExerciseType(req.exerciseType());
+    }
+
+    public ExerciseType getExerciseType(String code) {
+        return exerciseTypeRepository.findByCode(code)
+                .orElseThrow(UnknownExerciseCodeException::new);
+    }
+
     @Transactional
     public void saveMaxEntry(ExerciseEntryRequest req) {
         User user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
 
-        ExerciseType exerciseType = exerciseTypeRepository.findByCode(req.exerciseType())
-                .orElseThrow(UnknownExerciseCodeException::new);
+        ExerciseType exerciseType = getExerciseType(req);
 
         UserMaxHistory max =  UserMaxHistory.builder()
                 .user(user)
@@ -51,7 +58,6 @@ public class ExerciseService {
                 .maxValue(req.count())
                 .date(LocalDate.now())
                 .build();
-
 
         user.getMaxHistory().add(max);
         userRepository.save(user);
