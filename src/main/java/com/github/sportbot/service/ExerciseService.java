@@ -28,8 +28,7 @@ public class ExerciseService {
         User user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
 
-        ExerciseType exerciseType = exerciseTypeRepository.findByCode(req.exerciseType())
-                .orElseThrow(UnknownExerciseCodeException::new);
+        ExerciseType exerciseType = getExerciseType(req);
 
         WorkoutHistory exercise = WorkoutHistory.builder()
                 .user(user)
@@ -42,6 +41,15 @@ public class ExerciseService {
         userRepository.save(user);
     }
 
+    public ExerciseType getExerciseType(ExerciseEntryRequest req) {
+        return getExerciseType(req.exerciseType());
+    }
+
+    public ExerciseType getExerciseType(String code) {
+        return exerciseTypeRepository.findByCode(code)
+                .orElseThrow(UnknownExerciseCodeException::new);
+    }
+
     @Transactional
     public void saveMaxEntry(ExerciseEntryRequest req) {
         log.info("Saving max entry: telegramId={}, exerciseType={}, max={}",
@@ -50,8 +58,7 @@ public class ExerciseService {
         User user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
 
-        ExerciseType exerciseType = exerciseTypeRepository.findByCode(req.exerciseType())
-                .orElseThrow(UnknownExerciseCodeException::new);
+        ExerciseType exerciseType = getExerciseType(req);
 
         UserMaxHistory max = UserMaxHistory.builder()
                 .user(user)
@@ -64,7 +71,7 @@ public class ExerciseService {
         log.info("Added new UserMaxHistory for userId={}, exerciseTypeId={}, value={}",
                 user.getId(), exerciseType.getId(), req.count());
 
-        UserProgramId id = new UserProgramId(user.getId(), exerciseType.getId());
+        UserProgramId id = new UserProgramId(user.getId().longValue(), exerciseType.getId());
         UserProgram program = userProgramRepository.findById(id)
                 .orElseGet(() -> {
                             UserProgram newProgram = new UserProgram();

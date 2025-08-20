@@ -33,7 +33,7 @@ public class UserProgramFetchService {
         User user = userSearchService.findUserByTelegramId(telegramId);
         ExerciseType exerciseType = userSearchService.findExerciseTypeByCode(exerciseCode);
 
-        Pair<Integer, Integer> maxAndDay = userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId())
+        Pair<Integer, Integer> maxAndDay = userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId().longValue(), exerciseType.getId())
                 .map(p -> Pair.of(p.getCurrentMax(), p.getDayNumber()))
                 .orElseGet(() -> {
                     log.warn("Program not found. Using max from history and default day=1 for userId={}, exerciseTypeId={}",

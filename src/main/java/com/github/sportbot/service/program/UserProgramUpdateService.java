@@ -23,7 +23,7 @@ public class UserProgramUpdateService {
         User user = userSearchService.findUserByTelegramId(telegramId);
         ExerciseType exerciseType = userSearchService.findExerciseTypeByCode(exerciseCode);
 
-        UserProgramId id = new UserProgramId(user.getId(), exerciseType.getId());
+        UserProgramId id = new UserProgramId(user.getId().longValue(), exerciseType.getId());
         UserProgram program = userProgramRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Program not found"));
 
