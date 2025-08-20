@@ -36,7 +36,7 @@ class ExerciseControllerIntegrationTest {
                 telegramId,
                 exerciseCode,
                 20
-        );
+        );//test comment
 
         mockMvc.perform(post("/api/v1/exercises")
                         .contentType(MediaType.APPLICATION_JSON)
