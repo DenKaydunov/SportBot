@@ -2,21 +2,20 @@ package com.github.sportbot.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.sportbot.dto.ExerciseEntryRequest;
+import com.github.sportbot.service.ExerciseService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("test")
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(ExerciseController.class) // загружаем только контроллер
 class ExerciseControllerIntegrationTest {
 
     @Autowired
@@ -24,6 +23,9 @@ class ExerciseControllerIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private ExerciseService exerciseService;
 
     private final Integer telegramId = 123456789;
     private final String exerciseCode = "squat";
@@ -41,5 +43,4 @@ class ExerciseControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
     }
-
 }
