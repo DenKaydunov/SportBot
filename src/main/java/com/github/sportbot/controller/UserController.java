@@ -1,5 +1,6 @@
 package com.github.sportbot.controller;
 
+import com.github.sportbot.constants.MessageConstants;
 import com.github.sportbot.dto.RegistrationRequest;
 import com.github.sportbot.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,6 @@ public class UserController {
     @PostMapping
     public String registerUser(@RequestBody RegistrationRequest request) {
         userService.registerUser(request);
-        return "User registered successfully";
+        return MessageConstants.USER_REGISTERED;
     }
 }
