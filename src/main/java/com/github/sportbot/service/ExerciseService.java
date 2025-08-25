@@ -45,6 +45,13 @@ public class ExerciseService {
                 .orElseThrow(UnknownExerciseCodeException::new);
     }
 
+
+
+
+
+    //кодище
+
+
     @Transactional
     public void saveMaxEntry(ExerciseEntryRequest req) {
         User user = userRepository.findByTelegramId(req.telegramId())
