@@ -69,6 +69,11 @@ public class LeaderboardService {
         return new LeaderboardEntry(name, total, max);
     }
 
+
+
+    //кодище №2
+
+
     private String formatLeaderboardString(LeaderboardData data, ExerciseType exerciseType, String period) {
         StringBuilder sb = new StringBuilder();
         

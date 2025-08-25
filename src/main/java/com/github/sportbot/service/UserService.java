@@ -41,5 +41,11 @@ public class UserService {
                 .build();
         userProfileRepository.save(profile);
     }
+
+    // кодище № 3
+
+
+
+
 }
 
