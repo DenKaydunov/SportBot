@@ -23,14 +23,14 @@ public class ExerciseController {
     }
 
     @PostMapping
-    public String saveEntry(@RequestBody @Valid ExerciseEntryRequest req) {
+    public String saveExerciseResult(@RequestBody @Valid ExerciseEntryRequest req) {
         exerciseService.saveExerciseEntry(req);
         return MessageConstants.EXERCISE_RECORDED;
     }
 
     @PostMapping("/max")
     public String saveMax(@RequestBody @Valid ExerciseEntryRequest req) {
-        exerciseService.saveMaxEntry(req);
+        exerciseService.saveExerciseMaxResult(req);
         return MessageConstants.MAX_EXERCISE_RECORDED;
     }
 }

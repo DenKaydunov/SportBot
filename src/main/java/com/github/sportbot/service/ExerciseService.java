@@ -46,7 +46,7 @@ public class ExerciseService {
     }
 
     @Transactional
-    public void saveMaxEntry(ExerciseEntryRequest req) {
+    public void saveExerciseMaxResult(ExerciseEntryRequest req) {
         User user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
 
