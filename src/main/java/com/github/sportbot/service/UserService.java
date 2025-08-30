@@ -21,9 +21,7 @@ public class UserService {
 
     @Transactional
     public void registerUser(RegistrationRequest request) {
-        userRepository.findByTelegramId(request.telegramId())
-                .ifPresent(_ -> { throw new DaoException("User already exists"); });
-
+        userRepository.findByTelegramId(request.telegramId()).orElseThrow(() -> new DaoException("User not found"));
 
         User user = User.builder()
                 .telegramId(request.telegramId())

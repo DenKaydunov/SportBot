@@ -15,8 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ExerciseController {
 
-    @Autowired
-    private ExerciseService exerciseService;
+    private final ExerciseService exerciseService;
 
     @PostMapping
     public void saveEntry(@RequestBody @Valid ExerciseEntryRequest req) {
