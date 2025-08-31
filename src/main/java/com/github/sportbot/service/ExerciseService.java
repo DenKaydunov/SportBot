@@ -20,7 +20,7 @@ public class ExerciseService {
     private final UserProgramRepository userProgramRepository;
 
     @Transactional
-    public void saveExerciseEntry(ExerciseEntryRequest req) {
+    public void saveExerciseResult(ExerciseEntryRequest req) {
         User user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
 

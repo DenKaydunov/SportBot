@@ -3,10 +3,8 @@ package com.github.sportbot.controller;
 import com.github.sportbot.constants.MessageConstants;
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.service.ExerciseService;
-import jakarta.validation.MessageInterpolator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,7 +19,7 @@ public class ExerciseController {
 
     @PostMapping
     public String saveExerciseResult(@RequestBody @Valid ExerciseEntryRequest req) {
-        exerciseService.saveExerciseEntry(req);
+        exerciseService.saveExerciseResult(req);
         return MessageConstants.EXERCISE_RECORDED;
     }
 

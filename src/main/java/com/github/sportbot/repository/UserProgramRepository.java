@@ -9,5 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface UserProgramRepository extends JpaRepository<UserProgram, UserProgramId> {
-    Optional<UserProgram> findByIdUserIdAndIdExerciseTypeId(Long userId, Long exerciseTypeId);
+    Optional<UserProgram> findByIdUserIdAndIdExerciseTypeId(Integer userId, Long exerciseTypeId);
 }

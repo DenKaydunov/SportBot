@@ -67,14 +67,14 @@ class ExerciseServiceTest {
     }
 
     @Test
-    void saveExerciseEntry_Success() {
+    void saveExerciseResult_Success() {
         // Given
         when(userRepository.findByTelegramId(123456)).thenReturn(Optional.of(testUser));
         when(exerciseTypeRepository.findByCode("pushup")).thenReturn(Optional.of(testExerciseType));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
         // When
-        exerciseService.saveExerciseEntry(testRequest);
+        exerciseService.saveExerciseResult(testRequest);
 
         // Then
         verify(userRepository).findByTelegramId(123456);
@@ -90,12 +90,12 @@ class ExerciseServiceTest {
     }
 
     @Test
-    void saveExerciseEntry_UserNotFound_ThrowsException() {
+    void saveExerciseResult_UserNotFound_ThrowsException() {
         // Given
         when(userRepository.findByTelegramId(123456)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(UserNotFoundException.class, () -> exerciseService.saveExerciseEntry(testRequest));
+        assertThrows(UserNotFoundException.class, () -> exerciseService.saveExerciseResult(testRequest));
 
         verify(userRepository).findByTelegramId(123456);
         verifyNoInteractions(exerciseTypeRepository);
@@ -112,7 +112,7 @@ class ExerciseServiceTest {
 
         // When & Then
         assertThrows(UnknownExerciseCodeException.class, () -> {
-            exerciseService.saveExerciseEntry(invalidRequest);
+            exerciseService.saveExerciseResult(invalidRequest);
         });
 
         verify(userRepository).findByTelegramId(123456);
@@ -175,8 +175,6 @@ class ExerciseServiceTest {
 
         // When
         exerciseService.saveExerciseMaxResult(testRequest);
-        exerciseService.saveMaxEntry(testRequest);
-
         verify(userRepository).findByTelegramId(123456);
         verify(exerciseTypeRepository).findByCode("pushup");
         verify(userRepository).save(testUser);

@@ -24,6 +24,7 @@ public class UserProgramService {
     private final WorkoutProperties workoutProperties;
     private final ExerciseService exerciseService;
     private final UserService userService;
+    private final UserMaxService userMaxService;
 
     /**
      * Получение плана тренировок для пользователя
@@ -49,14 +50,28 @@ public class UserProgramService {
         User user = userService.getUserByTelegramId(telegramId);
         ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode);
 
-        UserProgramId id = new UserProgramId(user.getId(), exerciseType.getId());
-        UserProgram program = userProgramRepository.findById(id)
-                .orElseThrow(ProgramNotFoundException::new);
+        UserProgram program = userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId())
+                .orElse(createDefaultProgram(user, exerciseType));
 
+        incrementProgramDayNumber(program);
+        userProgramRepository.save(program);
+    }
+
+    private static void incrementProgramDayNumber(UserProgram program) {
         int newDay = program.getDayNumber() + 1;
         program.setDayNumber(newDay);
+    }
 
-        userProgramRepository.save(program);
+    private UserProgram createDefaultProgram(User user, ExerciseType exerciseType) {
+        int dayNumber = 1;
+        UserProgramId id = new UserProgramId(user.getId(), exerciseType.getId());
+        return UserProgram.builder()
+                .id(id)
+                .user(user)
+                .exerciseType(exerciseType)
+                .currentMax(userMaxService.getMax(user, exerciseType))
+                .dayNumber(dayNumber)
+                .build();
     }
 
 
@@ -64,11 +79,7 @@ public class UserProgramService {
         return userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId())
                 .map(p -> new ProgramState(p.getCurrentMax(), p.getDayNumber()))
                 .orElseGet(() -> {
-                    int max = userMaxHistoryRepository.findByUserAndExerciseType(user, exerciseType).stream()
-                            .mapToInt(UserMaxHistory::getMaxValue)
-                            .max()
-                            .orElse(5);
-
+                    int max = userMaxService.getMax(user, exerciseType);
                     return new ProgramState(max, 1);
                 });
     }
