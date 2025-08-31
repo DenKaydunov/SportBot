@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserProgramController {
 
-    private static final Logger log = LoggerFactory.getLogger(UserProgramController.class);
     private final UserProgramService userProgramService;
 
     @GetMapping
@@ -26,9 +25,6 @@ public class UserProgramController {
 
     @PutMapping
     public void updateProgram(@RequestBody @Valid UpdateProgramRequest request) {
-        log.info("Received update request: telegramId={}, exerciseType={}",
-                request.telegramId(), request.exerciseType());
-
         userProgramService.updateProgram(
                 request.telegramId(),
                 request.exerciseType()
