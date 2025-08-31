@@ -5,21 +5,17 @@
 -- =========================================
 -- ⚙️ 1. Генерация 20 тестовых пользователей
 -- =========================================
-INSERT INTO users (telegram_id, is_subscribed, created_at, updated_at)
-SELECT 
+INSERT INTO users (id, telegram_id,  full_name, is_subscribed, created_at, updated_at, remind_time)
+SELECT
+    (generate_series(1, 20) % 20) + 1 as id,
     1000000 + generate_series(1, 20) as telegram_id,
+    'Test User ' || generate_series(1, 20) as full_name,
     TRUE as is_subscribed,
     NOW() as created_at,
-    NOW() as updated_at;
-
--- =========================================
--- ⚙️ 2. Генерация профилей для всех пользователей
--- =========================================
-INSERT INTO user_profiles (user_id, full_name, remind_time)
-SELECT 
-    generate_series(1, 20) as user_id,
-    'Test User ' || generate_series(1, 20) as full_name,
+    NOW() as updated_at,
     ((8 + (generate_series(1, 20) % 12))::text || ':00:00')::time as remind_time;
+
+
 
 -- =========================================
 -- ⚙️ 3. Генерация истории тренировок для отжиманий (pushup)
