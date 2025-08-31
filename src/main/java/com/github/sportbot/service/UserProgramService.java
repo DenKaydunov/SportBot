@@ -2,9 +2,7 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.WorkoutProperties;
 import com.github.sportbot.dto.WorkoutPlanResponse;
-import com.github.sportbot.exception.ProgramNotFoundException;
 import com.github.sportbot.model.*;
-import com.github.sportbot.repository.UserMaxHistoryRepository;
 import com.github.sportbot.repository.UserProgramRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -19,7 +17,6 @@ import java.util.Locale;
 public class UserProgramService {
 
     private final UserProgramRepository userProgramRepository;
-    private final UserMaxHistoryRepository userMaxHistoryRepository;
     private final MessageSource messageSource;
     private final WorkoutProperties workoutProperties;
     private final ExerciseService exerciseService;

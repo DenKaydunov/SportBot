@@ -111,9 +111,7 @@ class ExerciseServiceTest {
         ExerciseEntryRequest invalidRequest = new ExerciseEntryRequest(123456, "unknown", 10);
 
         // When & Then
-        assertThrows(UnknownExerciseCodeException.class, () -> {
-            exerciseService.saveExerciseResult(invalidRequest);
-        });
+        assertThrows(UnknownExerciseCodeException.class, () -> exerciseService.saveExerciseResult(invalidRequest));
 
         verify(userRepository).findByTelegramId(123456);
         verify(exerciseTypeRepository).findByCode("unknown");
@@ -152,9 +150,7 @@ class ExerciseServiceTest {
         when(exerciseTypeRepository.findByCode("unknown")).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(UnknownExerciseCodeException.class, () -> {
-            exerciseService.getExerciseType("unknown");
-        });
+        assertThrows(UnknownExerciseCodeException.class, () -> exerciseService.getExerciseType("unknown"));
 
         verify(exerciseTypeRepository).findByCode("unknown");
     }
@@ -193,9 +189,7 @@ class ExerciseServiceTest {
         when(userRepository.findByTelegramId(123456)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(UserNotFoundException.class, () -> {
-            exerciseService.saveExerciseMaxResult(testRequest);
-        });
+        assertThrows(UserNotFoundException.class, () -> exerciseService.saveExerciseMaxResult(testRequest));
 
         verify(userRepository).findByTelegramId(123456);
         verifyNoInteractions(exerciseTypeRepository);
@@ -211,9 +205,7 @@ class ExerciseServiceTest {
         ExerciseEntryRequest invalidRequest = new ExerciseEntryRequest(123456, "unknown", 10);
 
         // When & Then
-        assertThrows(UnknownExerciseCodeException.class, () -> {
-            exerciseService.saveExerciseMaxResult(invalidRequest);
-        });
+        assertThrows(UnknownExerciseCodeException.class, () -> exerciseService.saveExerciseMaxResult(invalidRequest));
 
         verify(userRepository).findByTelegramId(123456);
         verify(exerciseTypeRepository).findByCode("unknown");
