@@ -17,9 +17,10 @@ public class ExerciseService {
 
     private final UserRepository userRepository;
     private final ExerciseTypeRepository exerciseTypeRepository;
+    private final UserProgramRepository userProgramRepository;
 
     @Transactional
-    public void saveExerciseEntry(ExerciseEntryRequest req) {
+    public void saveExerciseResult(ExerciseEntryRequest req) {
         User user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
 
@@ -52,7 +53,7 @@ public class ExerciseService {
 
         ExerciseType exerciseType = getExerciseType(req);
 
-        UserMaxHistory max =  UserMaxHistory.builder()
+        UserMaxHistory max = UserMaxHistory.builder()
                 .user(user)
                 .exerciseType(exerciseType)
                 .maxValue(req.count())
@@ -60,6 +61,21 @@ public class ExerciseService {
                 .build();
 
         user.getMaxHistory().add(max);
+
+        UserProgramId id = new UserProgramId(user.getId(), exerciseType.getId());
+        UserProgram program = userProgramRepository.findById(id)
+                .orElseGet(() -> {
+                            UserProgram newProgram = new UserProgram();
+                            newProgram.setId(id);
+                            newProgram.setUser(user);
+                            newProgram.setExerciseType(exerciseType);
+                            newProgram.setDayNumber(1);
+                            return newProgram;
+                        }
+                );
+
+        program.setCurrentMax(req.count());
         userRepository.save(user);
+        userProgramRepository.save(program);
     }
 }

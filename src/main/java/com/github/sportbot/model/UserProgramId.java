@@ -16,5 +16,5 @@ public class UserProgramId implements Serializable {
     @Column(name = "user_id")
     private Integer userId;
     @Column(name = "exercise_type_id")
-    private Integer exerciseTypeId;
+    private Long exerciseTypeId;
 }

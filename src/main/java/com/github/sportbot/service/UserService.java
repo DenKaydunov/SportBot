@@ -2,6 +2,7 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.dto.RegistrationRequest;
 import com.github.sportbot.exception.UserAlreadyExistsException;
+import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.User;
 import com.github.sportbot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class UserService {
     @Transactional
     public void registerUser(RegistrationRequest request) {
         userRepository.findByTelegramId(request.telegramId())
-                .ifPresent(user -> { throw new UserAlreadyExistsException(); });
+                .orElseThrow(UserAlreadyExistsException::new);
 
         User user = User.builder()
                 .fullName(request.fullName())
@@ -32,5 +33,10 @@ public class UserService {
                 .remindTime(request.remindTime())
                 .build();
         userRepository.save(user);
+    }
+
+    public User getUserByTelegramId(Integer telegramId) {
+        return userRepository.findByTelegramId(telegramId)
+                .orElseThrow(UserNotFoundException::new);
     }
 }
