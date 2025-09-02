@@ -6,10 +6,12 @@ import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +20,8 @@ public class ExerciseService {
     private final UserRepository userRepository;
     private final ExerciseTypeRepository exerciseTypeRepository;
     private final UserProgramRepository userProgramRepository;
+    private final WorkoutHistoryRepository workoutHistoryRepository;
+    private final MessageSource messageSource;
 
     @Transactional
     public void saveExerciseResult(ExerciseEntryRequest req) {
@@ -47,20 +51,20 @@ public class ExerciseService {
     }
 
     @Transactional
-    public void saveExerciseMaxResult(ExerciseEntryRequest req) {
+    public String saveExerciseMaxResult(ExerciseEntryRequest req) {
         User user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
 
         ExerciseType exerciseType = getExerciseType(req);
 
-        UserMaxHistory max = UserMaxHistory.builder()
+        UserMaxHistory userMaxHistory = UserMaxHistory.builder()
                 .user(user)
                 .exerciseType(exerciseType)
                 .maxValue(req.count())
                 .date(LocalDate.now())
                 .build();
 
-        user.getMaxHistory().add(max);
+        user.getMaxHistory().add(userMaxHistory);
 
         UserProgramId id = new UserProgramId(user.getId(), exerciseType.getId());
         UserProgram program = userProgramRepository.findById(id)
@@ -77,5 +81,13 @@ public class ExerciseService {
         program.setCurrentMax(req.count());
         userRepository.save(user);
         userProgramRepository.save(program);
+
+        int totalReps = workoutHistoryRepository.sumAllByExerciseType(exerciseType.getId());
+        return messageSource.getMessage(
+                "workout.max_reps",
+                new Object[]{exerciseType.getTitle(), user.getFullName(), userMaxHistory.getMaxValue(), totalReps},
+                Locale.forLanguageTag("ru-RU")
+        );
     }
+
 }

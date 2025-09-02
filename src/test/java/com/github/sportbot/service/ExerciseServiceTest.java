@@ -7,16 +7,14 @@ import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserMaxHistory;
 import com.github.sportbot.model.WorkoutHistory;
-import com.github.sportbot.repository.ExerciseTypeRepository;
-import com.github.sportbot.repository.UserMaxHistoryRepository;
-import com.github.sportbot.repository.UserProgramRepository;
-import com.github.sportbot.repository.UserRepository;
+import com.github.sportbot.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -35,6 +33,12 @@ class ExerciseServiceTest {
 
     @Mock
     private ExerciseTypeRepository exerciseTypeRepository;
+
+    @Mock
+    private WorkoutHistoryRepository workoutHistoryRepository;
+
+    @Mock
+    private MessageSource messageSource;
 
     @InjectMocks
     private ExerciseService exerciseService;

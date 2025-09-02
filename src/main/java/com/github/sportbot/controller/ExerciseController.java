@@ -25,7 +25,6 @@ public class ExerciseController {
 
     @PostMapping("/max")
     public String saveMax(@RequestBody @Valid ExerciseEntryRequest req) {
-        exerciseService.saveExerciseMaxResult(req);
-        return MessageConstants.MAX_EXERCISE_RECORDED;
+        return exerciseService.saveExerciseMaxResult(req);
     }
 }
