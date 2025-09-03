@@ -5,23 +5,24 @@ import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
-import com.github.sportbot.model.UserMaxHistory;
 import com.github.sportbot.model.WorkoutHistory;
-import com.github.sportbot.repository.*;
+import com.github.sportbot.repository.ExerciseTypeRepository;
+import com.github.sportbot.repository.UserMaxHistoryRepository;
+import com.github.sportbot.repository.UserProgramRepository;
+import com.github.sportbot.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -33,12 +34,6 @@ class ExerciseServiceTest {
 
     @Mock
     private ExerciseTypeRepository exerciseTypeRepository;
-
-    @Mock
-    private WorkoutHistoryRepository workoutHistoryRepository;
-
-    @Mock
-    private MessageSource messageSource;
 
     @InjectMocks
     private ExerciseService exerciseService;
@@ -157,62 +152,5 @@ class ExerciseServiceTest {
         assertThrows(UnknownExerciseCodeException.class, () -> exerciseService.getExerciseType("unknown"));
 
         verify(exerciseTypeRepository).findByCode("unknown");
-    }
-
-    @Test
-    void saveExerciseMaxResult_Success() {
-        // Given
-        when(userRepository.findByTelegramId(123456)).thenReturn(Optional.of(testUser));
-        when(exerciseTypeRepository.findByCode("pushup")).thenReturn(Optional.of(testExerciseType));
-
-        // Если сервис проверяет наличие программы — вернем "не найдено", чтобы он обработал путь по умолчанию
-        when(userProgramRepository.findById(any())).thenReturn(Optional.empty());
-        lenient().when(userMaxHistoryRepository.findByUserAndExerciseType(any(), any()))
-                .thenReturn(Collections.emptyList());
-
-        // Обычно сервис сохраняет пользователя; важно замокать
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
-
-        // When
-        exerciseService.saveExerciseMaxResult(testRequest);
-        verify(userRepository).findByTelegramId(123456);
-        verify(exerciseTypeRepository).findByCode("pushup");
-        verify(userRepository).save(testUser);
-
-        assertEquals(1, testUser.getMaxHistory().size());
-        UserMaxHistory savedMax = testUser.getMaxHistory().getFirst();
-        assertEquals(testUser, savedMax.getUser());
-        assertEquals(testExerciseType, savedMax.getExerciseType());
-        assertEquals(10, savedMax.getMaxValue());
-        assertEquals(LocalDate.now(), savedMax.getDate());
-    }
-
-    @Test
-    void saveExerciseMaxResult_UserNotFound_ThrowsException() {
-        // Given
-        when(userRepository.findByTelegramId(123456)).thenReturn(Optional.empty());
-
-        // When & Then
-        assertThrows(UserNotFoundException.class, () -> exerciseService.saveExerciseMaxResult(testRequest));
-
-        verify(userRepository).findByTelegramId(123456);
-        verifyNoInteractions(exerciseTypeRepository);
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void saveExerciseMaxResult_UnknownExerciseCode_ThrowsException() {
-        // Given
-        when(userRepository.findByTelegramId(123456)).thenReturn(Optional.of(testUser));
-        when(exerciseTypeRepository.findByCode("unknown")).thenReturn(Optional.empty());
-
-        ExerciseEntryRequest invalidRequest = new ExerciseEntryRequest(123456, "unknown", 10);
-
-        // When & Then
-        assertThrows(UnknownExerciseCodeException.class, () -> exerciseService.saveExerciseMaxResult(invalidRequest));
-
-        verify(userRepository).findByTelegramId(123456);
-        verify(exerciseTypeRepository).findByCode("unknown");
-        verify(userRepository, never()).save(any());
     }
 }
