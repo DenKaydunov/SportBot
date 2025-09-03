@@ -27,7 +27,7 @@ class ExerciseControllerIntegrationTest {
 
     @MockBean
     private ExerciseService exerciseService;
-    @MockitoBean
+    @MockBean
     private UserMaxService userMaxService;
 
     private final Integer telegramId = 123456789;
