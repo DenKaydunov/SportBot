@@ -3,6 +3,7 @@ package com.github.sportbot.service;
 import com.github.sportbot.config.WorkoutProperties;
 import com.github.sportbot.dto.WorkoutPlanResponse;
 import com.github.sportbot.model.*;
+import com.github.sportbot.repository.UserMaxHistoryRepository;
 import com.github.sportbot.repository.UserProgramRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -16,18 +17,18 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class UserProgramService {
 
+    public static final int FIRST_PROGRAM_DAY = 1;
     private final UserProgramRepository userProgramRepository;
     private final MessageSource messageSource;
     private final WorkoutProperties workoutProperties;
     private final ExerciseService exerciseService;
     private final UserService userService;
-    private final UserMaxService userMaxService;
+    private final UserMaxHistoryRepository userMaxHistoryRepository;
 
     /**
      * Получение плана тренировок для пользователя
      */
     public WorkoutPlanResponse getWorkoutPlan(Integer telegramId, String exerciseCode) {
-
         User user = userService.getUserByTelegramId(telegramId);
         ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode);
         ProgramState programState = loadProgramState(user, exerciseType);
@@ -36,39 +37,49 @@ public class UserProgramService {
         int total = sets.stream().mapToInt(Integer::intValue).sum();
 
         String msg = localizeWorkoutMessage(sets, total);
-
         return new WorkoutPlanResponse(sets, total, msg);
     }
 
     /**
      * Обновление программы (инкремент дня)
      */
-    public void updateProgram(Integer telegramId, String exerciseCode) {
+    public void incrementDayProgram(Integer telegramId, String exerciseCode) {
         User user = userService.getUserByTelegramId(telegramId);
         ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode);
-
-        UserProgram program = userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId())
-                .orElse(createDefaultProgram(user, exerciseType));
-
-        incrementProgramDayNumber(program);
+        UserProgram program = getUserProgram(user, exerciseType);
+        program.setDayNumber(program.getDayNumber() + 1);
         userProgramRepository.save(program);
     }
 
-    private static void incrementProgramDayNumber(UserProgram program) {
-        int newDay = program.getDayNumber() + 1;
-        program.setDayNumber(newDay);
+    /**
+     * Получить программу тренировок из базы
+     * @param user
+     * @param exerciseType
+     * @return
+     */
+    private UserProgram getUserProgram(User user, ExerciseType exerciseType) {
+        return userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId())
+                .orElse(createDefaultProgram(user, exerciseType));
     }
 
     private UserProgram createDefaultProgram(User user, ExerciseType exerciseType) {
-        int dayNumber = 1;
         UserProgramId id = new UserProgramId(user.getId(), exerciseType.getId());
         return UserProgram.builder()
                 .id(id)
                 .user(user)
                 .exerciseType(exerciseType)
-                .currentMax(userMaxService.getMax(user, exerciseType))
-                .dayNumber(dayNumber)
+                .currentMax(getMax(user, exerciseType))
+                .dayNumber(FIRST_PROGRAM_DAY)
                 .build();
+    }
+
+    public static final int DEFAULT_EXERCISE_VALUE = 5;
+
+    public int getMax(User user, ExerciseType exerciseType) {
+        return userMaxHistoryRepository.findByUserAndExerciseType(user, exerciseType).stream()
+                .mapToInt(UserMaxHistory::getMaxValue)
+                .max()
+                .orElse(DEFAULT_EXERCISE_VALUE);
     }
 
 
@@ -76,8 +87,8 @@ public class UserProgramService {
         return userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId())
                 .map(p -> new ProgramState(p.getCurrentMax(), p.getDayNumber()))
                 .orElseGet(() -> {
-                    int max = userMaxService.getMax(user, exerciseType);
-                    return new ProgramState(max, 1);
+                    int max = getMax(user, exerciseType);
+                    return new ProgramState(max, FIRST_PROGRAM_DAY);
                 });
     }
 
@@ -95,6 +106,13 @@ public class UserProgramService {
                 new Object[]{sets.toString().replaceAll("[\\[\\]]", ""), total},
                 Locale.forLanguageTag("ru-RU")
         );
+    }
+
+    public void updateProgram(User user, ExerciseType exerciseType, int currentMax) {
+        UserProgram userProgram = getUserProgram(user, exerciseType);
+        userProgram.setCurrentMax(currentMax);
+        userProgram.setDayNumber(FIRST_PROGRAM_DAY);
+        userProgramRepository.save(userProgram);
     }
 
     /**

@@ -3,6 +3,7 @@ package com.github.sportbot.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.service.ExerciseService;
+import com.github.sportbot.service.UserMaxService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -26,6 +27,8 @@ class ExerciseControllerIntegrationTest {
 
     @MockBean
     private ExerciseService exerciseService;
+    @MockitoBean
+    private UserMaxService userMaxService;
 
     private final Integer telegramId = 123456789;
     private final String exerciseCode = "squat";

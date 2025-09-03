@@ -3,8 +3,11 @@ package com.github.sportbot.service;
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
-import com.github.sportbot.model.*;
-import com.github.sportbot.repository.*;
+import com.github.sportbot.model.ExerciseType;
+import com.github.sportbot.model.User;
+import com.github.sportbot.model.WorkoutHistory;
+import com.github.sportbot.repository.ExerciseTypeRepository;
+import com.github.sportbot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +20,7 @@ public class ExerciseService {
 
     private final UserRepository userRepository;
     private final ExerciseTypeRepository exerciseTypeRepository;
-    private final UserProgramRepository userProgramRepository;
+
 
     @Transactional
     public void saveExerciseResult(ExerciseEntryRequest req) {
@@ -44,38 +47,5 @@ public class ExerciseService {
     public ExerciseType getExerciseType(String code) {
         return exerciseTypeRepository.findByCode(code)
                 .orElseThrow(UnknownExerciseCodeException::new);
-    }
-
-    @Transactional
-    public void saveExerciseMaxResult(ExerciseEntryRequest req) {
-        User user = userRepository.findByTelegramId(req.telegramId())
-                .orElseThrow(UserNotFoundException::new);
-
-        ExerciseType exerciseType = getExerciseType(req);
-
-        UserMaxHistory max = UserMaxHistory.builder()
-                .user(user)
-                .exerciseType(exerciseType)
-                .maxValue(req.count())
-                .date(LocalDate.now())
-                .build();
-
-        user.getMaxHistory().add(max);
-
-        UserProgramId id = new UserProgramId(user.getId(), exerciseType.getId());
-        UserProgram program = userProgramRepository.findById(id)
-                .orElseGet(() -> {
-                            UserProgram newProgram = new UserProgram();
-                            newProgram.setId(id);
-                            newProgram.setUser(user);
-                            newProgram.setExerciseType(exerciseType);
-                            newProgram.setDayNumber(1);
-                            return newProgram;
-                        }
-                );
-
-        program.setCurrentMax(req.count());
-        userRepository.save(user);
-        userProgramRepository.save(program);
     }
 }
