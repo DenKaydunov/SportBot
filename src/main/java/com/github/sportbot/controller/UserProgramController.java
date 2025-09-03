@@ -5,8 +5,6 @@ import com.github.sportbot.dto.WorkoutPlanResponse;
 import com.github.sportbot.service.UserProgramService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,7 +23,7 @@ public class UserProgramController {
 
     @PutMapping
     public void updateProgram(@RequestBody @Valid UpdateProgramRequest request) {
-        userProgramService.updateProgram(
+        userProgramService.incrementDayProgram(
                 request.telegramId(),
                 request.exerciseType()
         );

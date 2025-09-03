@@ -52,7 +52,8 @@ public class User {
     @Builder.Default
     private List<UserProgram> programs = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id")
     @Builder.Default
     private List<WorkoutHistory> workoutHistory = new ArrayList<>();
 
