@@ -1,6 +1,6 @@
 package com.github.sportbot.service;
 
-import com.github.sportbot.WorkoutProperties;
+import com.github.sportbot.config.WorkoutProperties;
 import com.github.sportbot.dto.WorkoutPlanResponse;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.UserMaxHistoryRepository;
