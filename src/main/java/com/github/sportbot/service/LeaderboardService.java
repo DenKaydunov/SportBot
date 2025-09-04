@@ -2,7 +2,7 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.Period;
-import com.github.sportbot.repository.WorkoutHistoryRepository;
+import com.github.sportbot.repository.ExerciseRecordRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LeaderboardService {
 
-    private final WorkoutHistoryRepository workoutHistoryRepository;
+    private final ExerciseRecordRepository exerciseRecordRepository;
     private final ExerciseService exerciseService;
 
     public String getLeaderboardString(String exerciseCode, int limit) {
@@ -47,11 +47,11 @@ public class LeaderboardService {
         List<Object[]> rawData;
         
         if (startDate != null) {
-            totalCount = workoutHistoryRepository.sumAllByExerciseTypeAndDateAfter(exerciseType.getId(), startDate);
-            rawData = workoutHistoryRepository.findTopUsersWithDetailsByExerciseTypeAndDateAfter(exerciseType.getId(), limit, startDate);
+            totalCount = exerciseRecordRepository.sumAllByExerciseTypeAndDateAfter(exerciseType.getId(), startDate);
+            rawData = exerciseRecordRepository.findTopUsersWithDetailsByExerciseTypeAndDateAfter(exerciseType.getId(), limit, startDate);
         } else {
-            totalCount = workoutHistoryRepository.sumAllByExerciseType(exerciseType.getId());
-            rawData = workoutHistoryRepository.findTopUsersWithDetailsByExerciseType(exerciseType.getId(), limit);
+            totalCount = exerciseRecordRepository.sumAllByExerciseType(exerciseType.getId());
+            rawData = exerciseRecordRepository.findTopUsersWithDetailsByExerciseType(exerciseType.getId(), limit);
         }
         
         List<LeaderboardEntry> entries = rawData.stream()
