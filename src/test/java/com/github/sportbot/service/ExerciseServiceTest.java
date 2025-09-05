@@ -6,16 +6,14 @@ import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.WorkoutHistory;
-import com.github.sportbot.repository.ExerciseTypeRepository;
-import com.github.sportbot.repository.UserMaxHistoryRepository;
-import com.github.sportbot.repository.UserProgramRepository;
-import com.github.sportbot.repository.UserRepository;
+import com.github.sportbot.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -34,6 +32,10 @@ class ExerciseServiceTest {
 
     @Mock
     private ExerciseTypeRepository exerciseTypeRepository;
+    @Mock
+    private WorkoutHistoryRepository workoutHistoryRepository;
+    @Mock
+    private MessageSource messageSource;
 
     @InjectMocks
     private ExerciseService exerciseService;
@@ -72,6 +74,11 @@ class ExerciseServiceTest {
         when(exerciseTypeRepository.findByCode("pushup")).thenReturn(Optional.of(testExerciseType));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
+        when(workoutHistoryRepository.sumTotalReps(testUser, testExerciseType))
+                .thenReturn(50);
+        when(messageSource.getMessage(anyString(), any(), any()))
+                .thenReturn("Сообщение");
+
         // When
         exerciseService.saveExerciseResult(testRequest);
 
@@ -79,6 +86,7 @@ class ExerciseServiceTest {
         verify(userRepository).findByTelegramId(123456);
         verify(exerciseTypeRepository).findByCode("pushup");
         verify(userRepository).save(testUser);
+        verify(workoutHistoryRepository).sumTotalReps(testUser, testExerciseType);
         
         assertEquals(1, testUser.getWorkoutHistory().size());
         WorkoutHistory savedExercise = testUser.getWorkoutHistory().getFirst();
