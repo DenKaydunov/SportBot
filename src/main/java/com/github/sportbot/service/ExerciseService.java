@@ -8,11 +8,14 @@ import com.github.sportbot.model.User;
 import com.github.sportbot.model.ExerciseRecord;
 import com.github.sportbot.repository.ExerciseTypeRepository;
 import com.github.sportbot.repository.UserRepository;
+import com.github.sportbot.repository.WorkoutHistoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +23,12 @@ public class ExerciseService {
 
     private final UserRepository userRepository;
     private final ExerciseTypeRepository exerciseTypeRepository;
+    private final WorkoutHistoryRepository workoutHistoryRepository;
+    private final MessageSource messageSource;
 
 
     @Transactional
-    public void saveExerciseResult(ExerciseEntryRequest req) {
+    public String saveExerciseResult(ExerciseEntryRequest req) {
         User user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
 
@@ -38,6 +43,11 @@ public class ExerciseService {
 
         user.getExerciseRecord().add(exercise);
         userRepository.save(user);
+
+        int total = workoutHistoryRepository.sumTotalReps(user, exerciseType);
+        return messageSource.getMessage("workout.today_sets",
+                new Object[]{req.count(), total},
+                Locale.forLanguageTag("ru-RU"));
     }
 
     public ExerciseType getExerciseType(ExerciseEntryRequest req) {
