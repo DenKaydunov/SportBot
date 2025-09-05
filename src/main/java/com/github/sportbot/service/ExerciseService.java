@@ -45,8 +45,8 @@ public class ExerciseService {
         userRepository.save(user);
 
         int total = workoutHistoryRepository.sumTotalReps(user, exerciseType);
-        return messageSource.getMessage("workout.today_sets",
-                new Object[]{req.count(), total},
+        return messageSource.getMessage("workout.reps_recorded",
+                new Object[]{exerciseType.getTitle(), req.count(), total},
                 Locale.forLanguageTag("ru-RU"));
     }
 
