@@ -47,7 +47,7 @@ CREATE TABLE user_programs (
                                        ON DELETE CASCADE
 );
 
-CREATE TABLE workout_history (
+CREATE TABLE exercise_record (
                                  id               BIGSERIAL PRIMARY KEY,
                                  user_id          INTEGER NOT NULL,
                                  exercise_type_id INTEGER NOT NULL,

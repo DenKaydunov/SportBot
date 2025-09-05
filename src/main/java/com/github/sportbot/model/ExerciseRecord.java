@@ -7,13 +7,13 @@ import org.springframework.data.annotation.CreatedDate;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "workout_history")
+@Table(name = "exercise_record")
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class WorkoutHistory {
+public class ExerciseRecord {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
