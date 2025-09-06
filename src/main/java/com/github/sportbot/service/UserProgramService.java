@@ -1,0 +1,124 @@
+package com.github.sportbot.service;
+
+import com.github.sportbot.config.WorkoutProperties;
+import com.github.sportbot.dto.WorkoutPlanResponse;
+import com.github.sportbot.model.*;
+import com.github.sportbot.repository.UserMaxHistoryRepository;
+import com.github.sportbot.repository.UserProgramRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Locale;
+
+
+@Service
+@RequiredArgsConstructor
+public class UserProgramService {
+
+    public static final int FIRST_PROGRAM_DAY = 1;
+    private final UserProgramRepository userProgramRepository;
+    private final MessageSource messageSource;
+    private final WorkoutProperties workoutProperties;
+    private final ExerciseService exerciseService;
+    private final UserService userService;
+    private final UserMaxHistoryRepository userMaxHistoryRepository;
+
+    /**
+     * Получение плана тренировок для пользователя
+     */
+    public WorkoutPlanResponse getWorkoutPlan(Integer telegramId, String exerciseCode) {
+        User user = userService.getUserByTelegramId(telegramId);
+        ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode);
+        ProgramState programState = loadProgramState(user, exerciseType);
+
+        List<Integer> sets = generateWorkoutSets(programState.max(), programState.day());
+        int total = sets.stream().mapToInt(Integer::intValue).sum();
+
+        String msg = localizeWorkoutMessage(sets, total);
+        return new WorkoutPlanResponse(sets, total, msg);
+    }
+
+    /**
+     * Обновление программы (инкремент дня)
+     */
+    public void incrementDayProgram(Integer telegramId, String exerciseCode) {
+        User user = userService.getUserByTelegramId(telegramId);
+        ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode);
+        UserProgram program = getUserProgram(user, exerciseType);
+        program.setDayNumber(program.getDayNumber() + 1);
+        userProgramRepository.save(program);
+    }
+
+    /**
+     * Получить программу тренировок из базы
+     * @param user
+     * @param exerciseType
+     * @return
+     */
+    private UserProgram getUserProgram(User user, ExerciseType exerciseType) {
+        return userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId())
+                .orElse(createDefaultProgram(user, exerciseType));
+    }
+
+    private UserProgram createDefaultProgram(User user, ExerciseType exerciseType) {
+        UserProgramId id = new UserProgramId(user.getId(), exerciseType.getId());
+        return UserProgram.builder()
+                .id(id)
+                .user(user)
+                .exerciseType(exerciseType)
+                .currentMax(getMax(user, exerciseType))
+                .dayNumber(FIRST_PROGRAM_DAY)
+                .build();
+    }
+
+    public static final int DEFAULT_EXERCISE_VALUE = 5;
+
+    public int getMax(User user, ExerciseType exerciseType) {
+        return userMaxHistoryRepository.findByUserAndExerciseType(user, exerciseType).stream()
+                .mapToInt(UserMaxHistory::getMaxValue)
+                .max()
+                .orElse(DEFAULT_EXERCISE_VALUE);
+    }
+
+
+    private ProgramState loadProgramState(User user, ExerciseType exerciseType) {
+        return userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId())
+                .map(p -> new ProgramState(p.getCurrentMax(), p.getDayNumber()))
+                .orElseGet(() -> {
+                    int max = getMax(user, exerciseType);
+                    return new ProgramState(max, FIRST_PROGRAM_DAY);
+                });
+    }
+
+    private List<Integer> generateWorkoutSets(int max, int day) {
+        double increment = workoutProperties.getIncrementPerDay() * day;
+
+        return workoutProperties.getCoefficients().stream()
+                .map(coefficient -> (int) Math.round(max * (coefficient + increment)))
+                .toList();
+    }
+
+    private String localizeWorkoutMessage(List<Integer> sets, int total) {
+        return messageSource.getMessage(
+                "workout.today_sets",
+                new Object[]{sets.toString().replaceAll("[\\[\\]]", ""), total},
+                Locale.forLanguageTag("ru-RU")
+        );
+    }
+
+    public void updateProgram(User user, ExerciseType exerciseType, int currentMax) {
+        UserProgram userProgram = getUserProgram(user, exerciseType);
+        userProgram.setCurrentMax(currentMax);
+        userProgram.setDayNumber(FIRST_PROGRAM_DAY);
+        userProgramRepository.save(userProgram);
+    }
+
+    /**
+     * Record для хранения состояния программы.
+     */
+    private record ProgramState(int max, int day) {
+    }
+
+}

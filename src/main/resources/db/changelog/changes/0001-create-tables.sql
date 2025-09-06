@@ -2,31 +2,22 @@
 
 --changeset alexmazharouski:1
 CREATE TABLE users (
-                       id                SERIAL PRIMARY KEY,
-                       telegram_id       INTEGER NOT NULL UNIQUE,
-                       sendpulse_id      VARCHAR(255),
-                       is_subscribed     BOOLEAN NOT NULL DEFAULT TRUE,
-                       created_at        TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-                       updated_at        TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
-);
-
-CREATE TABLE user_profiles (
-                               id          SERIAL PRIMARY KEY,
-                               user_id     INTEGER NOT NULL,
-                               full_name   VARCHAR(255) NOT NULL,
-                               referrer_telegram_id INTEGER,
-                               remind_time TIME,
-                               CONSTRAINT fk_user_profiles_user
-                                   FOREIGN KEY (user_id)
-                                       REFERENCES users(id)
-                                       ON DELETE CASCADE
+                       id                   SERIAL PRIMARY KEY,
+                       full_name            VARCHAR(255) NOT NULL,
+                       telegram_id          INTEGER NOT NULL UNIQUE,
+                       referrer_telegram_id INTEGER,
+                       send_pulse_id        VARCHAR(255),
+                       is_subscribed        BOOLEAN NOT NULL DEFAULT TRUE,
+                       created_at           TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+                       updated_at           TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+                       remind_time          TIME
 );
 
 CREATE TABLE user_events (
                              id          BIGSERIAL PRIMARY KEY,
                              user_id     INTEGER NOT NULL,
                              event_type  VARCHAR(100) NOT NULL,
-                             payload     JSONB,
+                             payload     VARCHAR,
                              timestamp   TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
                              CONSTRAINT fk_user_events_user
                                  FOREIGN KEY (user_id)
@@ -56,7 +47,7 @@ CREATE TABLE user_programs (
                                        ON DELETE CASCADE
 );
 
-CREATE TABLE workout_history (
+CREATE TABLE exercise_record (
                                  id               BIGSERIAL PRIMARY KEY,
                                  user_id          INTEGER NOT NULL,
                                  exercise_type_id INTEGER NOT NULL,

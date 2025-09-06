@@ -1,10 +1,11 @@
 package com.github.sportbot.controller;
 
+import com.github.sportbot.constants.MessageConstants;
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.service.ExerciseService;
+import com.github.sportbot.service.UserMaxService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,14 +17,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class ExerciseController {
 
     private final ExerciseService exerciseService;
+    private final UserMaxService userMaxService;
 
     @PostMapping
-    public void saveEntry(@RequestBody @Valid ExerciseEntryRequest req) {
-        exerciseService.saveExerciseEntry(req);
+    public String saveExerciseResult(@RequestBody @Valid ExerciseEntryRequest req) {
+        exerciseService.saveExerciseResult(req);
+        return MessageConstants.EXERCISE_RECORDED;
     }
 
     @PostMapping("/max")
-    public void saveMax(@RequestBody @Valid ExerciseEntryRequest req) {
-        exerciseService.saveMaxEntry(req);
+    public String saveMax(@RequestBody @Valid ExerciseEntryRequest req) {
+        return userMaxService.saveExerciseMaxResult(req);
     }
 }

@@ -2,18 +2,18 @@ package com.github.sportbot.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "workout_history")
+@Table(name = "exercise_record")
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class WorkoutHistory {
+public class ExerciseRecord {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,6 +29,6 @@ public class WorkoutHistory {
 
     private Integer count;
 
-    @CreationTimestamp
+    @CreatedDate
     private LocalDate date;
 }
