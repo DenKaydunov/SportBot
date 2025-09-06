@@ -17,7 +17,7 @@ FROM SYSTEM_RANGE(1, 20) r(x);
 -- =========================================
 -- ⚙️ 3. Генерация истории тренировок для отжиманий (pushup)
 -- =========================================
-INSERT INTO workout_history (user_id, exercise_type_id, count, date)
+INSERT INTO exercise_record (user_id, exercise_type_id, count, date)
 SELECT
     MOD(x, 20) + 1,
     1,
@@ -28,7 +28,7 @@ FROM SYSTEM_RANGE(1, 60) r(x);
 -- =========================================
 -- ⚙️ 4. Генерация истории тренировок для приседаний (squat)
 -- =========================================
-INSERT INTO workout_history (user_id, exercise_type_id, count, date)
+INSERT INTO exercise_record (user_id, exercise_type_id, count, date)
 SELECT
     MOD(x, 20) + 1,
     2,
@@ -39,7 +39,7 @@ FROM SYSTEM_RANGE(1, 80) r(x);
 -- =========================================
 -- ⚙️ 5. Генерация истории тренировок для планки (plank)
 -- =========================================
-INSERT INTO workout_history (user_id, exercise_type_id, count, date)
+INSERT INTO exercise_record (user_id, exercise_type_id, count, date)
 SELECT
     MOD(x, 20) + 1,
     3,
@@ -63,7 +63,7 @@ FROM SYSTEM_RANGE(1, 20) r3(x);
 -- =========================================
 -- ⚙️ 7. Дополнительные записи для топ-пользователей (больше активности)
 -- =========================================
-INSERT INTO workout_history (user_id, exercise_type_id, count, date)
+INSERT INTO exercise_record (user_id, exercise_type_id, count, date)
 SELECT
     MOD(x, 5) + 1,
     MOD(x, 3) + 1,
@@ -71,7 +71,7 @@ SELECT
     DATEADD('DAY', -CAST(RAND() * 3 AS INT), CURRENT_DATE)
 FROM SYSTEM_RANGE(1, 50) r(x);
 
-INSERT INTO workout_history (user_id, exercise_type_id, count, date)
+INSERT INTO exercise_record (user_id, exercise_type_id, count, date)
 SELECT
     MOD(x, 5) + 6,
     MOD(x, 3) + 1,
@@ -79,7 +79,7 @@ SELECT
     DATEADD('DAY', -CAST(RAND() * 7 AS INT), CURRENT_DATE)
 FROM SYSTEM_RANGE(1, 30) r(x);
 
-INSERT INTO workout_history (user_id, exercise_type_id, count, date)
+INSERT INTO exercise_record (user_id, exercise_type_id, count, date)
 SELECT
     MOD(x, 5) + 11,
     MOD(x, 3) + 1,
@@ -87,7 +87,7 @@ SELECT
     DATEADD('DAY', -CAST(RAND() * 14 AS INT), CURRENT_DATE)
 FROM SYSTEM_RANGE(1, 20) r(x);
 
-INSERT INTO workout_history (user_id, exercise_type_id, count, date)
+INSERT INTO exercise_record (user_id, exercise_type_id, count, date)
 SELECT
     MOD(x, 5) + 16,
     MOD(x, 3) + 1,

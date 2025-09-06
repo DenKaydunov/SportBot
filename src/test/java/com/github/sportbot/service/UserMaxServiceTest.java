@@ -7,7 +7,7 @@ import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserMaxHistory;
 import com.github.sportbot.repository.UserRepository;
-import com.github.sportbot.repository.WorkoutHistoryRepository;
+import com.github.sportbot.repository.ExerciseRecordRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +37,7 @@ class UserMaxServiceTest {
     @Mock
     private ExerciseService exerciseService;
     @Mock
-    private WorkoutHistoryRepository workoutHistoryRepository;
+    private ExerciseRecordRepository exerciseRecordRepository;
     @Mock
     private MessageSource mSource;
 
@@ -54,7 +54,7 @@ class UserMaxServiceTest {
                 .id(1)
                 .telegramId(123456)
                 .isSubscribed(true)
-                .workoutHistory(new ArrayList<>())
+                .exerciseRecord(new ArrayList<>())
                 .maxHistory(new ArrayList<>())
                 .build();
 
@@ -75,7 +75,7 @@ class UserMaxServiceTest {
         when(userService.getUserByTelegramId(123456)).thenReturn(testUser);
         when(exerciseService.getExerciseType(any(ExerciseEntryRequest.class))).thenReturn(testExerciseType);
         final int totalCount = 100;
-        when(workoutHistoryRepository.sumTotalReps(testUser, testExerciseType)).thenReturn(totalCount);
+        when(exerciseRecordRepository.sumTotalReps(testUser, testExerciseType)).thenReturn(totalCount);
 
         // When
         userMaxService.saveExerciseMaxResult(testRequest);
@@ -111,7 +111,7 @@ class UserMaxServiceTest {
         verifyNoInteractions(exerciseService);
         verifyNoInteractions(userProgramService);
         verifyNoInteractions(userRepository);
-        verifyNoInteractions(workoutHistoryRepository);
+        verifyNoInteractions(exerciseRecordRepository);
         verifyNoInteractions(mSource);
     }
 
@@ -130,7 +130,7 @@ class UserMaxServiceTest {
         verify(exerciseService).getExerciseType(any(ExerciseEntryRequest.class));
         verifyNoInteractions(userProgramService);
         verifyNoInteractions(userRepository);
-        verifyNoInteractions(workoutHistoryRepository);
+        verifyNoInteractions(exerciseRecordRepository);
         verifyNoInteractions(mSource);
     }
 }

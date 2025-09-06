@@ -5,7 +5,7 @@ import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
-import com.github.sportbot.model.WorkoutHistory;
+import com.github.sportbot.model.ExerciseRecord;
 import com.github.sportbot.repository.ExerciseTypeRepository;
 import com.github.sportbot.repository.UserRepository;
 import com.github.sportbot.repository.WorkoutHistoryRepository;
@@ -34,14 +34,14 @@ public class ExerciseService {
 
         ExerciseType exerciseType = getExerciseType(req);
 
-        WorkoutHistory exercise = WorkoutHistory.builder()
+        ExerciseRecord exercise = ExerciseRecord.builder()
                 .user(user)
                 .exerciseType(exerciseType)
                 .count(req.count())
                 .date(LocalDate.now())
                 .build();
 
-        user.getWorkoutHistory().add(exercise);
+        user.getExerciseRecord().add(exercise);
         userRepository.save(user);
 
         int total = workoutHistoryRepository.sumTotalReps(user, exerciseType);

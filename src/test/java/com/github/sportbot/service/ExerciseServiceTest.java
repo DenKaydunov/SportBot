@@ -5,8 +5,6 @@ import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
-import com.github.sportbot.model.WorkoutHistory;
-import com.github.sportbot.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +52,7 @@ class ExerciseServiceTest {
                 .id(1)
                 .telegramId(123456)
                 .isSubscribed(true)
-                .workoutHistory(new ArrayList<>())
+                .exerciseRecord(new ArrayList<>())
                 .maxHistory(new ArrayList<>())
                 .build();
 
@@ -88,8 +86,8 @@ class ExerciseServiceTest {
         verify(userRepository).save(testUser);
         verify(workoutHistoryRepository).sumTotalReps(testUser, testExerciseType);
         
-        assertEquals(1, testUser.getWorkoutHistory().size());
-        WorkoutHistory savedExercise = testUser.getWorkoutHistory().getFirst();
+        assertEquals(1, testUser.getExerciseRecord().size());
+        ExerciseRecord savedExercise = testUser.getExerciseRecord().getFirst();
         assertEquals(testUser, savedExercise.getUser());
         assertEquals(testExerciseType, savedExercise.getExerciseType());
         assertEquals(10, savedExercise.getCount());
