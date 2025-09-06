@@ -6,10 +6,7 @@ import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.ExerciseRecord;
-import com.github.sportbot.repository.ExerciseTypeRepository;
-import com.github.sportbot.repository.UserMaxHistoryRepository;
-import com.github.sportbot.repository.UserProgramRepository;
-import com.github.sportbot.repository.UserRepository;
+import com.github.sportbot.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +31,9 @@ class ExerciseServiceTest {
 
     @Mock
     private ExerciseTypeRepository exerciseTypeRepository;
+
+    @Mock
+    private ExerciseRecordRepository exerciseRecordRepository;
 
     @InjectMocks
     private ExerciseService exerciseService;
@@ -71,6 +71,7 @@ class ExerciseServiceTest {
         when(userRepository.findByTelegramId(123456)).thenReturn(Optional.of(testUser));
         when(exerciseTypeRepository.findByCode("pushup")).thenReturn(Optional.of(testExerciseType));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(exerciseRecordRepository.sumTotalReps(any(User.class), any(ExerciseType.class))).thenReturn(100);
 
         // When
         exerciseService.saveExerciseResult(testRequest);
@@ -79,6 +80,7 @@ class ExerciseServiceTest {
         verify(userRepository).findByTelegramId(123456);
         verify(exerciseTypeRepository).findByCode("pushup");
         verify(userRepository).save(testUser);
+        verify(exerciseRecordRepository).sumTotalReps(testUser, testExerciseType);
         
         assertEquals(1, testUser.getExerciseRecord().size());
         ExerciseRecord savedExercise = testUser.getExerciseRecord().getFirst();
