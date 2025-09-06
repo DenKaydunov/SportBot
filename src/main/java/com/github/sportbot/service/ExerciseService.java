@@ -6,9 +6,9 @@ import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.ExerciseRecord;
+import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.ExerciseTypeRepository;
 import com.github.sportbot.repository.UserRepository;
-import com.github.sportbot.repository.WorkoutHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ public class ExerciseService {
 
     private final UserRepository userRepository;
     private final ExerciseTypeRepository exerciseTypeRepository;
-    private final WorkoutHistoryRepository workoutHistoryRepository;
+    private final ExerciseRecordRepository exerciseRecordRepository;
     private final MessageSource messageSource;
 
 
@@ -44,7 +44,7 @@ public class ExerciseService {
         user.getExerciseRecord().add(exercise);
         userRepository.save(user);
 
-        int total = workoutHistoryRepository.sumTotalReps(user, exerciseType);
+        int total = exerciseRecordRepository.sumTotalReps(user, exerciseType);
         return messageSource.getMessage("workout.reps_recorded",
                 new Object[]{exerciseType.getTitle(), req.count(), total},
                 Locale.forLanguageTag("ru-RU"));
