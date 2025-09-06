@@ -79,7 +79,7 @@ class ExerciseServiceTest {
         verify(userRepository).findByTelegramId(123456);
         verify(exerciseTypeRepository).findByCode("pushup");
         verify(userRepository).save(testUser);
-
+        
         assertEquals(1, testUser.getExerciseRecord().size());
         ExerciseRecord savedExercise = testUser.getExerciseRecord().getFirst();
         assertEquals(testUser, savedExercise.getUser());
