@@ -87,7 +87,7 @@ class ExerciseServiceTest {
         verify(exerciseTypeRepository).findByCode("pushup");
         verify(userRepository).save(testUser);
         verify(workoutHistoryRepository).sumTotalReps(testUser, testExerciseType);
-
+        
         assertEquals(1, testUser.getWorkoutHistory().size());
         WorkoutHistory savedExercise = testUser.getWorkoutHistory().getFirst();
         assertEquals(testUser, savedExercise.getUser());
