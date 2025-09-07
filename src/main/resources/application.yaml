@@ -1,10 +1,14 @@
 spring:
   application:
     name: SportBot
+  cloud:
+    gcp:
+      sql:
+        database-name: sportbot_db
+        instance-connection-name: sunny-might-465815-m2:us-central1:sportbotdb
   datasource:
-    url: jdbc:postgresql://localhost:5432/sportbot_db
-    username: postgres
-    password: postgres
+    username:
+    password:
     driver-class-name: org.postgresql.Driver
 
   jpa:

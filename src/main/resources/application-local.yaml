@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sportbot_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  cloud:
+    gcp:
+      sql:
+        enabled: false
+  liquibase:
+    contexts: local
