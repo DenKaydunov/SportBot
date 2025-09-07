@@ -4,7 +4,6 @@ import lombok.Getter;
 
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 @Getter
@@ -31,15 +30,10 @@ public enum Period {
         return startDateSupplier.get();
     }
 
-    public static Optional<Period> fromCode(String code) {
-        if (code == null) {
-            return Optional.empty();
-        }
-        
-        String lowerCode = code.toLowerCase();
+    public static Period fromCode(String code) {
         return Arrays.stream(values())
-                .filter(period -> period.englishCode.equals(lowerCode) || 
-                                period.russianCode.equals(lowerCode))
-                .findFirst();
+                .filter(period -> period.englishCode.equals(code))
+                .findFirst()
+                .orElse(Period.ALL);
     }
 }
