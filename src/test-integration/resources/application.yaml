@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: SportBot
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     contexts: test
@@ -11,3 +13,7 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: false
+  cloud:
+    gcp:
+      sql:
+        enabled: false

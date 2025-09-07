@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset alexmazharouski:1 dbms:postgresql
+--changeset alexmazharouski:1 context:default dbms:postgresql
 
 -- =========================================
 -- ⚙️ 1. Генерация 20 тестовых пользователей
