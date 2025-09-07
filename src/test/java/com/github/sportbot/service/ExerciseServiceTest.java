@@ -6,16 +6,15 @@ import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.ExerciseRecord;
-import com.github.sportbot.repository.ExerciseTypeRepository;
-import com.github.sportbot.repository.UserMaxHistoryRepository;
-import com.github.sportbot.repository.UserProgramRepository;
-import com.github.sportbot.repository.UserRepository;
+import com.github.sportbot.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
+
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -34,6 +33,12 @@ class ExerciseServiceTest {
 
     @Mock
     private ExerciseTypeRepository exerciseTypeRepository;
+
+    @Mock
+    private ExerciseRecordRepository exerciseRecordRepository;
+
+    @Mock
+    private MessageSource messageSource;
 
     @InjectMocks
     private ExerciseService exerciseService;
@@ -71,14 +76,26 @@ class ExerciseServiceTest {
         when(userRepository.findByTelegramId(123456)).thenReturn(Optional.of(testUser));
         when(exerciseTypeRepository.findByCode("pushup")).thenReturn(Optional.of(testExerciseType));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(exerciseRecordRepository.sumTotalReps(any(User.class), any(ExerciseType.class))).thenReturn(100);
+
+        when(messageSource.getMessage(
+                eq("workout.reps_recorded"),
+                any(Object[].class),
+                any())
+        ).thenReturn("Отжимания: сделано 10 повторений. Общее число: 100.");
 
         // When
-        exerciseService.saveExerciseResult(testRequest);
+        String result = exerciseService.saveExerciseResult(testRequest);
 
         // Then
         verify(userRepository).findByTelegramId(123456);
         verify(exerciseTypeRepository).findByCode("pushup");
         verify(userRepository).save(testUser);
+        verify(exerciseRecordRepository).sumTotalReps(testUser, testExerciseType);
+        verify(messageSource).getMessage(
+                eq("workout.reps_recorded"),
+                any(Object[].class),
+                any());
         
         assertEquals(1, testUser.getExerciseRecord().size());
         ExerciseRecord savedExercise = testUser.getExerciseRecord().getFirst();
@@ -86,6 +103,7 @@ class ExerciseServiceTest {
         assertEquals(testExerciseType, savedExercise.getExerciseType());
         assertEquals(10, savedExercise.getCount());
         assertEquals(LocalDate.now(), savedExercise.getDate());
+        assertEquals("Отжимания: сделано 10 повторений. Общее число: 100.", result);
     }
 
     @Test
@@ -99,6 +117,7 @@ class ExerciseServiceTest {
         verify(userRepository).findByTelegramId(123456);
         verifyNoInteractions(exerciseTypeRepository);
         verify(userRepository, never()).save(any());
+        verifyNoInteractions(messageSource);
     }
 
     @Test
@@ -115,6 +134,7 @@ class ExerciseServiceTest {
         verify(userRepository).findByTelegramId(123456);
         verify(exerciseTypeRepository).findByCode("unknown");
         verify(userRepository, never()).save(any());
+        verifyNoInteractions(messageSource);
     }
 
     @Test

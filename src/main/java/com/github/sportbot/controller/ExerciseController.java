@@ -1,6 +1,5 @@
 package com.github.sportbot.controller;
 
-import com.github.sportbot.constants.MessageConstants;
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.service.ExerciseService;
 import com.github.sportbot.service.UserMaxService;
@@ -21,8 +20,7 @@ public class ExerciseController {
 
     @PostMapping
     public String saveExerciseResult(@RequestBody @Valid ExerciseEntryRequest req) {
-        exerciseService.saveExerciseResult(req);
-        return MessageConstants.EXERCISE_RECORDED;
+        return exerciseService.saveExerciseResult(req);
     }
 
     @PostMapping("/max")
