@@ -7,6 +7,8 @@ spring:
   cloud:
     gcp:
       sql:
-        enabled: false
+        enabled: off
+      core:
+        enabled: off
   liquibase:
     contexts: local
