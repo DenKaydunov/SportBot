@@ -80,7 +80,7 @@ docker compose -f docker/docker-compose.yaml up -d
 9. Run application:
 
 ```shell
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
 10. [Swagger](http://localhost:8080/swagger-ui/index.html)
