@@ -20,7 +20,7 @@ public class UserService {
     @Transactional
     public void registerUser(RegistrationRequest request) {
         userRepository.findByTelegramId(request.telegramId())
-                .orElseThrow(UserAlreadyExistsException::new);
+                .ifPresent(user -> {throw new UserAlreadyExistsException();});
 
         User user = User.builder()
                 .fullName(request.fullName())
