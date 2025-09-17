@@ -1,8 +1,10 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.dto.RegistrationRequest;
+import com.github.sportbot.dto.UserRegistrationResponse;
 import com.github.sportbot.exception.UserAlreadyExistsException;
 import com.github.sportbot.exception.UserNotFoundException;
+import com.github.sportbot.mapper.UserMapper;
 import com.github.sportbot.model.User;
 import com.github.sportbot.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,8 +13,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 
-import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,11 +28,18 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private MessageSource messageSource;
+
+    @Mock
+    private UserMapper userMapper;
+
     @InjectMocks
     private UserService userService;
 
     private RegistrationRequest request;
     private User existingUser;
+    private User mappedUser;
 
     @BeforeEach
     void setUp() {
@@ -38,7 +49,7 @@ class UserServiceTest {
                 true,
                 "John Doe",
                 null,
-                LocalDateTime.now().toLocalTime()
+                LocalTime.now()
         );
 
         existingUser = User.builder()
@@ -46,19 +57,36 @@ class UserServiceTest {
                 .telegramId(123456)
                 .fullName("Existing User")
                 .build();
+
+        mappedUser = User.builder()
+                .id(2)
+                .telegramId(request.telegramId())
+                .fullName(request.fullName())
+                .build();
     }
 
     @Test
     void registerUser_Success() {
         // Given
         when(userRepository.findByTelegramId(request.telegramId())).thenReturn(Optional.empty());
+        when(userMapper.toEntity(request)).thenReturn(mappedUser);
+        when(userRepository.save(mappedUser)).thenReturn(mappedUser);
+        when(messageSource.getMessage("user.registered", null, Locale.forLanguageTag("ru-RU")))
+                .thenReturn("Пользователь успешно зарегистрирован");
 
         // When
-        userService.registerUser(request);
+        UserRegistrationResponse response = userService.registerUser(request);
 
         // Then
-        verify(userRepository).findByTelegramId(123456);
-        verify(userRepository).save(any(User.class));
+        assertNotNull(response);
+        assertEquals(mappedUser.getTelegramId(), response.telegramId());
+        assertEquals(mappedUser.getFullName(), response.fullName());
+        assertEquals("Пользователь успешно зарегистрирован", response.responseMessage());
+
+        verify(userRepository).findByTelegramId(request.telegramId());
+        verify(userMapper).toEntity(request);
+        verify(userRepository).save(mappedUser);
+        verify(messageSource).getMessage("user.registered", null, Locale.forLanguageTag("ru-RU"));
     }
 
     @Test
@@ -69,8 +97,10 @@ class UserServiceTest {
         // When & Then
         assertThrows(UserAlreadyExistsException.class, () -> userService.registerUser(request));
 
-        verify(userRepository).findByTelegramId(123456);
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository).findByTelegramId(request.telegramId());
+        verify(userMapper, never()).toEntity(any());
+        verify(userRepository, never()).save(any());
+        verifyNoInteractions(messageSource);
     }
 
     @Test
