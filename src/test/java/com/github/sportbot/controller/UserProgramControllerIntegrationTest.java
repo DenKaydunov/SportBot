@@ -2,6 +2,7 @@ package com.github.sportbot.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.sportbot.dto.UpdateProgramRequest;
+import com.github.sportbot.dto.WorkoutPlanResponse;
 import com.github.sportbot.service.UserProgramService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +12,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -34,9 +41,20 @@ class UserProgramControllerIntegrationTest {
 
     @Test
     void shouldReturnWorkoutPlan() throws Exception {
+        //Given
+        final List<Integer> sets = List.of(1, 2, 3, 4, 5);
+        final int totalReps = sets.stream().mapToInt(Integer::intValue).sum();
+        final String message = "You are master!";
+        WorkoutPlanResponse mockPlan = new WorkoutPlanResponse(sets, totalReps, message);
+
+        //When
+        when(userProgramService.getWorkoutPlan(anyInt(), anyString())).thenReturn(mockPlan);
+
+        //Then
         mockMvc.perform(get("/api/v1/programs")
                         .param("telegramId", String.valueOf(telegramId))
                         .param("exerciseType", exerciseCode))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sets").isArray())
                 .andExpect(jsonPath("$.totalReps").isNumber())
