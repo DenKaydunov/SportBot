@@ -19,6 +19,7 @@ public interface MotivationRepository extends JpaRepository<Motivation, Integer>
         JOIN m.exerciseType et
         WHERE et.code = :code
         ORDER BY function('RANDOM')
+        LIMIT 1
         """)
     Optional<Motivation> findRandomByExerciseTypeCode(@Param("code") String code);
 
