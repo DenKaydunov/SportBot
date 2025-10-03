@@ -55,7 +55,7 @@ public class User {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id")
     @Builder.Default
-    private List<ExerciseRecord> exerciseRecord = new ArrayList<>();
+    private List<ExerciseRecord> exerciseRecords = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id")
