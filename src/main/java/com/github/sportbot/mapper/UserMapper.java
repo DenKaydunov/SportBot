@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "exerciseRecord", ignore = true)
+    @Mapping(target = "exerciseRecords", ignore = true)
     @Mapping(target = "maxHistory", ignore = true)
     @Mapping(target = "events", ignore = true)
     @Mapping(target = "programs", ignore = true)

@@ -41,10 +41,10 @@ public class ExerciseService {
                 .date(LocalDate.now())
                 .build();
 
-        user.getExerciseRecord().add(exercise);
+        user.getExerciseRecords().add(exercise);
         userRepository.save(user);
 
-        int total = exerciseRecordRepository.sumTotalReps(user, exerciseType);
+        int total = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
         return messageSource.getMessage("workout.reps_recorded",
                 new Object[]{exerciseType.getTitle(), req.count(), total},
                 Locale.forLanguageTag("ru-RU"));
@@ -54,8 +54,14 @@ public class ExerciseService {
         return getExerciseType(req.exerciseType());
     }
 
+    //TODO move to ExerciseService
     public ExerciseType getExerciseType(String code) {
         return exerciseTypeRepository.findByCode(code)
                 .orElseThrow(UnknownExerciseCodeException::new);
+    }
+
+    public int getTotalReps(User user, String exerciseCode) {
+        ExerciseType exerciseType = getExerciseType(exerciseCode);
+        return exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
     }
 }
