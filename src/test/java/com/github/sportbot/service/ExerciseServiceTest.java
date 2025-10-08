@@ -4,6 +4,7 @@ import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
+import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.ExerciseRecord;
 import com.github.sportbot.repository.*;
@@ -48,16 +49,13 @@ class ExerciseServiceTest {
     private ExerciseEntryRequest testRequest;
 
 
-    @Mock private UserProgramRepository userProgramRepository;
-    @Mock private UserMaxHistoryRepository userMaxHistoryRepository;
-
     @BeforeEach
     void setUp() {
         testUser = User.builder()
                 .id(1)
                 .telegramId(123456)
                 .isSubscribed(true)
-                .exerciseRecord(new ArrayList<>())
+                .exerciseRecords(new ArrayList<>())
                 .maxHistory(new ArrayList<>())
                 .build();
 
@@ -76,7 +74,7 @@ class ExerciseServiceTest {
         when(userRepository.findByTelegramId(123456)).thenReturn(Optional.of(testUser));
         when(exerciseTypeRepository.findByCode("pushup")).thenReturn(Optional.of(testExerciseType));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
-        when(exerciseRecordRepository.sumTotalReps(any(User.class), any(ExerciseType.class))).thenReturn(100);
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(any(User.class), any(ExerciseType.class))).thenReturn(100);
 
         when(messageSource.getMessage(
                 eq("workout.reps_recorded"),
@@ -91,14 +89,14 @@ class ExerciseServiceTest {
         verify(userRepository).findByTelegramId(123456);
         verify(exerciseTypeRepository).findByCode("pushup");
         verify(userRepository).save(testUser);
-        verify(exerciseRecordRepository).sumTotalReps(testUser, testExerciseType);
+        verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(testUser, testExerciseType);
         verify(messageSource).getMessage(
                 eq("workout.reps_recorded"),
                 any(Object[].class),
                 any());
         
-        assertEquals(1, testUser.getExerciseRecord().size());
-        ExerciseRecord savedExercise = testUser.getExerciseRecord().getFirst();
+        assertEquals(1, testUser.getExerciseRecords().size());
+        ExerciseRecord savedExercise = testUser.getExerciseRecords().getFirst();
         assertEquals(testUser, savedExercise.getUser());
         assertEquals(testExerciseType, savedExercise.getExerciseType());
         assertEquals(10, savedExercise.getCount());
@@ -172,5 +170,22 @@ class ExerciseServiceTest {
         assertThrows(UnknownExerciseCodeException.class, () -> exerciseService.getExerciseType("unknown"));
 
         verify(exerciseTypeRepository).findByCode("unknown");
+    }
+
+    @Test
+    void getTotalReps_ReturnsCorrectSum() {
+        // Given
+        User user = new User();
+        ExerciseType exerciseType = new ExerciseType();
+        when(exerciseTypeRepository.findByCode("push_up")).thenReturn(Optional.of(exerciseType));
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType)).thenReturn(150);
+
+        // When
+        int totalReps = exerciseService.getTotalReps(user, ExerciseTypeEnum.PUSH_UP);
+
+        // Then
+        assertEquals(150, totalReps);
+        verify(exerciseTypeRepository).findByCode("push_up");
+        verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(user, exerciseType);
     }
 }
