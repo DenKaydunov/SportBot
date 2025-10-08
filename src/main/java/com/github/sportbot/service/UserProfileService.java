@@ -7,13 +7,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.Locale;
 
+import static com.github.sportbot.model.ExerciseTypeEnum.*;
+
 @Service
 @RequiredArgsConstructor
 public class UserProfileService {
 
-    public static final String PUSH_UP = "push_up";
-    public static final String PULL_UP = "pull_up";
-    public static final String SQUAT = "squat";
     private final ExerciseService exerciseService;
 
     private final UserService userService;
@@ -55,31 +54,16 @@ public class UserProfileService {
         int maxPullUps = userMaxService.getLastMaxByExerciseCode(user, PULL_UP);
         int maxSquats = userMaxService.getLastMaxByExerciseCode(user, SQUAT);
 
-        String name = messageSource.getMessage("profile.name", new Object[]{user.getFullName()}, locale);
-        String age = messageSource.getMessage("profile.age", null, locale);
-        String gender = messageSource.getMessage("profile.gender", null, locale);
-        String rank = messageSource.getMessage("profile.rank", null, locale);
-        String achievements = messageSource.getMessage("profile.achievements", null, locale);
-        String notificationTime = messageSource.getMessage("profile.notificationTime", new Object[]{user.getRemindTime().toString()}, locale);
-        String pushUps = messageSource.getMessage("profile.push-ups", new Object[]{countPushUps, maxPushUps}, locale);
-        String pullUps = messageSource.getMessage("profile.pullups", new Object[]{countPullUps, maxPullUps}, locale);
-        String squats = messageSource.getMessage("profile.squats", new Object[]{countSquats, maxSquats}, locale);
-        String status = messageSource.getMessage("profile.status", null, locale);
-
-        return String.join("\n",
-                name,
-                age,
-                gender,
-                rank,
-                achievements,
-                notificationTime,
-                "",
-                "Всего/max",
-                "* " + pushUps,
-                "* " + pullUps,
-                "* " + squats,
-                "",
-                status
+        return messageSource.getMessage(
+                "profile.template",
+                new Object[]{
+                        user.getFullName(),
+                        user.getRemindTime() != null ? user.getRemindTime().toString() : "не указано",
+                        countPushUps, maxPushUps,
+                        countPullUps, maxPullUps,
+                        countSquats, maxSquats
+                },
+                locale
         );
     }
 }

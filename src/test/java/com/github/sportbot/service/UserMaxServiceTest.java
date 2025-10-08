@@ -4,6 +4,7 @@ import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
+import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserMaxHistory;
 import com.github.sportbot.repository.UserMaxHistoryRepository;
@@ -146,31 +147,16 @@ class UserMaxServiceTest {
         UserMaxHistory history = new UserMaxHistory();
         history.setMaxValue(200);
 
-        when(exerciseService.getExerciseType("pushups")).thenReturn(exerciseType);
+        when(exerciseService.getExerciseType("push_up")).thenReturn(exerciseType);
         when(userMaxHistoryRepository.findTopByUserAndExerciseTypeOrderByDateDesc(user, exerciseType))
                 .thenReturn(Optional.of(history));
 
         // When
-        int lastMax = userMaxService.getLastMaxByExerciseCode(user, "pushups");
+        int lastMax = userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.PUSH_UP);
 
         // Then
         assertEquals(200, lastMax);
-        verify(exerciseService).getExerciseType("pushups");
+        verify(exerciseService).getExerciseType("push_up");
         verify(userMaxHistoryRepository).findTopByUserAndExerciseTypeOrderByDateDesc(user, exerciseType);
-    }
-
-    @Test
-    void getLastMaxByExerciseCode_UnknownExerciseCode_ThrowsException() {
-        // Given
-        User user = new User();
-        when(exerciseService.getExerciseType("unknown")).thenThrow(new UnknownExerciseCodeException());
-
-        // When & Then
-        assertThrows(UnknownExerciseCodeException.class, () ->
-                userMaxService.getLastMaxByExerciseCode(user, "unknown")
-        );
-
-        verify(exerciseService).getExerciseType("unknown");
-        verifyNoInteractions(userMaxHistoryRepository);
     }
 }

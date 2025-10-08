@@ -4,6 +4,7 @@ import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
+import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.ExerciseRecord;
 import com.github.sportbot.repository.ExerciseRecordRepository;
@@ -54,14 +55,14 @@ public class ExerciseService {
         return getExerciseType(req.exerciseType());
     }
 
-    //TODO move to ExerciseService
+    //TODO move to ExerciseService https://warsportbot.atlassian.net/browse/TSP-251
     public ExerciseType getExerciseType(String code) {
         return exerciseTypeRepository.findByCode(code)
                 .orElseThrow(UnknownExerciseCodeException::new);
     }
 
-    public int getTotalReps(User user, String exerciseCode) {
-        ExerciseType exerciseType = getExerciseType(exerciseCode);
+    public int getTotalReps(User user, ExerciseTypeEnum exerciseCode) {
+        ExerciseType exerciseType = getExerciseType(exerciseCode.getType());
         return exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
     }
 }

@@ -2,6 +2,7 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.model.ExerciseType;
+import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserMaxHistory;
 import com.github.sportbot.repository.ExerciseRecordRepository;
@@ -32,6 +33,7 @@ public class UserMaxService {
     @Transactional
     public String saveExerciseMaxResult(ExerciseEntryRequest req) {
         int telegramId = req.telegramId();
+        //TODO https://warsportbot.atlassian.net/browse/TSP-255
         int maxValue = req.count();
 
         User user = userService.getUserByTelegramId(telegramId);
@@ -64,8 +66,8 @@ public class UserMaxService {
                 .orElse(0);
     }
 
-    public int getLastMaxByExerciseCode(User user, String exerciseCode) {
-        ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode);
+    public int getLastMaxByExerciseCode(User user, ExerciseTypeEnum exerciseCode) {
+        ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode.getType());
         return getLastMax(user, exerciseType);
     }
 }

@@ -4,6 +4,7 @@ import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
+import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.ExerciseRecord;
 import com.github.sportbot.repository.*;
@@ -176,30 +177,15 @@ class ExerciseServiceTest {
         // Given
         User user = new User();
         ExerciseType exerciseType = new ExerciseType();
-        when(exerciseTypeRepository.findByCode("pushups")).thenReturn(Optional.of(exerciseType));
+        when(exerciseTypeRepository.findByCode("push_up")).thenReturn(Optional.of(exerciseType));
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType)).thenReturn(150);
 
         // When
-        int totalReps = exerciseService.getTotalReps(user, "pushups");
+        int totalReps = exerciseService.getTotalReps(user, ExerciseTypeEnum.PUSH_UP);
 
         // Then
         assertEquals(150, totalReps);
-        verify(exerciseTypeRepository).findByCode("pushups");
+        verify(exerciseTypeRepository).findByCode("push_up");
         verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(user, exerciseType);
-    }
-
-    @Test
-    void getTotalReps_UnknownCode_ThrowsException() {
-        // Given
-        User user = new User();
-        when(exerciseTypeRepository.findByCode("unknown")).thenReturn(Optional.empty());
-
-        // When & Then
-        assertThrows(UnknownExerciseCodeException.class, () ->
-                exerciseService.getTotalReps(user, "unknown")
-        );
-
-        verify(exerciseTypeRepository).findByCode("unknown");
-        verifyNoInteractions(exerciseRecordRepository);
     }
 }
