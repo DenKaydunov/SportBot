@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/changes/0003-add-it-test-data.sql
   - include:
       file: db/changelog/changes/0004-add-cloud-test-data.sql
+  - include:
+      file: db/changelog/changes/0005-add-motivations-test-data.sql
