@@ -4,8 +4,10 @@ import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
+import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserMaxHistory;
+import com.github.sportbot.repository.UserMaxHistoryRepository;
 import com.github.sportbot.repository.UserRepository;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +21,7 @@ import org.springframework.context.MessageSource;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -37,6 +40,8 @@ class UserMaxServiceTest {
     @Mock
     private ExerciseService exerciseService;
     @Mock
+    private UserMaxHistoryRepository userMaxHistoryRepository;
+    @Mock
     private ExerciseRecordRepository exerciseRecordRepository;
     @Mock
     private MessageSource mSource;
@@ -54,7 +59,7 @@ class UserMaxServiceTest {
                 .id(1)
                 .telegramId(123456)
                 .isSubscribed(true)
-                .exerciseRecord(new ArrayList<>())
+                .exerciseRecords(new ArrayList<>())
                 .maxHistory(new ArrayList<>())
                 .build();
 
@@ -75,7 +80,7 @@ class UserMaxServiceTest {
         when(userService.getUserByTelegramId(123456)).thenReturn(testUser);
         when(exerciseService.getExerciseType(any(ExerciseEntryRequest.class))).thenReturn(testExerciseType);
         final int totalCount = 100;
-        when(exerciseRecordRepository.sumTotalReps(testUser, testExerciseType)).thenReturn(totalCount);
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(testUser, testExerciseType)).thenReturn(totalCount);
 
         // When
         userMaxService.saveExerciseMaxResult(testRequest);
@@ -132,5 +137,26 @@ class UserMaxServiceTest {
         verifyNoInteractions(userRepository);
         verifyNoInteractions(exerciseRecordRepository);
         verifyNoInteractions(mSource);
+    }
+
+    @Test
+    void getLastMaxByExerciseCode_ReturnsCorrectValue() {
+        // Given
+        User user = new User();
+        ExerciseType exerciseType = new ExerciseType();
+        UserMaxHistory history = new UserMaxHistory();
+        history.setMaxValue(200);
+
+        when(exerciseService.getExerciseType("push_up")).thenReturn(exerciseType);
+        when(userMaxHistoryRepository.findTopByUserAndExerciseTypeOrderByDateDesc(user, exerciseType))
+                .thenReturn(Optional.of(history));
+
+        // When
+        int lastMax = userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.PUSH_UP);
+
+        // Then
+        assertEquals(200, lastMax);
+        verify(exerciseService).getExerciseType("push_up");
+        verify(userMaxHistoryRepository).findTopByUserAndExerciseTypeOrderByDateDesc(user, exerciseType);
     }
 }
