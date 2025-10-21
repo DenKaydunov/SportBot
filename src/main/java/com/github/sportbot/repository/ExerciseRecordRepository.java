@@ -15,7 +15,7 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
      * @param exerciseType Объект типа упражнения.
      * @return Общая сумма повторений.
      */
-    @Query("SELECT SUM(w.count) FROM ExerciseRecord w WHERE w.user = :user AND w.exerciseType = :exerciseType")
+    @Query("SELECT COALESCE(SUM(w.count), 0) FROM ExerciseRecord w WHERE w.user = :user AND w.exerciseType = :exerciseType")
     int sumTotalRepsByUserAndExerciseType(@Param("user") User user, @Param("exerciseType") ExerciseType exerciseType);
 
 }
