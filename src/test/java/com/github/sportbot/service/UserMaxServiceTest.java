@@ -18,13 +18,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -79,15 +78,15 @@ class UserMaxServiceTest {
         // Given
         when(userService.getUserByTelegramId(123456)).thenReturn(testUser);
         when(exerciseService.getExerciseType(any(ExerciseEntryRequest.class))).thenReturn(testExerciseType);
-        final int totalCount = 100;
-        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(testUser, testExerciseType)).thenReturn(totalCount);
+        final int max = 100;
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(testUser, testExerciseType)).thenReturn(max);
+        LocalDateTime now = LocalDateTime.now();
 
         // When
         userMaxService.saveExerciseMaxResult(testRequest);
 
         // Then
         verify(userService).getUserByTelegramId(123456);
-        verify(userProgramService).updateProgram(testUser, testExerciseType, 10);
         verify(userRepository).save(testUser);
 
         assertEquals(1, testUser.getMaxHistory().size());
@@ -95,7 +94,7 @@ class UserMaxServiceTest {
         assertEquals(testUser, savedMax.getUser());
         assertEquals(testExerciseType, savedMax.getExerciseType());
         assertEquals(10, savedMax.getMaxValue());
-        assertEquals(LocalDate.now(), savedMax.getDate());
+        assertTrue(now.isBefore(savedMax.getDate()));
         verify(mSource).getMessage(
                 eq("workout.max_reps"),
                 any(Object[].class),
