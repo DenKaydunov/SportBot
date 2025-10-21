@@ -68,7 +68,7 @@ CREATE TABLE user_max_history (
                                   user_id          INTEGER NOT NULL,
                                   exercise_type_id INTEGER NOT NULL,
                                   max_value        INTEGER NOT NULL,
-                                  date             DATE    NOT NULL,
+                                  date             TIMESTAMP    NOT NULL,
                                   CONSTRAINT fk_umh_user
                                       FOREIGN KEY (user_id)
                                           REFERENCES users(id)

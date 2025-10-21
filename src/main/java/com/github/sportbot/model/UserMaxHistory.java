@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_max_history")
@@ -25,7 +25,7 @@ public class UserMaxHistory {
 
     private Integer maxValue;
     @CreatedDate
-    private LocalDate date;
+    private LocalDateTime date;
 
     @ManyToOne
     @JoinColumn(name = "exercise_type_id", nullable = false)

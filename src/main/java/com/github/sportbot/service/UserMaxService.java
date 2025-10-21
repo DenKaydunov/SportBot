@@ -13,14 +13,15 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class UserMaxService {
 
-    private final UserProgramService userProgramService;
+    public static final int DEFAULT_EXERCISE_VALUE = 5;
+
     private final UserService userService;
     private final ExerciseService exerciseService;
     private final UserRepository userRepository;
@@ -43,13 +44,12 @@ public class UserMaxService {
                 .user(user)
                 .exerciseType(exerciseType)
                 .maxValue(maxValue)
-                .date(LocalDate.now())
+                .date(LocalDateTime.now())
                 .build();
 
         user.getMaxHistory().add(userMaxHistory);
 
         exerciseService.saveExerciseResult(new ExerciseEntryRequest(telegramId, exerciseType.getCode(), maxValue));
-        userProgramService.updateProgram(user, exerciseType, maxValue);
         userRepository.save(user);
 
         int totalReps = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
@@ -60,10 +60,10 @@ public class UserMaxService {
         );
     }
 
-    private int getLastMax(User user, ExerciseType exerciseType) {
+    public int getLastMax(User user, ExerciseType exerciseType) {
         return userMaxHistoryRepository.findTopByUserAndExerciseTypeOrderByDateDesc(user, exerciseType)
                 .map(UserMaxHistory::getMaxValue)
-                .orElse(0);
+                .orElse(DEFAULT_EXERCISE_VALUE);
     }
 
     public int getLastMaxByExerciseCode(User user, ExerciseTypeEnum exerciseCode) {
