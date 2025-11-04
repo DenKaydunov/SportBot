@@ -39,6 +39,8 @@ class UserMaxServiceTest {
     @Mock
     private ExerciseService exerciseService;
     @Mock
+    private ExerciseTypeService exerciseTypeService;
+    @Mock
     private UserMaxHistoryRepository userMaxHistoryRepository;
     @Mock
     private ExerciseRecordRepository exerciseRecordRepository;
@@ -77,7 +79,7 @@ class UserMaxServiceTest {
     void saveExerciseMaxResult_Success() {
         // Given
         when(userService.getUserByTelegramId(123456)).thenReturn(testUser);
-        when(exerciseService.getExerciseType(any(ExerciseEntryRequest.class))).thenReturn(testExerciseType);
+        when(exerciseTypeService.getExerciseType(any(ExerciseEntryRequest.class))).thenReturn(testExerciseType);
         final int max = 100;
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(testUser, testExerciseType)).thenReturn(max);
         LocalDateTime now = LocalDateTime.now();
@@ -123,7 +125,7 @@ class UserMaxServiceTest {
     void saveExerciseMaxResult_UnknownExerciseCode_ThrowsException() {
         // Given
         when(userService.getUserByTelegramId(123456)).thenReturn(testUser);
-        when(exerciseService.getExerciseType(any(ExerciseEntryRequest.class))).thenThrow(new UnknownExerciseCodeException());
+        when(exerciseTypeService.getExerciseType(any(ExerciseEntryRequest.class))).thenThrow(new UnknownExerciseCodeException());
 
         ExerciseEntryRequest invalidRequest = new ExerciseEntryRequest(123456, "unknown", 10);
 
@@ -131,7 +133,7 @@ class UserMaxServiceTest {
         assertThrows(UnknownExerciseCodeException.class, () -> userMaxService.saveExerciseMaxResult(invalidRequest));
 
         verify(userService).getUserByTelegramId(123456);
-        verify(exerciseService).getExerciseType(any(ExerciseEntryRequest.class));
+        verify(exerciseTypeService).getExerciseType(any(ExerciseEntryRequest.class));
         verifyNoInteractions(userProgramService);
         verifyNoInteractions(userRepository);
         verifyNoInteractions(exerciseRecordRepository);
@@ -146,7 +148,7 @@ class UserMaxServiceTest {
         UserMaxHistory history = new UserMaxHistory();
         history.setMaxValue(200);
 
-        when(exerciseService.getExerciseType("push_up")).thenReturn(exerciseType);
+        when(exerciseTypeService.getExerciseType("push_up")).thenReturn(exerciseType);
         when(userMaxHistoryRepository.findTopByUserAndExerciseTypeOrderByDateDesc(user, exerciseType))
                 .thenReturn(Optional.of(history));
 
@@ -155,7 +157,7 @@ class UserMaxServiceTest {
 
         // Then
         assertEquals(200, lastMax);
-        verify(exerciseService).getExerciseType("push_up");
+        verify(exerciseTypeService).getExerciseType("push_up");
         verify(userMaxHistoryRepository).findTopByUserAndExerciseTypeOrderByDateDesc(user, exerciseType);
     }
 }

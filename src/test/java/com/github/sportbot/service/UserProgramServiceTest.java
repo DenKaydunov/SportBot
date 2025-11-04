@@ -32,7 +32,7 @@ class UserProgramServiceTest {
     private WorkoutProperties workoutProperties;
 
     @Mock
-    private ExerciseService exerciseService;
+    private ExerciseTypeService exerciseTypeService;
 
     @Mock
     private UserService userService;
@@ -73,7 +73,7 @@ class UserProgramServiceTest {
     void getWorkoutPlan_Success() {
         // Given
         when(userService.getUserByTelegramId(user.getTelegramId())).thenReturn(user);
-        when(exerciseService.getExerciseType("push_up")).thenReturn(exerciseType);
+        when(exerciseTypeService.getExerciseType("push_up")).thenReturn(exerciseType);
         when(userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId()))
                 .thenReturn(Optional.of(existingProgram));
         when(userMaxService.getLastMax(user, exerciseType)).thenReturn(50);
@@ -97,7 +97,7 @@ class UserProgramServiceTest {
         assertEquals("Сегодня твоя тренировка: 25, 35, 45 — всего 105", response.message());
 
         verify(userService).getUserByTelegramId(user.getTelegramId());
-        verify(exerciseService).getExerciseType("push_up");
+        verify(exerciseTypeService).getExerciseType("push_up");
         verify(userProgramRepository).findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId());
         verify(userMaxService).getLastMax(user, exerciseType);
         verify(messageSource).getMessage(eq("workout.today_sets"), any(), eq(Locale.forLanguageTag("ru-RU")));
@@ -107,7 +107,7 @@ class UserProgramServiceTest {
     void incrementDayProgram_Success() {
         // Given
         when(userService.getUserByTelegramId(user.getTelegramId())).thenReturn(user);
-        when(exerciseService.getExerciseType("push_up")).thenReturn(exerciseType);
+        when(exerciseTypeService.getExerciseType("push_up")).thenReturn(exerciseType);
         when(userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId()))
                 .thenReturn(Optional.of(existingProgram));
 
@@ -123,7 +123,7 @@ class UserProgramServiceTest {
     void getWorkoutPlan_ResetsProgram_WhenMaxChanged() {
         // Given
         when(userService.getUserByTelegramId(user.getTelegramId())).thenReturn(user);
-        when(exerciseService.getExerciseType("push_up")).thenReturn(exerciseType);
+        when(exerciseTypeService.getExerciseType("push_up")).thenReturn(exerciseType);
         when(userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId()))
                 .thenReturn(Optional.of(existingProgram));
         when(userMaxService.getLastMax(user, exerciseType)).thenReturn(60); // Новый максимум

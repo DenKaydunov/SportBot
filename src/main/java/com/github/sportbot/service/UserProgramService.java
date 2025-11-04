@@ -22,6 +22,7 @@ public class UserProgramService {
     private final MessageSource messageSource;
     private final WorkoutProperties workoutProperties;
     private final ExerciseService exerciseService;
+    private final ExerciseTypeService exerciseTypeService;
     private final UserService userService;
     private final UserMaxService userMaxService;
 
@@ -30,7 +31,7 @@ public class UserProgramService {
      */
     public WorkoutPlanResponse getWorkoutPlan(Integer telegramId, String exerciseCode) {
         User user = userService.getUserByTelegramId(telegramId);
-        ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode);
+        ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
 
         UserProgram program = loadUserProgram(user, exerciseType);
 
@@ -46,7 +47,7 @@ public class UserProgramService {
      */
     public void incrementDayProgram(Integer telegramId, String exerciseCode) {
         User user = userService.getUserByTelegramId(telegramId);
-        ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode);
+        ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
 
         UserProgram program = loadUserProgram(user, exerciseType);
         program.setDayNumber(program.getDayNumber() + 1);
