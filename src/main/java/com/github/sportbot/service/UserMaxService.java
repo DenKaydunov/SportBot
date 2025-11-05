@@ -24,6 +24,7 @@ public class UserMaxService {
 
     private final UserService userService;
     private final ExerciseService exerciseService;
+    private final ExerciseTypeService exerciseTypeService;
     private final UserRepository userRepository;
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final UserMaxHistoryRepository userMaxHistoryRepository;
@@ -34,11 +35,11 @@ public class UserMaxService {
     @Transactional
     public String saveExerciseMaxResult(ExerciseEntryRequest req) {
         int telegramId = req.telegramId();
-        //TODO https://warsportbot.atlassian.net/browse/TSP-255
+        //TODO Max Value should be poistive https://warsportbot.atlassian.net/browse/TSP-255
         int maxValue = req.count();
 
         User user = userService.getUserByTelegramId(telegramId);
-        ExerciseType exerciseType = exerciseService.getExerciseType(req);
+        ExerciseType exerciseType = exerciseTypeService.getExerciseType(req);
 
         UserMaxHistory userMaxHistory = UserMaxHistory.builder()
                 .user(user)
@@ -67,7 +68,7 @@ public class UserMaxService {
     }
 
     public int getLastMaxByExerciseCode(User user, ExerciseTypeEnum exerciseCode) {
-        ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode.getType());
+        ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode.getType());
         return getLastMax(user, exerciseType);
     }
 }

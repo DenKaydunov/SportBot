@@ -15,9 +15,10 @@ public class LeaderboardService {
 
     private final LeaderBoardRepository leaderBoardRepository;
     private final ExerciseService exerciseService;
+    private final ExerciseTypeService exerciseTypeService;
 
     public String getLeaderboardByPeriod(String exerciseCode, int limit, String periodCode) {
-        ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode);
+        ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
         Period period = Period.fromCode(periodCode);
         LocalDate startDate = period.getStartDate();
         LocalDate endDate = (startDate == null ? null : LocalDate.now());
@@ -27,7 +28,7 @@ public class LeaderboardService {
 
     public String getLeaderboardByDates(String exerciseCode, int limit,
                                         LocalDate startDate, LocalDate endDate) {
-        ExerciseType exerciseType = exerciseService.getExerciseType(exerciseCode);
+        ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
         String displayName = String.format("c %s по %s", startDate, endDate);
 
         return buildAndFormatLeaderboard(exerciseType, limit, startDate, endDate, displayName);
