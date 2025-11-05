@@ -15,7 +15,7 @@ public class ExerciseTypeService {
 
     public ExerciseType getExerciseType(String code) {
         return exerciseTypeRepository.findByCode(code)
-                .orElseThrow(UnknownExerciseCodeException::new);
+                .orElseThrow(() -> new UnknownExerciseCodeException(code));
     }
 
     public ExerciseType getExerciseType(ExerciseEntryRequest req) {

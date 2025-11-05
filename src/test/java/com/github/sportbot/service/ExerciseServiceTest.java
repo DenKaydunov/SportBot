@@ -118,7 +118,7 @@ class ExerciseServiceTest {
         // Given
         when(userRepository.findByTelegramId(TELEGRAM_ID)).thenReturn(Optional.of(testUser));
         when(exerciseTypeService.getExerciseType(any(ExerciseEntryRequest.class)))
-                .thenThrow(new UnknownExerciseCodeException());
+                .thenThrow(new UnknownExerciseCodeException("unknown"));
 
         ExerciseEntryRequest invalidRequest = new ExerciseEntryRequest(TELEGRAM_ID, "unknown", 10);
 
