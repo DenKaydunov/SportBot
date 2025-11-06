@@ -8,12 +8,13 @@ import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.UserRepository;
-import java.time.LocalDate;
-import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
