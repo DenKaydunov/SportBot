@@ -125,7 +125,8 @@ class UserMaxServiceTest {
     void saveExerciseMaxResult_UnknownExerciseCode_ThrowsException() {
         // Given
         when(userService.getUserByTelegramId(123456)).thenReturn(testUser);
-        when(exerciseTypeService.getExerciseType(any(ExerciseEntryRequest.class))).thenThrow(new UnknownExerciseCodeException());
+        when(exerciseTypeService.getExerciseType(any(ExerciseEntryRequest.class)))
+                .thenThrow(new UnknownExerciseCodeException("unknown"));
 
         ExerciseEntryRequest invalidRequest = new ExerciseEntryRequest(123456, "unknown", 10);
 

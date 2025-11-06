@@ -14,7 +14,7 @@ public class MotivationService {
 
     public String getMotivation(String exerciseCode) {
         Motivation motivation = motivationRepository.findRandomByExerciseTypeCode(exerciseCode)
-                .orElseThrow(UnknownExerciseCodeException::new);
+                .orElseThrow(() -> new UnknownExerciseCodeException(exerciseCode));
         return motivation.getMessage();
     }
 }
