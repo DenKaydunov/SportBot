@@ -1,4 +1,8 @@
 #!/bin/sh
+# Force Java 21 for this project
+export JAVA_HOME=/usr/lib/jvm/jdk-21.0.9-oracle-x64
+export PATH=$JAVA_HOME/bin:$PATH
+
 # ----------------------------------------------------------------------------
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
