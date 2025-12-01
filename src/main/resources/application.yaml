@@ -7,8 +7,6 @@ spring:
         database-name: sportbot_db
         instance-connection-name: sportbot-479615:europe-west1:sportbot
   datasource:
-    username:
-    password:
     driver-class-name: org.postgresql.Driver
 
   jpa:
