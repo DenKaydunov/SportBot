@@ -5,7 +5,7 @@ spring:
     gcp:
       sql:
         database-name: sportbot_db
-        instance-connection-name: sunny-might-465815-m2:us-central1:sportbotdb
+        instance-connection-name: sportbot-479615:europe-west1:sportbot
   datasource:
     username:
     password:
