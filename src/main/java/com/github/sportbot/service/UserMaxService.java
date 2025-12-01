@@ -34,7 +34,7 @@ public class UserMaxService {
 
     @Transactional
     public String saveExerciseMaxResult(ExerciseEntryRequest req) {
-        int telegramId = req.telegramId();
+        Long telegramId = req.telegramId();
         //TODO Max Value should be poistive https://warsportbot.atlassian.net/browse/TSP-255
         int maxValue = req.count();
 

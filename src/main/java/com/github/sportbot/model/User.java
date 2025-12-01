@@ -26,7 +26,7 @@ public class User {
     @Column(name = "full_name", nullable = false)
     private String fullName;
     @Column(name = "telegram_id", nullable = false, unique = true)
-    private Integer telegramId;
+    private Long telegramId;
     @Column(name = "referrer_telegram_id")
     private Integer referrerTelegramId;
     @Column(name = "send_pulse_id")

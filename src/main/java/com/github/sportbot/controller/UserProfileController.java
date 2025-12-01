@@ -26,9 +26,8 @@ public class UserProfileController {
     @GetMapping
     public String getProfile(
             @RequestParam
-            @NotNull
-            @Parameter(example = "1000001")
-            Integer telegramId,
+            @Parameter(example = "1000001") @NotNull
+            Long telegramId,
 
             @RequestParam(required = false, defaultValue = "ru")
             @Parameter(example = "ru")

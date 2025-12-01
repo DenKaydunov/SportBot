@@ -30,7 +30,7 @@ class ExerciseControllerIntegrationTest {
     @MockBean
     private UserMaxService userMaxService;
 
-    private final Integer telegramId = 123456789;
+    private final Long telegramId = 123456789L;
     private final String exerciseCode = "squat";
 
     @Test

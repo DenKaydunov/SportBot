@@ -51,7 +51,7 @@ class UserProgramServiceTest {
     void setUp() {
         user = User.builder()
                 .id(1)
-                .telegramId(12345)
+                .telegramId(12345L)
                 .fullName("John Doe")
                 .build();
 

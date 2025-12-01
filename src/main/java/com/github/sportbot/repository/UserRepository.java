@@ -1,13 +1,14 @@
 package com.github.sportbot.repository;
 
 import com.github.sportbot.model.User;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Integer> {
-    Optional<User> findByTelegramId(Integer telegramId);
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByTelegramId(@NotNull Long telegramId);
 }
 

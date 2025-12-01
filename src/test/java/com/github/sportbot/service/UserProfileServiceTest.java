@@ -43,7 +43,7 @@ class UserProfileServiceTest {
     @Test
     void getProfile_ReturnsFormattedProfile() {
         // Given
-        Integer telegramId = 123456;
+        Long telegramId = 123456L;
         String lang = "ru";
         User user = new User();
         user.setFullName("Denis Kaydunov");

@@ -33,7 +33,7 @@ class ExerciseTypeServiceTest {
     @BeforeEach
     void setUp() {
         exerciseType = ExerciseType.builder().id(1L).code("push_up").title("Отжимания").build();
-        testRequest = new ExerciseEntryRequest(123456, "push_up", 10);
+        testRequest = new ExerciseEntryRequest(123456L, "push_up", 10);
     }
 
     @Test
@@ -51,7 +51,7 @@ class ExerciseTypeServiceTest {
     @Test
     void getExerciseType_ByRequest_Success() {
         // Given
-        ExerciseEntryRequest request = new ExerciseEntryRequest(10001, "push_up", 20);
+        ExerciseEntryRequest request = new ExerciseEntryRequest(10001L, "push_up", 20);
         when(exerciseTypeRepository.findByCode("push_up")).thenReturn(Optional.of(exerciseType));
 
         // When
@@ -65,7 +65,7 @@ class ExerciseTypeServiceTest {
     @Test
     void getExerciseType_ByRequest_NotFound_ThrowsException() {
         // Given
-        ExerciseEntryRequest request = new ExerciseEntryRequest(10001, "unknown", 20);
+        ExerciseEntryRequest request = new ExerciseEntryRequest(10001L, "unknown", 20);
 
         // When & Then
         assertThrows(
