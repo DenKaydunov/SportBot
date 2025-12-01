@@ -7,6 +7,7 @@ import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.mapper.UserMapper;
 import com.github.sportbot.model.User;
 import com.github.sportbot.repository.UserRepository;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ public class UserService {
         );
     }
 
-    public User getUserByTelegramId(Integer telegramId) {
+    public User getUserByTelegramId(@NotNull Long telegramId) {
         return userRepository.findByTelegramId(telegramId)
                 .orElseThrow(UserNotFoundException::new);
     }

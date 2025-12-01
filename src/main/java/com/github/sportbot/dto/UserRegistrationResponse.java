@@ -4,6 +4,6 @@ import jakarta.validation.constraints.NotNull;
 
 public record UserRegistrationResponse(
         @NotNull String responseMessage,
-        Integer telegramId,
+        Long telegramId,
         String fullName
 ) {}

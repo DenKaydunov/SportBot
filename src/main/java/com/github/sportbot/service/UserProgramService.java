@@ -4,6 +4,7 @@ import com.github.sportbot.config.WorkoutProperties;
 import com.github.sportbot.dto.WorkoutPlanResponse;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.UserProgramRepository;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,6 @@ public class UserProgramService {
     private final UserProgramRepository userProgramRepository;
     private final MessageSource messageSource;
     private final WorkoutProperties workoutProperties;
-    private final ExerciseService exerciseService;
     private final ExerciseTypeService exerciseTypeService;
     private final UserService userService;
     private final UserMaxService userMaxService;
@@ -29,7 +29,7 @@ public class UserProgramService {
     /**
      * Получение плана тренировок для пользователя
      */
-    public WorkoutPlanResponse getWorkoutPlan(Integer telegramId, String exerciseCode) {
+    public WorkoutPlanResponse getWorkoutPlan(@NotNull Long telegramId, String exerciseCode) {
         User user = userService.getUserByTelegramId(telegramId);
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
 
@@ -45,7 +45,7 @@ public class UserProgramService {
     /**
      * Обновление программы (инкремент дня)
      */
-    public void incrementDayProgram(Integer telegramId, String exerciseCode) {
+    public void incrementDayProgram(@NotNull Long telegramId, String exerciseCode) {
         User user = userService.getUserByTelegramId(telegramId);
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
 

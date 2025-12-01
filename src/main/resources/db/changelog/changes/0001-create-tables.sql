@@ -4,8 +4,8 @@
 CREATE TABLE users (
                        id                   SERIAL PRIMARY KEY,
                        full_name            VARCHAR(255) NOT NULL,
-                       telegram_id          INTEGER NOT NULL UNIQUE,
-                       referrer_telegram_id INTEGER,
+                       telegram_id          BIGINT NOT NULL UNIQUE,
+                       referrer_telegram_id BIGINT,
                        send_pulse_id        VARCHAR(255),
                        is_subscribed        BOOLEAN NOT NULL DEFAULT TRUE,
                        created_at           TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),

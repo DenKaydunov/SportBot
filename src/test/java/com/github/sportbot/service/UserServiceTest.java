@@ -44,7 +44,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         request = new RegistrationRequest(
-                123456,
+                123456L,
                 "sendPulse123",
                 true,
                 "John Doe",
@@ -54,7 +54,7 @@ class UserServiceTest {
 
         existingUser = User.builder()
                 .id(1)
-                .telegramId(123456)
+                .telegramId(123456L)
                 .fullName("Existing User")
                 .build();
 
@@ -106,24 +106,24 @@ class UserServiceTest {
     @Test
     void getUserByTelegramId_Success() {
         // Given
-        when(userRepository.findByTelegramId(123456)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByTelegramId(123456L)).thenReturn(Optional.of(existingUser));
 
         // When
-        User result = userService.getUserByTelegramId(123456);
+        User result = userService.getUserByTelegramId(123456L);
 
         // Then
         assertEquals(existingUser, result);
-        verify(userRepository).findByTelegramId(123456);
+        verify(userRepository).findByTelegramId(123456L);
     }
 
     @Test
     void getUserByTelegramId_NotFound_ThrowsException() {
         // Given
-        when(userRepository.findByTelegramId(123456)).thenReturn(Optional.empty());
+        when(userRepository.findByTelegramId(123456L)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(UserNotFoundException.class, () -> userService.getUserByTelegramId(123456));
+        assertThrows(UserNotFoundException.class, () -> userService.getUserByTelegramId(123456L));
 
-        verify(userRepository).findByTelegramId(123456);
+        verify(userRepository).findByTelegramId(123456L);
     }
 }

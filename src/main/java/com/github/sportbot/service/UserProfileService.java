@@ -1,6 +1,7 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.model.User;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class UserProfileService {
      * 📊 Статус: Сегодня тренируем силу воли 💪
      *
      */
-    public String getProfile(Integer telegramId, String lang) {
+    public String getProfile(@NotNull Long telegramId, String lang) {
         Locale locale = Locale.forLanguageTag(lang);
         User user = userService.getUserByTelegramId(telegramId);
 

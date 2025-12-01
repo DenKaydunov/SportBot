@@ -4,6 +4,7 @@ import com.github.sportbot.dto.UpdateProgramRequest;
 import com.github.sportbot.dto.WorkoutPlanResponse;
 import com.github.sportbot.service.UserProgramService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,7 @@ public class UserProgramController {
 
     @GetMapping
     public WorkoutPlanResponse getWorkoutPlan(
-            @RequestParam Integer telegramId,
+            @RequestParam @NotNull Long telegramId,
             @RequestParam String exerciseType) {
         return userProgramService.getWorkoutPlan(telegramId, exerciseType);
     }

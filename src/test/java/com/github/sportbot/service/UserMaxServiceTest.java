@@ -58,7 +58,7 @@ class UserMaxServiceTest {
     void setUp() {
         testUser = User.builder()
                 .id(1)
-                .telegramId(123456)
+                .telegramId(123456L)
                 .isSubscribed(true)
                 .exerciseRecords(new ArrayList<>())
                 .maxHistory(new ArrayList<>())
@@ -70,7 +70,7 @@ class UserMaxServiceTest {
                 .title("Отжимания")
                 .build();
 
-        testRequest = new ExerciseEntryRequest(123456, "pushup", 10);
+        testRequest = new ExerciseEntryRequest(123456L, "pushup", 10);
     }
 
 
@@ -78,7 +78,7 @@ class UserMaxServiceTest {
     @Test
     void saveExerciseMaxResult_Success() {
         // Given
-        when(userService.getUserByTelegramId(123456)).thenReturn(testUser);
+        when(userService.getUserByTelegramId(123456L)).thenReturn(testUser);
         when(exerciseTypeService.getExerciseType(any(ExerciseEntryRequest.class))).thenReturn(testExerciseType);
         final int max = 100;
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(testUser, testExerciseType)).thenReturn(max);
@@ -88,7 +88,7 @@ class UserMaxServiceTest {
         userMaxService.saveExerciseMaxResult(testRequest);
 
         // Then
-        verify(userService).getUserByTelegramId(123456);
+        verify(userService).getUserByTelegramId(123456L);
         verify(userRepository).save(testUser);
 
         assertEquals(1, testUser.getMaxHistory().size());
@@ -108,12 +108,12 @@ class UserMaxServiceTest {
     @Test
     void saveExerciseMaxResult_UserNotFound_ThrowsException() {
         // Given
-        when(userService.getUserByTelegramId(123456)).thenThrow(new UserNotFoundException());
+        when(userService.getUserByTelegramId(123456L)).thenThrow(new UserNotFoundException());
 
         // When & Then
         assertThrows(UserNotFoundException.class, () -> userMaxService.saveExerciseMaxResult(testRequest));
 
-        verify(userService).getUserByTelegramId(123456);
+        verify(userService).getUserByTelegramId(123456L);
         verifyNoInteractions(exerciseService);
         verifyNoInteractions(userProgramService);
         verifyNoInteractions(userRepository);
@@ -124,16 +124,16 @@ class UserMaxServiceTest {
     @Test
     void saveExerciseMaxResult_UnknownExerciseCode_ThrowsException() {
         // Given
-        when(userService.getUserByTelegramId(123456)).thenReturn(testUser);
+        when(userService.getUserByTelegramId(123456L)).thenReturn(testUser);
         when(exerciseTypeService.getExerciseType(any(ExerciseEntryRequest.class)))
                 .thenThrow(new UnknownExerciseCodeException("unknown"));
 
-        ExerciseEntryRequest invalidRequest = new ExerciseEntryRequest(123456, "unknown", 10);
+        ExerciseEntryRequest invalidRequest = new ExerciseEntryRequest(123456L, "unknown", 10);
 
         // When & Then
         assertThrows(UnknownExerciseCodeException.class, () -> userMaxService.saveExerciseMaxResult(invalidRequest));
 
-        verify(userService).getUserByTelegramId(123456);
+        verify(userService).getUserByTelegramId(123456L);
         verify(exerciseTypeService).getExerciseType(any(ExerciseEntryRequest.class));
         verifyNoInteractions(userProgramService);
         verifyNoInteractions(userRepository);

@@ -49,7 +49,7 @@ class ExerciseServiceTest {
     private User testUser;
     private ExerciseType testExerciseType;
     private ExerciseEntryRequest testRequest;
-    private static final int TELEGRAM_ID = 123456;
+    private static final long TELEGRAM_ID = 123456L;
 
     @BeforeEach
     void setUp() {

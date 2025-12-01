@@ -4,6 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record UpdateProgramRequest(
-        @NotNull Integer telegramId,
+        @NotNull Long telegramId,
         @NotBlank String exerciseType
 ) {}

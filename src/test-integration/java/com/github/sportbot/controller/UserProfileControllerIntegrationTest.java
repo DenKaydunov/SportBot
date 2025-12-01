@@ -22,7 +22,7 @@ class UserProfileControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private final Integer telegramId = 1000001;
+    private final Long telegramId = 1000001L;
     private final String lang = "ru";
 
     @Test
