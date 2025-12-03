@@ -53,6 +53,10 @@ public class LeaderboardController {
             @Parameter(example = "squat")
             String exerciseCode,
 
+            @RequestParam(required = false)
+            @Parameter(example = "PULL_UP_CH1")
+            String tagCode,
+
             @RequestParam(defaultValue = "20")
             int limit,
 
@@ -66,6 +70,6 @@ public class LeaderboardController {
             @Parameter(example = "2025-09-05")
             LocalDate endDate
     ) {
-        return leaderboardService.getLeaderboardByDates(exerciseCode, limit, startDate, endDate);
+        return leaderboardService.getLeaderboardByDates(exerciseCode, tagCode, limit, startDate, endDate);
     }
 }
