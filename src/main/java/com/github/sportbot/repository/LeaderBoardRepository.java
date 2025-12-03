@@ -19,9 +19,12 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
                         LEFT JOIN user_max_history umh
                                ON er.user_id = umh.user_id
                               AND er.exercise_type_id = umh.exercise_type_id
+                        LEFT JOIN user_tags uct
+                               ON uct.user_id = er.user_id
                         WHERE er.exercise_type_id = :exerciseTypeId
                             AND (coalesce(:startDate, er.date) <= er.date)
                             AND (coalesce(:endDate, er.date) >= er.date)
+                            AND (:tagId IS NULL OR uct.tag_id = :tagId)
             
                         GROUP BY er.user_id, u.full_name
                         ORDER BY total DESC
@@ -29,6 +32,7 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
             """, nativeQuery = true)
     List<Object[]> findTopUsersByExerciseTypeAndDate(
             @Param("exerciseTypeId") Long exerciseTypeId,
+            @Param("tagId") Long tagId,
             @Param("limit") int limit,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate

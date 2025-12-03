@@ -50,7 +50,7 @@ class LeaderboardControllerIntegrationTest {
         LocalDate endDate = LocalDate.of(2025, 9, 5);
         String expectedResponse = "Leaderboard for squats between 2025-09-01 and 2025-09-05";
 
-        when(leaderboardService.getLeaderboardByDates(exerciseCode, 5, startDate, endDate))
+        when(leaderboardService.getLeaderboardByDates(exerciseCode, "TAG",5, startDate, endDate))
                 .thenReturn(expectedResponse);
 
         // When & Then

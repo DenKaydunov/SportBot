@@ -16,6 +16,7 @@ public class LeaderboardService {
     private final LeaderBoardRepository leaderBoardRepository;
     private final ExerciseService exerciseService;
     private final ExerciseTypeService exerciseTypeService;
+    private final TagService tagService;
 
     public String getLeaderboardByPeriod(String exerciseCode, int limit, String periodCode) {
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
@@ -23,24 +24,31 @@ public class LeaderboardService {
         LocalDate startDate = period.getStartDate();
         LocalDate endDate = (startDate == null ? null : LocalDate.now());
 
-        return buildAndFormatLeaderboard(exerciseType, limit, startDate, endDate, period.getDisplayName());
+        return buildAndFormatLeaderboard(exerciseType, null, limit, startDate, endDate, period.getDisplayName());
     }
 
-    public String getLeaderboardByDates(String exerciseCode, int limit,
-                                        LocalDate startDate, LocalDate endDate) {
+    public String getLeaderboardByDates(String exerciseCode,
+                                        String tagCode,
+                                        int limit,
+                                        LocalDate startDate,
+                                        LocalDate endDate) {
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
+        Long tag= tagService.getIdByCode(tagCode);
         String displayName = String.format("c %s по %s", startDate, endDate);
 
-        return buildAndFormatLeaderboard(exerciseType, limit, startDate, endDate, displayName);
+        return buildAndFormatLeaderboard(exerciseType, tag, limit, startDate, endDate, displayName);
     }
 
-    private String buildAndFormatLeaderboard(ExerciseType exerciseType, int limit,
-                                             LocalDate startDate, LocalDate endDate,
+    private String buildAndFormatLeaderboard(ExerciseType exerciseType,
+                                             Long tagId,
+                                             int limit,
+                                             LocalDate startDate,
+                                             LocalDate endDate,
                                              String periodDisplay) {
         int totalCount = leaderBoardRepository.sumCountByExerciseTypeAndDate(
                 exerciseType.getId(), startDate, endDate);
         List<LeaderboardEntry> entries = leaderBoardRepository.findTopUsersByExerciseTypeAndDate(
-                        exerciseType.getId(), limit, startDate, endDate).stream()
+                        exerciseType.getId(), tagId, limit, startDate, endDate).stream()
                 .map(this::mapRowToEntry)
                 .toList();
         return formatLeaderboardString(totalCount, entries, exerciseType, periodDisplay);
