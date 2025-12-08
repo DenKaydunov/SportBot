@@ -55,6 +55,27 @@ class LeaderboardControllerIntegrationTest {
 
         // When & Then
         mockMvc.perform(get("/api/v1/leaderboard/{exerciseCode}/by-dates", exerciseCode)
+                        .param("tagCode", "TAG")
+                        .param("limit", "5")
+                        .param("startDate", startDate.toString())
+                        .param("endDate", endDate.toString())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string(expectedResponse));
+    }
+
+    @Test
+    void shouldReturnLeaderboardByDates_WhenTagIsOmitted() throws Exception {
+        // Given
+        LocalDate startDate = LocalDate.of(2025, 9, 1);
+        LocalDate endDate = LocalDate.of(2025, 9, 5);
+        String expectedResponse = "Leaderboard for squats between 2025-09-01 and 2025-09-05 (no tag)";
+
+        when(leaderboardService.getLeaderboardByDates(exerciseCode, null, 5, startDate, endDate))
+                .thenReturn(expectedResponse);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/leaderboard/{exerciseCode}/by-dates", exerciseCode)
                         .param("limit", "5")
                         .param("startDate", startDate.toString())
                         .param("endDate", endDate.toString())
