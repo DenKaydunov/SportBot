@@ -142,6 +142,34 @@ class UserMaxServiceTest {
     }
 
     @Test
+    void saveExerciseMaxResult_ZeroValue_ThrowsIllegalArgumentException() {
+        ExerciseEntryRequest zeroRequest = new ExerciseEntryRequest(123456L, "pushup", 0);
+
+        assertThrows(IllegalArgumentException.class, () -> userMaxService.saveExerciseMaxResult(zeroRequest));
+
+        verifyNoInteractions(userService);
+        verifyNoInteractions(exerciseTypeService);
+        verifyNoInteractions(exerciseService);
+        verifyNoInteractions(userRepository);
+        verifyNoInteractions(exerciseRecordRepository);
+        verifyNoInteractions(mSource);
+    }
+
+    @Test
+    void saveExerciseMaxResult_NegativeValue_ThrowsIllegalArgumentException() {
+        ExerciseEntryRequest negativeRequest = new ExerciseEntryRequest(123456L, "pushup", -5);
+
+        assertThrows(IllegalArgumentException.class, () -> userMaxService.saveExerciseMaxResult(negativeRequest));
+
+        verifyNoInteractions(userService);
+        verifyNoInteractions(exerciseTypeService);
+        verifyNoInteractions(exerciseService);
+        verifyNoInteractions(userRepository);
+        verifyNoInteractions(exerciseRecordRepository);
+        verifyNoInteractions(mSource);
+    }
+
+    @Test
     void getLastMaxByExerciseCode_ReturnsCorrectValue() {
         // Given
         User user = new User();
