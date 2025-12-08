@@ -35,8 +35,10 @@ public class UserMaxService {
     @Transactional
     public String saveExerciseMaxResult(ExerciseEntryRequest req) {
         Long telegramId = req.telegramId();
-        //TODO Max Value should be poistive https://warsportbot.atlassian.net/browse/TSP-255
         int maxValue = req.count();
+        if (maxValue <= 0) {
+            throw new IllegalArgumentException("Max value must be positive");
+        }
 
         User user = userService.getUserByTelegramId(telegramId);
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(req);
