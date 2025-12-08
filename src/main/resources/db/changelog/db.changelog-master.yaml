@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/changes/0005-add-motivations-test-data.sql
   - include:
       file: db/changelog/changes/0006-add-user-tags.sql
+  - include:
+      file: db/changelog/changes/0007-add-ranks.sql

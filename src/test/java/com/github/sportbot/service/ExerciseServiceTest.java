@@ -43,6 +43,9 @@ class ExerciseServiceTest {
     @Mock
     private ExerciseTypeService exerciseTypeService;
 
+    @Mock
+    private RankService rankService;
+
     @InjectMocks
     private ExerciseService exerciseService;
 
@@ -75,6 +78,8 @@ class ExerciseServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(testUser);
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(any(User.class), any()))
                 .thenReturn(100);
+        when(rankService.assignRankIfEligible(any(User.class), any(ExerciseType.class), anyInt()))
+                .thenReturn("");
 
         when(messageSource.getMessage(eq("workout.reps_recorded"), any(Object[].class), any()))
                 .thenReturn("Отжимания: сделано 10 повторений. Общее число: 100.");
@@ -88,6 +93,7 @@ class ExerciseServiceTest {
         verify(userRepository).save(testUser);
         verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(testUser, testExerciseType);
         verify(messageSource).getMessage(eq("workout.reps_recorded"), any(Object[].class), any());
+        verify(rankService).assignRankIfEligible(testUser, testExerciseType, 100);
 
         assertEquals(1, testUser.getExerciseRecords().size());
         ExerciseRecord savedExercise = testUser.getExerciseRecords().getFirst();
@@ -96,6 +102,30 @@ class ExerciseServiceTest {
         assertEquals(10, savedExercise.getCount());
         assertEquals(LocalDate.now(), savedExercise.getDate());
         assertEquals("Отжимания: сделано 10 повторений. Общее число: 100.", result);
+    }
+
+    @Test
+    void saveExerciseResult_WithRankMessage_AppendsNewLineAndRankText() {
+        // Given
+        when(userRepository.findByTelegramId(TELEGRAM_ID)).thenReturn(Optional.of(testUser));
+        when(exerciseTypeService.getExerciseType(testRequest)).thenReturn(testExerciseType);
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(any(User.class), any()))
+                .thenReturn(120);
+
+        when(messageSource.getMessage(eq("workout.reps_recorded"), any(Object[].class), any()))
+                .thenReturn("Отжимания: сделано 10 повторений. Общее число: 120.");
+
+        String promotion = "\nПоздравляю! Твой ранг повышен: — → Новичок";
+        when(rankService.assignRankIfEligible(any(User.class), any(ExerciseType.class), anyInt()))
+                .thenReturn(promotion);
+
+        // When
+        String result = exerciseService.saveExerciseResult(testRequest);
+
+        // Then
+        assertEquals("Отжимания: сделано 10 повторений. Общее число: 120." + promotion, result);
+        verify(rankService).assignRankIfEligible(testUser, testExerciseType, 120);
     }
 
     @Test
@@ -111,6 +141,7 @@ class ExerciseServiceTest {
         verifyNoInteractions(exerciseTypeRepository);
         verify(userRepository, never()).save(any());
         verifyNoInteractions(messageSource);
+        verifyNoInteractions(rankService);
     }
 
     @Test
@@ -131,6 +162,7 @@ class ExerciseServiceTest {
         verify(exerciseTypeService).getExerciseType(invalidRequest);
         verify(userRepository, never()).save(any());
         verifyNoInteractions(messageSource);
+        verifyNoInteractions(rankService);
     }
 
     @Test

@@ -19,6 +19,7 @@ public class UserProfileService {
     private final UserService userService;
     private final UserMaxService userMaxService;
     private final MessageSource messageSource;
+    private final RankService rankService;
 
     /**
      * Return user profile.
@@ -55,6 +56,8 @@ public class UserProfileService {
         int maxPullUps = userMaxService.getLastMaxByExerciseCode(user, PULL_UP);
         int maxSquats = userMaxService.getLastMaxByExerciseCode(user, SQUAT);
 
+        String rank = rankService.getRankTitle(user);
+
         return messageSource.getMessage(
                 "profile.template",
                 new Object[]{
@@ -62,9 +65,12 @@ public class UserProfileService {
                         user.getRemindTime() != null ? user.getRemindTime().toString() : "не указано",
                         countPushUps, maxPushUps,
                         countPullUps, maxPullUps,
-                        countSquats, maxSquats
+                        countSquats, maxSquats,
+                        rank
                 },
                 locale
         );
     }
+
+
 }

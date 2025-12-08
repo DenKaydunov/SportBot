@@ -24,6 +24,7 @@ public class ExerciseService {
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final MessageSource messageSource;
     private final ExerciseTypeService exerciseTypeService;
+    private final RankService rankService;
 
     @Transactional
     public String saveExerciseResult(ExerciseEntryRequest req) {
@@ -42,9 +43,12 @@ public class ExerciseService {
         userRepository.save(user);
 
         int total = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
-        return messageSource.getMessage("workout.reps_recorded",
+
+        String message = messageSource.getMessage("workout.reps_recorded",
                 new Object[]{exerciseType.getTitle(), req.count(), total},
                 Locale.forLanguageTag("ru-RU"));
+        String rankMessage = rankService.assignRankIfEligible(user, exerciseType, total);
+        return message + rankMessage;
     }
 
     public int getTotalReps(User user, ExerciseTypeEnum exerciseCode) {
