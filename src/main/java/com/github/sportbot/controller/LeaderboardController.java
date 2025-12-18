@@ -39,6 +39,7 @@ public class LeaderboardController {
         return leaderboardService.getLeaderboardByPeriod(exerciseCode, limit, period);
     }
 
+    //TODO https://warsportbot.atlassian.net/browse/TSP-306
     /**
      * Provides paginated leaderboard data by period.
      * @see com.github.sportbot.model.Period  Period: today|week|month|all
