@@ -14,7 +14,6 @@ import java.util.List;
 public class LeaderboardService {
 
     private final LeaderBoardRepository leaderBoardRepository;
-    private final ExerciseService exerciseService;
     private final ExerciseTypeService exerciseTypeService;
     private final TagService tagService;
 
@@ -25,6 +24,27 @@ public class LeaderboardService {
         LocalDate endDate = (startDate == null ? null : LocalDate.now());
 
         return buildAndFormatLeaderboard(exerciseType, null, limit, startDate, endDate, period.getDisplayName());
+    }
+
+    public String getLeaderboardByPeriodPaged(String exerciseCode, int page, int size, String periodCode) {
+        if (page < 0) page = 0;
+        if (size <= 0) size = 20;
+        ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
+        Period period = Period.fromCode(periodCode);
+        LocalDate startDate = period.getStartDate();
+        LocalDate endDate = (startDate == null ? null : LocalDate.now());
+
+        int offset = page * size;
+
+        int totalCount = leaderBoardRepository.sumCountByExerciseTypeAndDate(
+                exerciseType.getId(), startDate, endDate);
+        List<LeaderboardEntry> entries = leaderBoardRepository.findTopUsersByExerciseTypeAndDatePaged(
+                        exerciseType.getId(), null, size, offset, startDate, endDate).stream()
+                .map(this::mapRowToEntry)
+                .toList();
+
+        String periodDisplay = period.getDisplayName();
+        return formatLeaderboardString(totalCount, entries, exerciseType, periodDisplay, offset);
     }
 
     public String getLeaderboardByDates(String exerciseCode,
@@ -51,7 +71,7 @@ public class LeaderboardService {
                         exerciseType.getId(), tagId, limit, startDate, endDate).stream()
                 .map(this::mapRowToEntry)
                 .toList();
-        return formatLeaderboardString(totalCount, entries, exerciseType, periodDisplay);
+        return formatLeaderboardString(totalCount, entries, exerciseType, periodDisplay, 0);
     }
 
     private LeaderboardEntry mapRowToEntry(Object[] row) {
@@ -64,7 +84,8 @@ public class LeaderboardService {
     private String formatLeaderboardString(int totalCount,
                                            List<LeaderboardEntry> entries,
                                            ExerciseType exerciseType,
-                                           String periodDisplay) {
+                                           String periodDisplay,
+                                           int startIndex) {
         StringBuilder sb = new StringBuilder();
         sb.append("⚡Таблица лидеров⚡").append("\n");
 
@@ -78,7 +99,7 @@ public class LeaderboardService {
                 .append(exerciseType.getTitle().toLowerCase())
                 .append(".\n");
 
-        int index = 1;
+        int index = startIndex + 1;
         for (LeaderboardEntry e : entries) {
             sb.append(String.format("%d. %s — %d • max %d%n",
                     index++, e.name(), e.total(), e.max()));
