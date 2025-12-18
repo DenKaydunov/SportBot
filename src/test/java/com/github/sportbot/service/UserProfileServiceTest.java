@@ -1,7 +1,10 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.dto.UpdateProfileRequest;
 import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
+import com.github.sportbot.model.Sex;
+import com.github.sportbot.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
@@ -17,6 +20,7 @@ class UserProfileServiceTest {
     private UserService userService;
     private ExerciseService exerciseService;
     private UserMaxService userMaxService;
+    private UserRepository userRepository;
     private MessageSource messageSource;
 
     private UserProfileService userProfileService;
@@ -31,11 +35,13 @@ class UserProfileServiceTest {
         this.userService = mock(UserService.class);
         this.exerciseService = mock(ExerciseService.class);
         this.userMaxService = mock(UserMaxService.class);
+        this.userRepository = mock(UserRepository.class);
 
         this.userProfileService = new UserProfileService(
                 exerciseService,
                 userService,
                 userMaxService,
+                userRepository,
                 messageSource
         );
     }
@@ -48,6 +54,9 @@ class UserProfileServiceTest {
         User user = new User();
         user.setFullName("Denis Kaydunov");
         user.setRemindTime(LocalTime.of(13, 0));
+        user.setLanguage("ru");
+        user.setAge(30);
+        user.setSex(Sex.MAN);
 
         when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
         when(exerciseService.getTotalReps(user, ExerciseTypeEnum.PUSH_UP)).thenReturn(13663);
@@ -64,10 +73,62 @@ class UserProfileServiceTest {
 
         // Then
         assertTrue(profile.contains("📝 Имя: Denis Kaydunov"));
+        assertTrue(profile.contains("📈 Возраст: 30"));
+        assertTrue(profile.contains("🎭 Пол: мужчина"));
+        assertTrue(profile.contains("🌐 Язык: русский"));
         assertTrue(profile.contains("⏰ Время тренировки: 13:00"));
         assertTrue(profile.contains("отжиманий: 13 663/0"));
         assertTrue(profile.contains("подтягиваний: 2 009/15"));
         assertTrue(profile.contains("приседаний: 2 293/50"));
         assertTrue(profile.contains("📊")); // статус
+    }
+
+    @Test
+    void updateProfile_UpdatesFieldsAndReturnsMessage() {
+        Long telegramId = 123456L;
+        User user = new User();
+        user.setFullName("Test User");
+
+        when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
+
+        var request = new UpdateProfileRequest(
+                telegramId,
+                25,
+                Sex.WOMAN,
+                "en"
+        );
+
+        String result = userProfileService.updateProfile(request);
+
+        assertTrue(result.contains("Профиль Test User обновлён."));
+        assertTrue(user.getAge().equals(25));
+        assertTrue(user.getSex() == Sex.WOMAN);
+        assertTrue(user.getLanguage().equals("en"));
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateProfile_AllowsEmptyLanguageAndKeepsNulls() {
+        Long telegramId = 123456L;
+        User user = new User();
+        user.setFullName("Empty Lang User");
+        user.setLanguage("ru"); // existing
+
+        when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
+
+        var request = new UpdateProfileRequest(
+                telegramId,
+                null,
+                null,
+                "" // clear language
+        );
+
+        String result = userProfileService.updateProfile(request);
+
+        assertTrue(result.contains("Профиль Empty Lang User обновлён."));
+        assertNull(user.getLanguage()); // cleared
+        assertNull(user.getAge()); // unchanged and still null
+        assertNull(user.getSex()); // unchanged and still null
+        verify(userRepository).save(user);
     }
 }

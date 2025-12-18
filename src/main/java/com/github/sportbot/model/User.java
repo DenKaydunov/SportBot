@@ -34,6 +34,13 @@ public class User {
     @Column(name = "is_subscribed", nullable = false)
     @Builder.Default
     private Boolean isSubscribed = Boolean.TRUE;
+    @Column(name = "age")
+    private Integer age;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sex")
+    private Sex sex;
+    @Column(name = "language", length = 10)
+    private String language;
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

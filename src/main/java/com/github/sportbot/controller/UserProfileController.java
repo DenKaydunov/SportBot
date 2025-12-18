@@ -2,12 +2,16 @@ package com.github.sportbot.controller;
 
 import com.github.sportbot.service.UserProfileService;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.github.sportbot.dto.UpdateProfileRequest;
 
 @RestController
 @RequestMapping("/api/v1/profile")
@@ -34,5 +38,10 @@ public class UserProfileController {
             String lang
     ) {
         return userProfileService.getProfile(telegramId, lang);
+    }
+
+    @PutMapping
+    public String updateProfile(@RequestBody @Valid UpdateProfileRequest request) {
+        return userProfileService.updateProfile(request);
     }
 }
