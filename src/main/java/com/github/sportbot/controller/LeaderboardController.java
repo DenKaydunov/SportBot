@@ -18,10 +18,10 @@ public class LeaderboardController {
     /**
      * Provides leaderboard data by period.
      * @see com.github.sportbot.model.Period  Period: today|week|month|all
-     * @param exerciseCode
-     * @param limit
-     * @param period
-     * @return
+     * @param exerciseCode type of exercise
+     * @param limit count of rows
+     * @param period period code (today, yesterday, week, month, all)
+     * @return formatted leaderboard
      */
     @GetMapping("/{exerciseCode}/by-period")
     public String getLeaderboardByPeriod(
@@ -40,12 +40,40 @@ public class LeaderboardController {
     }
 
     /**
+     * Provides paginated leaderboard data by period.
+     * @see com.github.sportbot.model.Period  Period: today|week|month|all
+     * @param exerciseCode type of exercise
+     * @param page zero-based page index
+     * @param size page size
+     * @param period period code (today, yesterday, week, month, all)
+     * @return formatted leaderboard page
+     */
+    @GetMapping("/{exerciseCode}/by-period/paged")
+    public String getLeaderboardByPeriodPaged(
+            @PathVariable
+            @Parameter(example = "squat")
+            String exerciseCode,
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "20")
+            int size,
+
+            @RequestParam(required = false)
+            @Parameter(example = "today")
+            String period
+    ) {
+        return leaderboardService.getLeaderboardByPeriodPaged(exerciseCode, page, size, period);
+    }
+
+    /**
      * Provides leaderboard data by custom period, between startDate and endDate
-     * @param exerciseCode
-     * @param limit
-     * @param startDate
-     * @param endDate
-     * @return
+     * @param exerciseCode type of exercise
+     * @param limit count of rows
+     * @param startDate start Date
+     * @param endDate end Date
+     * @return formatted leaderboard
      */
     @GetMapping("/{exerciseCode}/by-dates")
     public String getLeaderboardByDates(
