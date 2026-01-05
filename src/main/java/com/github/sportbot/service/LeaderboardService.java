@@ -77,8 +77,7 @@ public class LeaderboardService {
     private LeaderboardEntry mapRowToEntry(Object[] row) {
         String name = (String) row[0];
         Long total = (Long) row[1];
-        Integer max = (Integer) row[2];
-        return new LeaderboardEntry(name, total, max);
+        return new LeaderboardEntry(name, total);
     }
 
     private String formatLeaderboardString(int totalCount,
@@ -101,8 +100,8 @@ public class LeaderboardService {
 
         int index = startIndex + 1;
         for (LeaderboardEntry e : entries) {
-            sb.append(String.format("%d. %s — %d • max %d%n",
-                    index++, e.name(), e.total(), e.max()));
+            sb.append(String.format("%d. %s — %d%n",
+                    index++, e.name(), e.total()));
         }
 
         if (entries.isEmpty()) {
@@ -112,6 +111,6 @@ public class LeaderboardService {
         return sb.toString();
     }
 
-    private record LeaderboardEntry(String name, long total, int max) {
+    private record LeaderboardEntry(String name, long total) {
     }
 }

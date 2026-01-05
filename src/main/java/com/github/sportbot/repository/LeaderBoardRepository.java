@@ -11,14 +11,10 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
     @Query(value = """
                         SELECT
                             COALESCE(u.full_name, 'Без имени')      AS user_name,
-                            SUM(er.count)                           AS total,
-                            COALESCE(MAX(umh.max_value), 0)         AS max_value
+                            SUM(er.count)                           AS total
                         FROM exercise_record er
                         LEFT JOIN users u
                                ON er.user_id = u.id
-                        LEFT JOIN user_max_history umh
-                               ON er.user_id = umh.user_id
-                              AND er.exercise_type_id = umh.exercise_type_id
                         LEFT JOIN user_tags uct
                                ON uct.user_id = er.user_id
                         WHERE er.exercise_type_id = :exerciseTypeId
@@ -42,14 +38,10 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
     @Query(value = """
                         SELECT
                             COALESCE(u.full_name, 'Без имени')      AS user_name,
-                            SUM(er.count)                           AS total,
-                            COALESCE(MAX(umh.max_value), 0)         AS max_value
+                            SUM(er.count)                           AS total
                         FROM exercise_record er
                         LEFT JOIN users u
                                ON er.user_id = u.id
-                        LEFT JOIN user_max_history umh
-                               ON er.user_id = umh.user_id
-                              AND er.exercise_type_id = umh.exercise_type_id
                         LEFT JOIN user_tags uct
                                ON uct.user_id = er.user_id
                         WHERE er.exercise_type_id = :exerciseTypeId
