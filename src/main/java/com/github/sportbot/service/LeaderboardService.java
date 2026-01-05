@@ -37,7 +37,7 @@ public class LeaderboardService {
         int offset = page * size;
 
         int totalCount = leaderBoardRepository.sumCountByExerciseTypeAndDate(
-                exerciseType.getId(), startDate, endDate);
+                exerciseType.getId(), null, startDate, endDate);
         List<LeaderboardEntry> entries = leaderBoardRepository.findTopUsersByExerciseTypeAndDatePaged(
                         exerciseType.getId(), null, size, offset, startDate, endDate).stream()
                 .map(this::mapRowToEntry)
@@ -66,7 +66,7 @@ public class LeaderboardService {
                                              LocalDate endDate,
                                              String periodDisplay) {
         int totalCount = leaderBoardRepository.sumCountByExerciseTypeAndDate(
-                exerciseType.getId(), startDate, endDate);
+                exerciseType.getId(), tagId, startDate, endDate);
         List<LeaderboardEntry> entries = leaderBoardRepository.findTopUsersByExerciseTypeAndDate(
                         exerciseType.getId(), tagId, limit, startDate, endDate).stream()
                 .map(this::mapRowToEntry)

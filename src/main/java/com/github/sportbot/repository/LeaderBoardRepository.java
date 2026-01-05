@@ -15,12 +15,10 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
                         FROM exercise_record er
                         LEFT JOIN users u
                                ON er.user_id = u.id
-                        LEFT JOIN user_tags uct
-                               ON uct.user_id = er.user_id
                         WHERE er.exercise_type_id = :exerciseTypeId
                             AND (coalesce(:startDate, er.date) <= er.date)
                             AND (coalesce(:endDate, er.date) >= er.date)
-                            AND (:tagId IS NULL OR uct.tag_id = :tagId)
+                            AND (:tagId IS NULL OR EXISTS (SELECT 1 FROM user_tags uct WHERE uct.user_id = er.user_id AND uct.tag_id = :tagId))
             
                         GROUP BY er.user_id, u.full_name
                         ORDER BY total DESC
@@ -42,12 +40,10 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
                         FROM exercise_record er
                         LEFT JOIN users u
                                ON er.user_id = u.id
-                        LEFT JOIN user_tags uct
-                               ON uct.user_id = er.user_id
                         WHERE er.exercise_type_id = :exerciseTypeId
                             AND (coalesce(:startDate, er.date) <= er.date)
                             AND (coalesce(:endDate, er.date) >= er.date)
-                            AND (:tagId IS NULL OR uct.tag_id = :tagId)
+                            AND (:tagId IS NULL OR EXISTS (SELECT 1 FROM user_tags uct WHERE uct.user_id = er.user_id AND uct.tag_id = :tagId))
             
                         GROUP BY er.user_id, u.full_name
                         ORDER BY total DESC
@@ -69,9 +65,11 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
                 WHERE er.exerciseType.id = :exerciseTypeId
                     AND (coalesce(:startDate, er.date) <= er.date)
                     AND (coalesce(:endDate, er.date) >= er.date)
+                    AND (:tagId IS NULL OR EXISTS (SELECT 1 FROM UserTag uct WHERE uct.user.id = er.user.id AND uct.challengeTag.id = :tagId))
             """)
     int sumCountByExerciseTypeAndDate(
             @Param("exerciseTypeId") Long exerciseTypeId,
+            @Param("tagId") Long tagId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
