@@ -162,4 +162,17 @@ class LeaderBoardRepositoryIntegrationTest {
                 exerciseType.getId(), tag2.getId(), LocalDate.now().minusDays(1), LocalDate.now().plusDays(1));
         assertThat(totalWithTag2).isEqualTo(80); // 50 from user1 + 30 from user2
     }
+
+    @Test
+    void findTopUsersByExerciseTypeAndDatePaged_ShouldFailWithInvalidSort() {
+        // Given
+        org.springframework.data.domain.Pageable pageableWithInvalidSort =
+                org.springframework.data.domain.PageRequest.of(0, 10, org.springframework.data.domain.Sort.by("string"));
+
+        // When & Then
+        // This is expected to throw an exception because 'string' column doesn't exist
+        org.junit.jupiter.api.Assertions.assertThrows(org.springframework.dao.DataAccessException.class,
+                () -> leaderBoardRepository.findTopUsersByExerciseTypeAndDatePaged(
+                        exerciseType.getId(), null, LocalDate.now(), LocalDate.now(), pageableWithInvalidSort));
+    }
 }

@@ -17,6 +17,11 @@ spring:
     show-sql: true
     open-in-view: false
 
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true
+
   liquibase:
     enabled: true
     change-log: db/changelog/db.changelog-master.yaml

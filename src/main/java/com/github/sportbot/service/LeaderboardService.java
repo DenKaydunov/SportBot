@@ -4,6 +4,8 @@ import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.Period;
 import com.github.sportbot.repository.LeaderBoardRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -26,25 +28,23 @@ public class LeaderboardService {
         return buildAndFormatLeaderboard(exerciseType, null, limit, startDate, endDate, period.getDisplayName());
     }
 
-    public String getLeaderboardByPeriodPaged(String exerciseCode, int page, int size, String periodCode) {
-        if (page < 0) page = 0;
-        if (size <= 0) size = 20;
+    public String getLeaderboardByPeriodPaged(String exerciseCode, Pageable pageable, String periodCode) {
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
         Period period = Period.fromCode(periodCode);
         LocalDate startDate = period.getStartDate();
         LocalDate endDate = (startDate == null ? null : LocalDate.now());
 
-        int offset = page * size;
+        Pageable unpagedSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 
         int totalCount = leaderBoardRepository.sumCountByExerciseTypeAndDate(
                 exerciseType.getId(), null, startDate, endDate);
         List<LeaderboardEntry> entries = leaderBoardRepository.findTopUsersByExerciseTypeAndDatePaged(
-                        exerciseType.getId(), null, size, offset, startDate, endDate).stream()
+                        exerciseType.getId(), null, startDate, endDate, unpagedSort).stream()
                 .map(this::mapRowToEntry)
                 .toList();
 
         String periodDisplay = period.getDisplayName();
-        return formatLeaderboardString(totalCount, entries, exerciseType, periodDisplay, offset);
+        return formatLeaderboardString(totalCount, entries, exerciseType, periodDisplay, (int) pageable.getOffset());
     }
 
     public String getLeaderboardByDates(String exerciseCode,
@@ -57,6 +57,27 @@ public class LeaderboardService {
         String displayName = String.format("c %s по %s", startDate, endDate);
 
         return buildAndFormatLeaderboard(exerciseType, tag, limit, startDate, endDate, displayName);
+    }
+
+    public String getLeaderboardByDatesPaged(String exerciseCode,
+                                             String tagCode,
+                                             Pageable pageable,
+                                             LocalDate startDate,
+                                             LocalDate endDate) {
+        ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
+        Long tagId = tagService.getIdByCode(tagCode);
+        String displayName = String.format("c %s по %s", startDate, endDate);
+
+        Pageable unpagedSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+
+        int totalCount = leaderBoardRepository.sumCountByExerciseTypeAndDate(
+                exerciseType.getId(), tagId, startDate, endDate);
+        List<LeaderboardEntry> entries = leaderBoardRepository.findTopUsersByExerciseTypeAndDatePaged(
+                        exerciseType.getId(), tagId, startDate, endDate, unpagedSort).stream()
+                .map(this::mapRowToEntry)
+                .toList();
+
+        return formatLeaderboardString(totalCount, entries, exerciseType, displayName, (int) pageable.getOffset());
     }
 
     private String buildAndFormatLeaderboard(ExerciseType exerciseType,

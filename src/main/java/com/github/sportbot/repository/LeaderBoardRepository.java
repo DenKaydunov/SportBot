@@ -1,5 +1,6 @@
 package com.github.sportbot.repository;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -47,15 +48,13 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
             
                         GROUP BY er.user_id, u.full_name
                         ORDER BY total DESC
-                        LIMIT :limit OFFSET :offset
             """, nativeQuery = true)
     List<Object[]> findTopUsersByExerciseTypeAndDatePaged(
             @Param("exerciseTypeId") Long exerciseTypeId,
             @Param("tagId") Long tagId,
-            @Param("limit") int limit,
-            @Param("offset") int offset,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
     );
 
 
