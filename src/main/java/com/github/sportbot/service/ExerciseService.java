@@ -25,6 +25,7 @@ public class ExerciseService {
     private final MessageSource messageSource;
     private final ExerciseTypeService exerciseTypeService;
     private final RankService rankService;
+    private final NotificationService notificationService;
 
     @Transactional
     public String saveExerciseResult(ExerciseEntryRequest req) {
@@ -40,7 +41,8 @@ public class ExerciseService {
                 .build();
 
         user.getExerciseRecords().add(exercise);
-        userRepository.save(user);
+
+        notificationService.notifyFollowersAboutWorkout(user, exerciseType, req.count());
 
         int total = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
 

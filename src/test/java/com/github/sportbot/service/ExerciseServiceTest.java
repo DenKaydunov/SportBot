@@ -46,6 +46,9 @@ class ExerciseServiceTest {
     @Mock
     private RankService rankService;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private ExerciseService exerciseService;
 
@@ -75,7 +78,6 @@ class ExerciseServiceTest {
         // Given
         when(userRepository.findByTelegramId(TELEGRAM_ID)).thenReturn(Optional.of(testUser));
         when(exerciseTypeService.getExerciseType(testRequest)).thenReturn(testExerciseType);
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(any(User.class), any()))
                 .thenReturn(100);
         when(rankService.assignRankIfEligible(any(User.class), any(ExerciseType.class), anyInt()))
@@ -90,7 +92,7 @@ class ExerciseServiceTest {
         // Then
         verify(userRepository).findByTelegramId(TELEGRAM_ID);
         verify(exerciseTypeService).getExerciseType(testRequest);
-        verify(userRepository).save(testUser);
+        verify(notificationService).notifyFollowersAboutWorkout(testUser, testExerciseType, 10);
         verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(testUser, testExerciseType);
         verify(messageSource).getMessage(eq("workout.reps_recorded"), any(Object[].class), any());
         verify(rankService).assignRankIfEligible(testUser, testExerciseType, 100);
@@ -109,7 +111,6 @@ class ExerciseServiceTest {
         // Given
         when(userRepository.findByTelegramId(TELEGRAM_ID)).thenReturn(Optional.of(testUser));
         when(exerciseTypeService.getExerciseType(testRequest)).thenReturn(testExerciseType);
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(any(User.class), any()))
                 .thenReturn(120);
 
