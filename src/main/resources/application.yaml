@@ -5,10 +5,10 @@ spring:
     gcp:
       sql:
         database-name: sportbot_db
-        instance-connection-name: sportbot-479615:europe-west1:sportbot
+        instance-connection-name: sportbot-485510:europe-west1:sportbotdb
   datasource:
     username: postgres
-    password: ${DB_PASSWORD}
+    password: sportbotDb1_
     driver-class-name: org.postgresql.Driver
 
   jpa:
