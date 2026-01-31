@@ -132,6 +132,62 @@ public class LeaderboardService {
         return sb.toString();
     }
 
+    public String getTopAllExercises(Long userId, int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 100)); // защита от мусора
+        List<Object[]> rows = leaderBoardRepository.findTopAllWithUser(safeLimit, userId);
+
+        // top = все строки position <= limit
+        List<Object[]> topRows = rows.stream()
+                .filter(r -> ((Number) r[3]).intValue() <= safeLimit)
+                .toList();
+
+        // userRow = строка userId (может уже быть в top)
+        Object[] userRow = rows.stream()
+                .filter(r -> ((Number) r[0]).longValue() == userId)
+                .findFirst()
+                .orElse(null);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Топ:\n");
+
+        for (Object[] r : topRows) {
+            long id = ((Number) r[0]).longValue();
+            String name = (String) r[1];
+            long total = ((Number) r[2]).longValue();
+            int pos = ((Number) r[3]).intValue();
+
+            sb.append(formatPlace(pos))
+                    .append(" ")
+                    .append(name)
+                    .append(" + ")
+                    .append(total)
+                    .append(" упр\n");
+        }
+
+        if (userRow != null) {
+            int userPos = ((Number) userRow[3]).intValue();
+            long userTotal = ((Number) userRow[2]).longValue();
+
+            sb.append("\nТвое место — ")
+                    .append(userPos)
+                    .append(" (ты + ")
+                    .append(userTotal)
+                    .append(" упр)");
+        }
+
+        return sb.toString();
+    }
+
+    private String formatPlace(int pos) {
+        return switch (pos) {
+            case 1 -> "🥇 1 место —";
+            case 2 -> "🥈 2 место —";
+            case 3 -> "🥉 3 место —";
+            default -> pos + " место —";
+        };
+    }
+
+
     private record LeaderboardEntry(String name, long total) {
     }
 }
