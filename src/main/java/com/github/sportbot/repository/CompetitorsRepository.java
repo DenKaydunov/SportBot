@@ -52,4 +52,26 @@ public interface CompetitorsRepository extends JpaRepository<ExerciseRecord, Lon
             @Param("userId") Integer userId,
             @Param("exerciseTypeId") Long exerciseTypeId
     );
+
+
+    @Query(value = """
+            SELECT u.full_name as fullName, u.telegram_id as telegramId, SUM(er.count) as totalCount
+            FROM users u
+            JOIN exercise_record er ON u.id = er.user_id
+            JOIN exercise_types et ON er.exercise_type_id = et.id
+            WHERE et.code = :exerciseCode
+            GROUP BY u.id, u.full_name, u.telegram_id
+            ORDER BY totalCount DESC
+            """, nativeQuery = true)
+    List<LeaderboardProjection> getFullLeaderboard(@Param("exerciseCode") String exerciseCode);
+
+
+    // Проекция для получения данных из Native Query
+    interface LeaderboardProjection {
+        String getFullName();
+
+        Long getTelegramId();
+
+        Integer getTotalCount();
+    }
 }

@@ -24,4 +24,20 @@ public class CompetitorsController {
     ) {
         return competitorsService.getCompetitorsAllTime(exerciseCode, userId);
     }
+
+
+    @GetMapping("/v2/{exerciseCode}")
+    public String getCompetitors(
+            @PathVariable
+            @Parameter(example = "squat")
+            String exerciseCode,
+
+            @RequestParam
+            @Parameter(example = "1000001")
+            Long telegramId
+    ) {
+        return competitorsService.getCompetitors(telegramId, exerciseCode);
+    }
+
+
 }

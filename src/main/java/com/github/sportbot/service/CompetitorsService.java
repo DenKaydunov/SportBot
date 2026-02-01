@@ -95,4 +95,46 @@ public class CompetitorsService {
             String name,
             Long total
     ) {}
+
+
+    public String getCompetitors(Long telegramId, String exerciseCode) {
+        List<CompetitorsRepository.LeaderboardProjection> leaderboard = competitorsRepository.getFullLeaderboard(exerciseCode);
+
+        int userIndex = -1;
+        for (int i = 0; i < leaderboard.size(); i++) {
+            if (leaderboard.get(i).getTelegramId().equals(telegramId)) {
+                userIndex = i;
+                break;
+            }
+        }
+
+        if (userIndex == -1) {
+            return "Вы еще не записывали тренировки по этому упражнению!";
+        }
+
+
+
+        // Определяем границы (2 сверху, 2 снизу)
+        int start = Math.max(0, userIndex - 2);
+        int end = Math.min(leaderboard.size() - 1, userIndex + 2);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("🥊 *Соперники* 🥊\n");
+        sb.append("Период: всё время\n\n");
+
+        for (int i = start; i <= end; i++) {
+            CompetitorsRepository.LeaderboardProjection entry = leaderboard.get(i);
+            int rank = i + 1;
+
+            if (i == userIndex) {
+                sb.append("👉 ");
+            } else {
+                sb.append(rank).append(". ");
+            }
+
+            sb.append(entry.getFullName()).append(" — ").append(entry.getTotalCount()).append("\n");
+        }
+
+        return sb.toString();
+    }
 }
