@@ -5,7 +5,7 @@ spring:
     gcp:
       sql:
         database-name: sportbot_db
-        instance-connection-name: sportbot-479615:europe-west1:sportbot
+        instance-connection-name: sportbot-485510:europe-west1:sportbotdb
   datasource:
     username: postgres
     password: ${DB_PASSWORD}
@@ -25,3 +25,6 @@ spring:
   liquibase:
     enabled: true
     change-log: db/changelog/db.changelog-master.yaml
+
+bot:
+  token: ${SPORT_BOT_TOKEN}
