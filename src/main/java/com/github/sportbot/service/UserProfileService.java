@@ -20,6 +20,7 @@ public class UserProfileService {
     private final UserMaxService userMaxService;
     private final MessageSource messageSource;
     private final RankService rankService;
+    private final StreakService streakService;
 
     /**
      * Return user profile.
@@ -57,6 +58,7 @@ public class UserProfileService {
         int maxSquats = userMaxService.getLastMaxByExerciseCode(user, SQUAT);
 
         String rank = rankService.getRankTitle(user);
+        String streakInfo = streakService.getStreakInfo(user, locale);
 
         return messageSource.getMessage(
                 "profile.template",
@@ -66,7 +68,8 @@ public class UserProfileService {
                         countPushUps, maxPushUps,
                         countPullUps, maxPullUps,
                         countSquats, maxSquats,
-                        rank
+                        rank,
+                        streakInfo
                 },
                 locale
         );

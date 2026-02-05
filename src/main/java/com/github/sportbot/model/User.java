@@ -5,6 +5,7 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -42,6 +43,17 @@ public class User {
     private LocalDateTime updatedAt;
     @Column(name = "remind_time")
     private LocalTime remindTime;
+
+    @Column(name = "current_streak", nullable = false)
+    @Builder.Default
+    private Integer currentStreak = 0;
+
+    @Column(name = "best_streak", nullable = false)
+    @Builder.Default
+    private Integer bestStreak = 0;
+
+    @Column(name = "last_workout_date")
+    private LocalDate lastWorkoutDate;
 
     @OneToMany
     @JoinColumn(name = "user_id")
