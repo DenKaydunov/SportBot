@@ -1,5 +1,6 @@
 package com.github.sportbot.bot;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -8,6 +9,10 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Component
 public class SportBot extends TelegramLongPollingBot {
+
+    public SportBot(@Value("${bot.token}") String botToken) {
+        super(botToken);
+    }
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -29,10 +34,5 @@ public class SportBot extends TelegramLongPollingBot {
     @Override
     public String getBotUsername() {
         return "Sport Bot";
-    }
-
-    @Override
-    public String getBotToken() {
-        return System.getenv("TG_BOT_TOKEN");
     }
 }
