@@ -1,7 +1,10 @@
 package com.github.sportbot.controller;
 
+import com.github.sportbot.repository.LeaderBoardRepository;
 import com.github.sportbot.service.LeaderboardService;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -11,9 +14,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -29,6 +34,9 @@ class LeaderboardControllerIntegrationTest {
     private LeaderboardService leaderboardService;
 
     private final String exerciseCode = "squat";
+
+    @Mock
+    private LeaderBoardRepository leaderBoardRepository;
 
     @Test
     void shouldReturnLeaderboardByPeriod() throws Exception {
@@ -121,5 +129,18 @@ class LeaderboardControllerIntegrationTest {
                         .param("period", "today")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldCallServiceWithCorrectParams() throws Exception {
+        when(leaderboardService.getTopAllExercises(anyLong(), anyInt()))
+                .thenReturn("ok");
+
+        mockMvc.perform(get("/api/v1/leaderboard/top")
+                        .param("userId", "4")
+                        .param("limit", "10"))
+                .andExpect(status().isOk());
+
+        verify(leaderboardService).getTopAllExercises(4L, 10);
     }
 }
