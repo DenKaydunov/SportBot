@@ -5,7 +5,6 @@ import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.repository.ExerciseDayRepository;
-import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.ExerciseTypeRepository;
 import com.github.sportbot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
