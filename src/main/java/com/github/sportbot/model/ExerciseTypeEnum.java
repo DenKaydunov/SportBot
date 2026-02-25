@@ -12,7 +12,8 @@ import lombok.RequiredArgsConstructor;
 public enum ExerciseTypeEnum {
     PUSH_UP("push_up"),
     PULL_UP("pull_up"),
-    SQUAT("squat");
+    SQUAT("squat"),
+    ABS("abs");
 
     private final String type;
 }
