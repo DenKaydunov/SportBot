@@ -37,14 +37,14 @@ public class ExerciseDayService {
 
         List<Object[]> result = repository.sumByUserAndDate(user, date);
 
-        Map<Long, Integer> sumMap = result.stream().
+        Map<Long, Long> sumMap = result.stream().
                 collect(Collectors.toMap(
                         row -> ((ExerciseType) row[0]).getId(),
-                        row -> (Integer) row[1]
+                        row -> (Long) row[1]
                         ));
 
         for (ExerciseType type : allTypes){
-            Integer total = sumMap.getOrDefault(type.getId(), 0);
+            Long total = sumMap.getOrDefault(type.getId(), 0L);
             report.append(type.getTitle()).append(" - ").append(total + "\n");
         }
 
