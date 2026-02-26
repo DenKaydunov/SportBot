@@ -19,8 +19,16 @@ public class ExerciseDayService {
 
     private final UserRepository userRepository;
     private final ExerciseDayRepository dayRepository;
-    
+    /**
+     * return user exercises for the date
 
+     * Твой прогресс за 25.02.2026💪🏻:
+     * Приседания - 0
+     * Подтягивания - 20
+     * Отжимания - 10
+     * Пресс - 0
+
+     **/
     public String progressForDay(ExerciseEntryRequest req, LocalDate date){
 
         User user = userRepository.findByTelegramId(req.telegramId())
