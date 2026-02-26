@@ -49,7 +49,7 @@ public class ExerciseDayServiceTest {
         //given
         when(userRepository.findByTelegramId(testRequest.telegramId())).thenReturn(Optional.of(user));
 
-        when(dayRepository.getUserDayProgressBy(user, date))
+        when(dayRepository.getUserDayProgressByDate(user, date))
                 .thenReturn(List.of(
                         new ExerciseDaySummaryProjection() {
                             @Override
@@ -88,7 +88,7 @@ public class ExerciseDayServiceTest {
         //given
         when(userRepository.findByTelegramId(testRequest.telegramId())).thenReturn(Optional.of(user));
 
-        when(dayRepository.getUserDayProgressBy(user, date)).thenReturn(List.of());
+        when(dayRepository.getUserDayProgressByDate(user, date)).thenReturn(List.of());
 
         //when
         String result = dayService.progressForDay(testRequest, date);
