@@ -33,7 +33,7 @@ public class ExerciseController {
 
     @GetMapping("/day/{date}")
     public String progressForDay(@Valid ExerciseEntryRequest req,
-                                  @PathVariable String date){
+                                 @PathVariable String date){
         LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("dd.MM.yyyy"));
         return dayService.progressForDay(req, localDate);
     }
