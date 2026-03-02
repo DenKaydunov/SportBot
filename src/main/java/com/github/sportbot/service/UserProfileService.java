@@ -40,6 +40,7 @@ public class UserProfileService {
      * • Отжимания: 13663 (max: ещё не определён)
      * • Подтягивания: 2009 (max: 15)
      * • Приседания: 2293 (max: 50)
+     * • Пресс: 2293 (max: 50)
      * <p>
      * 📊 Статус: Сегодня тренируем силу воли 💪
      *
@@ -51,10 +52,12 @@ public class UserProfileService {
         int countPushUps = exerciseService.getTotalReps(user, PUSH_UP);
         int countPullUps = exerciseService.getTotalReps(user, PULL_UP);
         int countSquats = exerciseService.getTotalReps(user, SQUAT);
+        int countAbs = exerciseService.getTotalReps(user, ABS);
 
         int maxPushUps = userMaxService.getLastMaxByExerciseCode(user, PUSH_UP);
         int maxPullUps = userMaxService.getLastMaxByExerciseCode(user, PULL_UP);
         int maxSquats = userMaxService.getLastMaxByExerciseCode(user, SQUAT);
+        int maxAbs = userMaxService.getLastMaxByExerciseCode(user, ABS);
 
         String rank = rankService.getRankTitle(user);
 
@@ -66,6 +69,7 @@ public class UserProfileService {
                         countPushUps, maxPushUps,
                         countPullUps, maxPullUps,
                         countSquats, maxSquats,
+                        countAbs, maxAbs,
                         rank
                 },
                 locale

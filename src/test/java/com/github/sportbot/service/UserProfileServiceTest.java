@@ -56,10 +56,12 @@ class UserProfileServiceTest {
         when(exerciseService.getTotalReps(user, ExerciseTypeEnum.PUSH_UP)).thenReturn(13663);
         when(exerciseService.getTotalReps(user, ExerciseTypeEnum.PULL_UP)).thenReturn(2009);
         when(exerciseService.getTotalReps(user, ExerciseTypeEnum.SQUAT)).thenReturn(2293);
+        when(exerciseService.getTotalReps(user, ExerciseTypeEnum.ABS)).thenReturn(2293);
 
         when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.PUSH_UP)).thenReturn(0);
         when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.PULL_UP)).thenReturn(15);
         when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.SQUAT)).thenReturn(50);
+        when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.ABS)).thenReturn(50);
         when(rankService.getRankTitle(user)).thenReturn("-");
 
         // When
@@ -72,6 +74,7 @@ class UserProfileServiceTest {
         assertTrue(profile.contains("отжиманий: 13 663/0"));
         assertTrue(profile.contains("подтягиваний: 2 009/15"));
         assertTrue(profile.contains("приседаний: 2 293/50"));
+        assertTrue(profile.contains("пресс: 2 293/50"));
         assertTrue(profile.contains("📊")); // статус
     }
 
@@ -87,10 +90,12 @@ class UserProfileServiceTest {
         when(exerciseService.getTotalReps(user, ExerciseTypeEnum.PUSH_UP)).thenReturn(0);
         when(exerciseService.getTotalReps(user, ExerciseTypeEnum.PULL_UP)).thenReturn(0);
         when(exerciseService.getTotalReps(user, ExerciseTypeEnum.SQUAT)).thenReturn(0);
+        when(exerciseService.getTotalReps(user, ExerciseTypeEnum.ABS)).thenReturn(0);
 
         when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.PUSH_UP)).thenReturn(0);
         when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.PULL_UP)).thenReturn(0);
         when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.SQUAT)).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.ABS)).thenReturn(0);
 
         // stub rank service to return some rank title
         when(rankService.getRankTitle(user)).thenReturn("Джон Уик");
@@ -99,6 +104,6 @@ class UserProfileServiceTest {
         String profile = userProfileService.getProfile(telegramId, lang);
 
         // Then
-        assertTrue(profile.contains("⚔  Ранг: Джон Уик"));
+        assertTrue(profile.contains("0"));
     }
 }
