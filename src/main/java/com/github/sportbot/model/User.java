@@ -55,6 +55,10 @@ public class User {
     @Column(name = "last_workout_date")
     private LocalDate lastWorkoutDate;
 
+    @Column(name = "balance_ton",  nullable = false)
+    @Builder.Default
+    private Integer balanceTon = 0;
+
     @OneToMany
     @JoinColumn(name = "user_id")
     @Builder.Default

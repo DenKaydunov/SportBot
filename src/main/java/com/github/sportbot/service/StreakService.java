@@ -1,5 +1,6 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.User;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.UserRepository;
@@ -55,8 +56,8 @@ public class StreakService {
             // Новая тренировка после последней
             long daysBetween = workoutDate.toEpochDay() - lastWorkoutDate.toEpochDay();
             
-            if (daysBetween == 1) {
-                // Последняя тренировка была вчера - продолжаем стрик
+            if (daysBetween <= 1) {
+                // Последняя тренировка была вчера или позавчера - продолжаем стрик
                 int newStreak = user.getCurrentStreak() + 1;
                 user.setCurrentStreak(newStreak);
                 updateBestStreakIfNeeded(user, newStreak);
@@ -85,7 +86,7 @@ public class StreakService {
                 .orElse(null);
 
         if (previousWorkoutDate != null && previousWorkoutDate.equals(workoutDate.minusDays(1))) {
-            // Предыдущая тренировка была вчера - продолжаем стрик
+            // Предыдущая тренировка была вчера или позавчера - продолжаем стрик
             // Но нужно пересчитать весь стрик от этой даты
             recalculateStreakFromDate(user, workoutDate);
         } else {
@@ -190,5 +191,27 @@ public class StreakService {
     public int getBestStreak(User user) {
         return user.getBestStreak();
     }
-}
 
+    public String saveStreak(Long telegramId){
+       User user = userRepository.findByTelegramId(telegramId)
+               .orElseThrow(UserNotFoundException::new);
+
+        LocalDate lastWorkoutDate = user.getLastWorkoutDate();
+        LocalDate today = LocalDate.now();
+
+       //проверяем что BalanceTon не 0
+       if (user.getBalanceTon() < 1 || user.getBalanceTon() == null ){
+           return "Недостаточно Ton для сохранения Streak";
+       }
+
+        if (lastWorkoutDate != null && (lastWorkoutDate.equals(today.minusDays(1)) ||
+                lastWorkoutDate.equals(today.minusDays(2)))){
+            //Списываем BalanceTon
+            user.setBalanceTon(user.getBalanceTon() - 1);
+            //Списываем устанавливаем новую дату отсчета streak
+            user.setLastWorkoutDate(LocalDate.now());
+            userRepository.save(user);
+            return "Streak сохранён за 1 Ton";
+        } else return "Streak нельзя сохранить, от последней тренировки прошло более 2-х дней.";
+    }
+}

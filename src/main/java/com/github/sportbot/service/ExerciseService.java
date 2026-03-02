@@ -1,18 +1,19 @@
 package com.github.sportbot.service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
+import com.github.sportbot.model.*;
+import com.github.sportbot.repository.AchievementRepository;
+import com.github.sportbot.repository.MilestoneRepository;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UserNotFoundException;
-import com.github.sportbot.model.ExerciseRecord;
-import com.github.sportbot.model.ExerciseType;
-import com.github.sportbot.model.ExerciseTypeEnum;
-import com.github.sportbot.model.User;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.UserRepository;
 
@@ -28,6 +29,9 @@ public class ExerciseService {
     private final ExerciseTypeService exerciseTypeService;
     private final RankService rankService;
     private final StreakService streakService;
+    private final MilestoneRepository milestoneRepository;
+    private final AchievementRepository achievementRepository;
+    private final AchievementService achievementService;
 
     @Transactional
     public String saveExerciseResult(ExerciseEntryRequest req) {
@@ -47,6 +51,7 @@ public class ExerciseService {
 
         // Обновляем стрик пользователя
         streakService.updateStreak(user, exercise.getDate());
+        achievementService.checkStreakMilestones(req.telegramId());
         
         // Перезагружаем пользователя для получения обновленных данных стрика
         user = userRepository.findByTelegramId(req.telegramId())
@@ -61,8 +66,10 @@ public class ExerciseService {
         
         // Добавляем информацию о стрике, если он изменился
         String streakMessage = getStreakUpdateMessage(user, exercise.getDate());
+
+        String milestone = getAchievementUpdateMessage(user);
         
-        return message + rankMessage + streakMessage;
+        return message + rankMessage + streakMessage + milestone;
     }
 
     public int getTotalReps(User user, ExerciseTypeEnum exerciseCode) {
@@ -88,4 +95,47 @@ public class ExerciseService {
 
         return "";
     }
+
+    private String getAchievementUpdateMessage(User user){
+        int currentStreak = user.getCurrentStreak();
+
+        List<StreakMilestone> milestone = milestoneRepository.findAllByOrderByDaysRequiredAsc();
+        List<Integer> achieve = achievementRepository.findMilestoneIdsByUserId(user.getId());
+
+        // Определяем milestone, который пользователь получает сейчас
+        Optional<StreakMilestone> justAchieved = milestone.stream()
+                .filter(m -> !achieve.contains(m.getId()))
+                .filter(m -> m.getDaysRequired() == currentStreak)
+                .findFirst();
+
+        // Определяем следующий milestone
+        Optional<StreakMilestone> nextMilestone = milestone.stream()
+                .filter(m -> !achieve.contains(m.getId()))
+                .filter(m -> m.getDaysRequired() > currentStreak)
+                .findFirst();
+
+        StringBuilder message = new StringBuilder();
+
+        if (justAchieved.isPresent()){
+            StreakMilestone m = justAchieved.get();
+            message.append("\n🏆 Поздравляем! Достигнут milestone: ")
+                    .append(m.getTitle())
+                    .append(" (")
+                    .append(m.getDaysRequired())
+                    .append(" дней), ")
+                    .append(m.getDescription())
+                    .append(" - награда: ")
+                    .append(m.getRewardTon())
+                    .append(" Ton");
+        }
+
+        if (nextMilestone.isPresent()) {
+            int daysToNext = nextMilestone.get().getDaysRequired() - currentStreak;
+            message.append("\nДо следующего milestone осталось: ")
+                    .append(daysToNext)
+                    .append(" дней");
+        } else { message.append("\nВсе milestones достигнуты!");
+        }
+        return message.toString();
     }
+}

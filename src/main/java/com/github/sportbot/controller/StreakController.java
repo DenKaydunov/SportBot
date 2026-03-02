@@ -5,10 +5,7 @@ import com.github.sportbot.service.UserService;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Locale;
 
@@ -76,5 +73,16 @@ public class StreakController {
         var user = userService.getUserByTelegramId(telegramId);
         return streakService.getBestStreak(user);
     }
-}
 
+    /**
+     *
+     * @param telegramId
+     * @return результат сохранения Streak за Ton
+     */
+    @PostMapping("/save")
+    public String saveStreak(@Parameter(example = "1000001") @NotNull
+                             Long telegramId){
+        String message = streakService.saveStreak(telegramId);
+        return message;
+    }
+}
