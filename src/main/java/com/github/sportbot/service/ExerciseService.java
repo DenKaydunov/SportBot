@@ -14,14 +14,26 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UserNotFoundException;
+import com.github.sportbot.model.ExerciseRecord;
+import com.github.sportbot.model.ExerciseType;
+import com.github.sportbot.model.ExerciseTypeEnum;
+import com.github.sportbot.model.User;
+import com.github.sportbot.repository.ExercisePeriodProjection;
+import com.github.sportbot.repository.ExercisePeriodRepository;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class ExerciseService {
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     private final UserRepository userRepository;
     private final ExerciseRecordRepository exerciseRecordRepository;
@@ -32,6 +44,9 @@ public class ExerciseService {
     private final MilestoneRepository milestoneRepository;
     private final AchievementRepository achievementRepository;
     private final AchievementService achievementService;
+    private final NotificationService notificationService;
+    private final ExercisePeriodRepository dayRepository;
+
 
     @Transactional
     public String saveExerciseResult(ExerciseEntryRequest req) {
@@ -47,7 +62,8 @@ public class ExerciseService {
                 .build();
 
         user.getExerciseRecords().add(exercise);
-        userRepository.save(user);
+
+        notificationService.notifyFollowersAboutWorkout(user, exerciseType, req.count());
 
         // Обновляем стрик пользователя
         streakService.updateStreak(user, exercise.getDate());
@@ -137,5 +153,59 @@ public class ExerciseService {
         } else { message.append("\nВсе milestones достигнуты!");
         }
         return message.toString();
+    }
+}
+     * Provides user exercises for a specified date
+     * <p>
+     * Твой прогресс за 25.02.2026:
+     * Приседания - 0
+     * Подтягивания - 20
+     * Отжимания - 10
+     * Пресс - 0
+     *
+     */
+    public List<ExercisePeriodProjection> getUserProgress(
+            Long telegramId,
+            LocalDate startDate,
+            LocalDate endDate) {
+        return dayRepository.getUserProgressByPeriod(telegramId, startDate, endDate);
+    }
+
+    public String progressForPeriod(
+            Long telegramId,
+            LocalDate startDate,
+            LocalDate endDate) {
+        userRepository.findByTelegramId(telegramId).orElseThrow(UserNotFoundException::new);
+
+        LocalDate finalEndDate = (endDate == null) ? startDate : endDate;
+        verifyDates(startDate, finalEndDate);
+
+        List<ExercisePeriodProjection> summary = getUserProgress(telegramId, startDate, finalEndDate);
+
+        StringBuilder report = new StringBuilder();
+        appendHeader(report, startDate, finalEndDate);
+
+        if (summary.isEmpty()) {
+            report.append("Тренировок за этот период не найдено. 😴");
+        } else {
+            summary.forEach(exercise -> report.append(String.format("%s - %d%n", exercise.getExerciseType(), exercise.getTotalCount())));
+        }
+
+        return report.toString();
+    }
+
+    private void appendHeader(StringBuilder sb, LocalDate start, LocalDate end) {
+        if (start.equals(end)) {
+            sb.append("Твой прогресс за ").append(start.format(DATE_FORMATTER)).append(":\n");
+        } else {
+            sb.append("Твой прогресс с ").append(start.format(DATE_FORMATTER))
+                    .append(" по ").append(end.format(DATE_FORMATTER)).append(":\n");
+        }
+    }
+
+    private static void verifyDates(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Дата начала не может быть позже даты окончания!");
+        }
     }
 }

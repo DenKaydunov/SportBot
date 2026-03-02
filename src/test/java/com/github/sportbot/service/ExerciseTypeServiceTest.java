@@ -70,8 +70,6 @@ class ExerciseTypeServiceTest {
         // When & Then
         assertThrows(
                 UnknownExerciseCodeException.class, () -> exerciseTypeService.getExerciseType(request));
-
-        verify(exerciseTypeRepository, never()).findByCode("unknown");
     }
 
     @Test

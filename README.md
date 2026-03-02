@@ -88,6 +88,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 </details>
 
 <details>
+
 <summary>
 How to run the app locally with SendPulse chains?
 </summary>
@@ -109,5 +110,51 @@ ngrok config add-authtoken $YOUR_TOKEN
 ```shell
 ngrok http http://localhost:8080
 ```
+
+</details>
+
+<details>
+
+<summary>
+Deploy
+</summary>
+
+This section outlines how to deploy the Sport Bot application to Google Cloud Platform (GCP).
+
+1.  **Google Cloud Account:** Ensure you have an active Google Cloud account and a project set up.
+2.  **Google Cloud SDK:** Install the `gcloud` command-line tool.
+
+```shell
+brew install --cask google-cloud-sdk
+```
+3. Init project for GCP CLI:
+```shell
+gcloud init
+```  
+
+4. Create maven-wrapper:
+```shell
+mvn wrapper:wrapper 
+```
+5. Verify env variables in application yaml.
+6. Verify spring.cloud variables in application yaml.
+7. Deploy app to GCP:
+
+```shell
+gcloud app deploy
+```
+8. **Go to bot in Telegram and verify that bot is still working!**
+
+You can stream logs from the command line by running:
+
+```shell
+gcloud app logs tail -s default
+```
+
+To view your application in the web browser run:
+```shell
+gcloud app browse
+```
+
 
 </details>

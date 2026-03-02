@@ -5,12 +5,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -82,5 +85,41 @@ class LeaderboardControllerIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse));
+    }
+
+    @Test
+    void shouldReturnLeaderboardByDatesPaged() throws Exception {
+        // Given
+        LocalDate startDate = LocalDate.of(2025, 9, 1);
+        LocalDate endDate = LocalDate.of(2025, 9, 5);
+        String expectedResponse = "Paginated leaderboard for squats between 2025-09-01 and 2025-09-05";
+
+        when(leaderboardService.getLeaderboardByDatesPaged(eq(exerciseCode), eq("TAG"), any(Pageable.class), eq(startDate), eq(endDate)))
+                .thenReturn(expectedResponse);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/leaderboard/{exerciseCode}/by-dates/paged", exerciseCode)
+                        .param("tagCode", "TAG")
+                        .param("page", "1")
+                        .param("size", "20")
+                        .param("startDate", startDate.toString())
+                        .param("endDate", endDate.toString())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string(expectedResponse));
+    }
+
+    @Test
+    void shouldHandleInvalidSortGracefully() throws Exception {
+        // Given
+        // When & Then
+        // Should return 200 OK because service now ignores the sort parameter
+        mockMvc.perform(get("/api/v1/leaderboard/{exerciseCode}/by-period/paged", exerciseCode)
+                        .param("page", "1")
+                        .param("size", "10")
+                        .param("sort", "string")
+                        .param("period", "today")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 }

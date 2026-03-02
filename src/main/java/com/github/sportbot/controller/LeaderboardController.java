@@ -3,6 +3,8 @@ package com.github.sportbot.controller;
 import com.github.sportbot.service.LeaderboardService;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,13 +41,11 @@ public class LeaderboardController {
         return leaderboardService.getLeaderboardByPeriod(exerciseCode, limit, period);
     }
 
-    //TODO https://warsportbot.atlassian.net/browse/TSP-306
     /**
      * Provides paginated leaderboard data by period.
      * @see com.github.sportbot.model.Period  Period: today|week|month|all
      * @param exerciseCode type of exercise
-     * @param page zero-based page index
-     * @param size page size
+     * @param pageable pagination parameters (page, size)
      * @param period period code (today, yesterday, week, month, all)
      * @return formatted leaderboard page
      */
@@ -55,17 +55,14 @@ public class LeaderboardController {
             @Parameter(example = "squat")
             String exerciseCode,
 
-            @RequestParam(defaultValue = "0")
-            int page,
-
-            @RequestParam(defaultValue = "20")
-            int size,
+            @PageableDefault
+            Pageable pageable,
 
             @RequestParam(required = false)
             @Parameter(example = "today")
             String period
     ) {
-        return leaderboardService.getLeaderboardByPeriodPaged(exerciseCode, page, size, period);
+        return leaderboardService.getLeaderboardByPeriodPaged(exerciseCode, pageable, period);
     }
 
     /**
@@ -100,5 +97,40 @@ public class LeaderboardController {
             LocalDate endDate
     ) {
         return leaderboardService.getLeaderboardByDates(exerciseCode, tagCode, limit, startDate, endDate);
+    }
+
+    /**
+     * Provides paginated leaderboard data by custom period, between startDate and endDate
+     * @param exerciseCode type of exercise
+     * @param tagCode tag code for filtering
+     * @param pageable pagination parameters (page, size)
+     * @param startDate start Date
+     * @param endDate end Date
+     * @return formatted leaderboard page
+     */
+    @GetMapping("/{exerciseCode}/by-dates/paged")
+    public String getLeaderboardByDatesPaged(
+            @PathVariable
+            @Parameter(example = "squat")
+            String exerciseCode,
+
+            @RequestParam(required = false)
+            @Parameter(example = "PULL_UP_CH1")
+            String tagCode,
+
+            @PageableDefault
+            Pageable pageable,
+
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            @Parameter(example = "2025-09-05")
+            LocalDate startDate,
+
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            @Parameter(example = "2025-09-05")
+            LocalDate endDate
+    ) {
+        return leaderboardService.getLeaderboardByDatesPaged(exerciseCode, tagCode, pageable, startDate, endDate);
     }
 }
