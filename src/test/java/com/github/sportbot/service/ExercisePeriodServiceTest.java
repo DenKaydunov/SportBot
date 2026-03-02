@@ -1,9 +1,8 @@
 package com.github.sportbot.service;
 
-import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.model.User;
-import com.github.sportbot.repository.ExercisePeriodRepository;
 import com.github.sportbot.repository.ExercisePeriodProjection;
+import com.github.sportbot.repository.ExercisePeriodRepository;
 import com.github.sportbot.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,35 +11,42 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.swing.text.DateFormatter;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ExercisePeriodServiceTest {
+class ExercisePeriodServiceTest {
 
     @Mock
     private ExercisePeriodRepository dayRepository;
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
-    private ExercisePeriodService dayService;
+    private ExerciseService exerciseService;
 
     private Long telegramId;
-    private String oneDate;
-    private String twoDate;
+    private LocalDate oneDate;
+    private LocalDate twoDate;
+
+    private User user;
 
 
     @BeforeEach
     void setUp(){
-        oneDate = "24.02.2026";
-        twoDate = "26.02.2026";
+        oneDate = LocalDate.parse("2026-02-24");
+        twoDate = LocalDate.parse("2026-02-26");
         telegramId = 123456L;
 
+        user = User.builder()
+                .id(1)
+                .telegramId(123456L)
+                .fullName("Existing User")
+                .build();
     }
 
     @Test
@@ -73,29 +79,32 @@ public class ExercisePeriodServiceTest {
                             }
                         }
                 ));
+        when(userRepository.findByTelegramId(telegramId)).thenReturn(Optional.of(user));
 
         //when
-        String result = dayService.progressForPeriod(telegramId, oneDate, twoDate);
+        String result = exerciseService.progressForPeriod(telegramId, oneDate, twoDate);
 
         //then
-        assertEquals("Твой прогресс c 24.02.2026 по 26.02.2026:\nОтжимания - 10\nПодтягивания - 20\n", result);
+        assertEquals("Твой прогресс с 24.02.2026 по 26.02.2026:\nОтжимания - 10\nПодтягивания - 20\n", result);
 
     }
 
 
     @Test
-    void getReportForDate_WhenNoExercise_ReturnOnlyHeader(){
+    void getReportForDate_WhenNoExercise(){
         //given
         LocalDate startDate = LocalDate.of(2026, 2, 24);
         LocalDate endDate = LocalDate.of(2026, 2, 26);
 
         when(dayRepository.getUserProgressByPeriod(telegramId, startDate, endDate)).thenReturn(List.of());
+        when(userRepository.findByTelegramId(telegramId)).thenReturn(Optional.of(user));
+
 
         //when
-        String result = dayService.progressForPeriod(telegramId, oneDate, twoDate);
+        String result = exerciseService.progressForPeriod(telegramId, oneDate, twoDate);
 
         //then
-        assertEquals("Твой прогресс c 24.02.2026 по 26.02.2026:\n", result);
+        assertEquals("Твой прогресс с 24.02.2026 по 26.02.2026:\nТренировок за этот период не найдено. 😴", result);
     }
 
 }

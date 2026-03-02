@@ -1,12 +1,15 @@
 package com.github.sportbot.controller;
 
 import com.github.sportbot.dto.ExerciseEntryRequest;
-import com.github.sportbot.service.ExercisePeriodService;
 import com.github.sportbot.service.ExerciseService;
 import com.github.sportbot.service.UserMaxService;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/exercises")
@@ -15,7 +18,6 @@ public class ExerciseController {
 
     private final ExerciseService exerciseService;
     private final UserMaxService userMaxService;
-    private final ExercisePeriodService dayService;
 
 
     @PostMapping
@@ -29,9 +31,21 @@ public class ExerciseController {
     }
 
     @GetMapping("/progress/{telegramId}")
-    public String progressForPeriod(@PathVariable Long telegramId,
-                                    @RequestParam String oneDate,
-                                    @RequestParam(required = false) String twoDate){
-        return dayService.progressForPeriod(telegramId, oneDate, twoDate);
+    public String progressForPeriod(
+            @PathVariable
+            @Parameter(example = "1000001")
+            Long telegramId,
+
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            @Parameter(example = "2025-02-05")
+            LocalDate startDate,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            @Parameter(example = "2026-02-05")
+            LocalDate endDate
+    ) {
+        return exerciseService.progressForPeriod(telegramId, startDate, endDate);
     }
 }
