@@ -19,6 +19,7 @@ class UserProfileServiceTest {
     private UserMaxService userMaxService;
     private MessageSource messageSource;
     private RankService rankService;
+    private StreakService streakService;
 
     private UserProfileService userProfileService;
 
@@ -33,13 +34,15 @@ class UserProfileServiceTest {
         this.exerciseService = mock(ExerciseService.class);
         this.userMaxService = mock(UserMaxService.class);
         this.rankService = mock(RankService.class);
+        this.streakService = mock(StreakService.class);
 
         this.userProfileService = new UserProfileService(
                 exerciseService,
                 userService,
                 userMaxService,
                 messageSource,
-                rankService
+                rankService,
+                streakService
         );
     }
 
