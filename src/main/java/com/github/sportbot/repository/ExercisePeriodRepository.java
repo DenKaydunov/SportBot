@@ -25,18 +25,4 @@ public interface ExercisePeriodRepository extends JpaRepository<ExerciseRecord, 
                                                            @Param("startDate") LocalDate startDate,
                                                            @Param("endDate") LocalDate endDate);
 
-    @Query("""
-    SELECT et.title 
-    AS exerciseType, 
-    COALESCE(SUM(er.count), 0) 
-    AS totalCount 
-    FROM ExerciseType et 
-    LEFT JOIN ExerciseRecord er 
-    ON er.exerciseType = et 
-    AND er.user.telegramId = :telegramId 
-    AND er.date = :date 
-    GROUP BY et.title
-    """)
-    List<ExercisePeriodProjection> getUserProgressForDate(@Param("telegramId") Long telegramId,
-                                                          @Param("date") LocalDate date);
 }

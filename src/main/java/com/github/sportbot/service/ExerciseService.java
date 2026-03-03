@@ -121,16 +121,12 @@ public class ExerciseService {
         }
     }
 
-    public List<ExercisePeriodProjection> getProgressToday(Long telegramId, LocalDate date){
-        return dayRepository.getUserProgressForDate(telegramId, date);
-    }
-
     public String progressToday(Long telegramId) {
         userRepository.findByTelegramId(telegramId).orElseThrow(UserNotFoundException::new);
 
         LocalDate date = LocalDate.now();
 
-        List<ExercisePeriodProjection> summary = getProgressToday(telegramId, date);
+        List<ExercisePeriodProjection> summary = getUserProgress(telegramId, date, date);
 
         StringBuilder report = new StringBuilder("Тренировки за сегодня:\n");
 
