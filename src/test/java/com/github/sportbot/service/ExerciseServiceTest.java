@@ -192,7 +192,7 @@ class ExerciseServiceTest {
         //Given
         LocalDate date = LocalDate.now();
         User user = new User();
-        when(periodRepository.getUserProgressForDate(TELEGRAM_ID, date))
+        when(periodRepository.getUserProgressByPeriod(TELEGRAM_ID, date, date))
                 .thenReturn(List.of(
                         new ExercisePeriodProjection() {
                             @Override
@@ -233,7 +233,7 @@ class ExerciseServiceTest {
         User user = new User();
         LocalDate date = LocalDate.now();
 
-        when(periodRepository.getUserProgressForDate(TELEGRAM_ID, date)).thenReturn(List.of());
+        when(periodRepository.getUserProgressByPeriod(TELEGRAM_ID, date, date)).thenReturn(List.of());
         when(userRepository.findByTelegramId(TELEGRAM_ID)).thenReturn(Optional.of(user));
 
 
