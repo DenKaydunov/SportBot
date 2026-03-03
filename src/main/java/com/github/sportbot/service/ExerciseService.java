@@ -120,19 +120,4 @@ public class ExerciseService {
             throw new IllegalArgumentException("Дата начала не может быть позже даты окончания!");
         }
     }
-
-    public String progressToday(Long telegramId) {
-        userRepository.findByTelegramId(telegramId).orElseThrow(UserNotFoundException::new);
-
-        LocalDate date = LocalDate.now();
-
-        List<ExercisePeriodProjection> summary = getUserProgress(telegramId, date, date);
-
-        StringBuilder report = new StringBuilder("Тренировки за сегодня:\n");
-
-        summary.forEach(exercise -> report
-                .append(String.format("%s - %d%n", exercise.getExerciseType(), exercise.getTotalCount())));
-
-        return report.toString();
-    }
 }

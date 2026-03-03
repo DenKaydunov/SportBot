@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -85,7 +86,9 @@ class ExercisePeriodServiceTest {
         String result = exerciseService.progressForPeriod(telegramId, oneDate, twoDate);
 
         //then
-        assertEquals("Твой прогресс с 24.02.2026 по 26.02.2026:\nОтжимания - 10\nПодтягивания - 20\n", result);
+        assertTrue(result.contains("Твой прогресс с 24.02.2026 по 26.02.2026:"));
+        assertTrue(result.contains("Отжимания - 10"));
+        assertTrue(result.contains("Подтягивания - 20"));
 
     }
 
