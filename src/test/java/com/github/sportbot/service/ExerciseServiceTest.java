@@ -18,10 +18,11 @@ import org.springframework.context.MessageSource;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -48,6 +49,9 @@ class ExerciseServiceTest {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private ExercisePeriodRepository periodRepository;
 
     @InjectMocks
     private ExerciseService exerciseService;
@@ -181,5 +185,62 @@ class ExerciseServiceTest {
         assertEquals(150, totalReps);
         verify(exerciseTypeService).getExerciseType("push_up");
         verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(user, testExerciseType);
+    }
+
+    @Test
+    void getReportToday_returnsFormattedReport(){
+        //Given
+        LocalDate date = LocalDate.now();
+        User user = new User();
+        when(periodRepository.getUserProgressForDate(TELEGRAM_ID, date))
+                .thenReturn(List.of(
+                        new ExercisePeriodProjection() {
+                            @Override
+                            public String getExerciseType() {
+                                return "Отжимания";
+                            }
+                            @Override
+                            public Integer getTotalCount() {
+                                return 10;
+                            }
+                        },
+                        new ExercisePeriodProjection() {
+                            @Override
+                            public String getExerciseType() {
+                                return "Подтягивания";
+                            }
+
+                            @Override
+                            public Integer getTotalCount() {
+                                return 20;
+                            }
+                        }
+                ));
+        when(userRepository.findByTelegramId(TELEGRAM_ID)).thenReturn(Optional.of(user));
+
+        //When
+        String result = exerciseService.progressToday(TELEGRAM_ID);
+
+        //then
+        assertTrue(result.contains("Тренировки за сегодня:"));
+        assertTrue(result.contains("Отжимания - 10"));
+        assertTrue(result.contains("Подтягивания - 20"));
+    }
+
+    @Test
+    void getReportToday_WhenNoExercise() {
+        //given
+        User user = new User();
+        LocalDate date = LocalDate.now();
+
+        when(periodRepository.getUserProgressForDate(TELEGRAM_ID, date)).thenReturn(List.of());
+        when(userRepository.findByTelegramId(TELEGRAM_ID)).thenReturn(Optional.of(user));
+
+
+        //when
+        String result = exerciseService.progressToday(TELEGRAM_ID);
+
+        //then
+        assertTrue(result.contains("Тренировки за сегодня:"));
     }
 }
