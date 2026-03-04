@@ -7,7 +7,6 @@ import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
 import com.github.sportbot.repository.ExercisePeriodProjection;
-import com.github.sportbot.repository.ExercisePeriodRepository;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,6 @@ public class ExerciseService {
     private final ExerciseTypeService exerciseTypeService;
     private final RankService rankService;
     private final NotificationService notificationService;
-    private final ExercisePeriodRepository dayRepository;
 
 
     @Transactional
@@ -76,13 +74,6 @@ public class ExerciseService {
      * Пресс - 0
      *
      */
-    public List<ExercisePeriodProjection> getUserProgress(
-            Long telegramId,
-            LocalDate startDate,
-            LocalDate endDate) {
-        return dayRepository.getUserProgressByPeriod(telegramId, startDate, endDate);
-    }
-
     public String progressForPeriod(
             Long telegramId,
             LocalDate startDate,
@@ -92,7 +83,7 @@ public class ExerciseService {
         LocalDate finalEndDate = (endDate == null) ? startDate : endDate;
         verifyDates(startDate, finalEndDate);
 
-        List<ExercisePeriodProjection> summary = getUserProgress(telegramId, startDate, finalEndDate);
+        List<ExercisePeriodProjection> summary = exerciseRecordRepository.getUserProgressByPeriod(telegramId, startDate, endDate);
 
         StringBuilder report = new StringBuilder();
         appendHeader(report, startDate, finalEndDate);
