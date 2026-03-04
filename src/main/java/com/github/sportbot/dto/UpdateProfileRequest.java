@@ -9,7 +9,7 @@ public record UpdateProfileRequest(
         @NotNull Long telegramId,
         @PositiveOrZero Integer age,
         Sex sex,
-        // allow empty or 2-letter code; empty means "clear" / unspecified
+        String name,
         @Pattern(regexp = "^$|^[a-zA-Z]{2}$", message = "Language must be empty or a 2-letter code")
         String language
 ) {}

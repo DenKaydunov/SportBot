@@ -109,6 +109,9 @@ public class UserProfileService {
             String normalized = request.language().strip().toLowerCase(Locale.ROOT);
             user.setLanguage(normalized.isEmpty() ? null : normalized);
         }
+        if (request.name() != null){
+            user.setFullName(request.name());
+        }
         userRepository.save(user);
         return messageSource.getMessage(
                 "profile.updated",
