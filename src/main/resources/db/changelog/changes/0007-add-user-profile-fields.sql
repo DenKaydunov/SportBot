@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset sportbot:7
+--changeset Alexsandr Mojarovskiy:7
 ALTER TABLE users
     ADD COLUMN age INTEGER,
     ADD COLUMN sex VARCHAR(10),

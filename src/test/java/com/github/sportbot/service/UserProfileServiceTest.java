@@ -10,6 +10,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 
 import java.time.LocalTime;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -135,6 +136,7 @@ class UserProfileServiceTest {
                 telegramId,
                 25,
                 Sex.WOMAN,
+                "Test User",
                 "en"
         );
 
@@ -143,6 +145,7 @@ class UserProfileServiceTest {
         assertTrue(result.contains("Профиль Test User обновлён."));
         assertTrue(user.getAge().equals(25));
         assertTrue(user.getSex() == Sex.WOMAN);
+        assertTrue(user.getFullName().equals("Test User"));
         assertTrue(user.getLanguage().equals("en"));
         verify(userRepository).save(user);
     }
@@ -151,7 +154,7 @@ class UserProfileServiceTest {
     void updateProfile_AllowsEmptyLanguageAndKeepsNulls() {
         Long telegramId = 123456L;
         User user = new User();
-        user.setFullName("Empty Lang User");
+        user.setFullName(null);
         user.setLanguage("ru"); // existing
 
         when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
@@ -160,14 +163,16 @@ class UserProfileServiceTest {
                 telegramId,
                 null,
                 null,
+                null,
                 "" // clear language
         );
 
         String result = userProfileService.updateProfile(request);
 
-        assertTrue(result.contains("Профиль Empty Lang User обновлён."));
+        assertTrue(result.contains("Профиль null обновлён."));
         assertNull(user.getLanguage()); // cleared
         assertNull(user.getAge()); // unchanged and still null
+        assertNull(user.getFullName()); // unchanged and still null
         assertNull(user.getSex()); // unchanged and still null
         verify(userRepository).save(user);
     }
