@@ -44,4 +44,9 @@ public class SubscriptionController {
                                   @RequestParam String exerciseCode) {
         return subscriptionService.compareProgress(telegramId, targetTelegramId, exerciseCode);
     }
+
+    @PostMapping("/unsubscribe/{telegramId}")
+    public String unsubscribeUser(@PathVariable Long telegramId){
+        return subscriptionService.unsubscribeUser(telegramId);
+    }
 }
