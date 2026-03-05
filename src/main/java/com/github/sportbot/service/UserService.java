@@ -45,4 +45,23 @@ public class UserService {
         return userRepository.findByTelegramId(telegramId)
                 .orElseThrow(UserNotFoundException::new);
     }
+
+    public String unsubscribeUser(Long telegramId) {
+        User user = getUserByTelegramId(telegramId);
+
+        if (!user.getIsSubscribed()) {
+            return messageSource.getMessage(
+                    "unsubscribe.user.false",
+                    null,
+                    Locale.forLanguageTag("ru-RU")
+            );
+        } else {
+            user.setIsSubscribed(false);
+            userRepository.save(user);
+            return messageSource.getMessage(
+                    "unsubscribe.user.true",
+                    null,
+                    Locale.forLanguageTag("ru-RU"));
+        }
+    }
 }

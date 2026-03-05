@@ -105,15 +105,4 @@ public class SubscriptionService {
 
         return sb.toString();
     }
-
-    public String unsubscribeUser(Long telegramId) {
-        User user = userService.getUserByTelegramId(telegramId);
-
-        if (!user.getIsSubscribed()) {
-            return "Вы не подписаны";
-        } else {
-            user.setIsSubscribed(false);
-            return "Вы отписались";
-        }
-    }
 }
