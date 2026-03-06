@@ -5,6 +5,7 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -34,6 +35,13 @@ public class User {
     @Column(name = "is_subscribed", nullable = false)
     @Builder.Default
     private Boolean isSubscribed = Boolean.TRUE;
+    @Column(name = "age")
+    private Integer age;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sex")
+    private Sex sex;
+    @Column(name = "language", length = 10)
+    private String language;
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -42,6 +50,21 @@ public class User {
     private LocalDateTime updatedAt;
     @Column(name = "remind_time")
     private LocalTime remindTime;
+
+    @Column(name = "current_streak", nullable = false)
+    @Builder.Default
+    private Integer currentStreak = 0;
+
+    @Column(name = "best_streak", nullable = false)
+    @Builder.Default
+    private Integer bestStreak = 0;
+
+    @Column(name = "last_workout_date")
+    private LocalDate lastWorkoutDate;
+
+    @Column(name = "balance_ton",  nullable = false)
+    @Builder.Default
+    private Integer balanceTon = 0;
 
     @OneToMany
     @JoinColumn(name = "user_id")

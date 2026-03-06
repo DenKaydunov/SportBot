@@ -4,7 +4,6 @@ import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
-import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserMaxHistory;
 import com.github.sportbot.repository.UserMaxHistoryRepository;
@@ -182,7 +181,7 @@ class UserMaxServiceTest {
                 .thenReturn(Optional.of(history));
 
         // When
-        int lastMax = userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.PUSH_UP);
+        int lastMax = userMaxService.getLastMaxByExerciseCode(user, "push_up");
 
         // Then
         assertEquals(200, lastMax);
