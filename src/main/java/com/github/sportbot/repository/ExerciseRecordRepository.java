@@ -21,6 +21,20 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
     @Query("SELECT COALESCE(SUM(w.count), 0) FROM ExerciseRecord w WHERE w.user = :user AND w.exerciseType = :exerciseType")
     int sumTotalRepsByUserAndExerciseType(@Param("user") User user, @Param("exerciseType") ExerciseType exerciseType);
 
+    @Query("""
+           SELECT et.title AS exerciseType,
+           COALESCE(SUM(er.count), 0) 
+           AS totalCount
+           FROM ExerciseType et
+           LEFT JOIN ExerciseRecord er
+           ON er.exerciseType = et
+           AND er.user.telegramId = :telegramId
+           AND er.date BETWEEN :startDate AND :endDate
+           GROUP BY et.title
+    """)
+    List<ExercisePeriodProjection> getUserProgressByPeriod(@Param("telegramId") Long telegramId,
+                                                           @Param("startDate") LocalDate startDate,
+                                                           @Param("endDate") LocalDate endDate);
     /**
      * Находит максимальную дату тренировки пользователя до указанной даты (не включая её).
      * @param user Объект пользователя.

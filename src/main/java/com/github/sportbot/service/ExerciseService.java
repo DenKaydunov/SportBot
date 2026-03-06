@@ -2,8 +2,14 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UserNotFoundException;
-import com.github.sportbot.model.*;
-import com.github.sportbot.repository.*;
+import com.github.sportbot.model.ExerciseRecord;
+import com.github.sportbot.model.ExerciseType;
+import com.github.sportbot.model.ExerciseTypeEnum;
+import com.github.sportbot.model.User;
+import com.github.sportbot.repository.ExercisePeriodProjection;
+import com.github.sportbot.repository.ExercisePeriodRepository;
+import com.github.sportbot.repository.ExerciseRecordRepository;
+import com.github.sportbot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
@@ -53,7 +59,7 @@ public class ExerciseService {
         // Обновляем стрик пользователя
         streakService.updateStreak(user, exercise.getDate());
         achievementService.checkStreakMilestones(req.telegramId());
-        
+
         // Перезагружаем пользователя для получения обновленных данных стрика
         user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
@@ -64,12 +70,12 @@ public class ExerciseService {
                 new Object[]{exerciseType.getTitle(), req.count(), total},
                 Locale.forLanguageTag("ru-RU"));
         String rankMessage = rankService.assignRankIfEligible(user, exerciseType, total);
-        
+
         // Добавляем информацию о стрике, если он изменился
         String streakMessage = getStreakUpdateMessage(user, exercise.getDate());
 
         String milestone = getAchievementUpdateMessage(user);
-        
+
         return message + rankMessage + streakMessage + milestone;
     }
 
@@ -167,7 +173,7 @@ public class ExerciseService {
         LocalDate finalEndDate = (endDate == null) ? startDate : endDate;
         verifyDates(startDate, finalEndDate);
 
-        List<ExercisePeriodProjection> summary = getUserProgress(telegramId, startDate, finalEndDate);
+        List<ExercisePeriodProjection> summary = exerciseRecordRepository.getUserProgressByPeriod(telegramId, startDate, endDate);
 
         StringBuilder report = new StringBuilder();
         appendHeader(report, startDate, finalEndDate);

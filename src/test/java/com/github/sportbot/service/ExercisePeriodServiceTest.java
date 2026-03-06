@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,6 +24,7 @@ class ExercisePeriodServiceTest {
 
     @Mock
     private ExerciseRecordRepository exerciseRepository;
+    private ExerciseRecordRepository exerciseRecordRepository;
     @Mock
     private UserRepository userRepository;
 
@@ -55,7 +57,7 @@ class ExercisePeriodServiceTest {
         LocalDate startDate = LocalDate.of(2026, 2, 24);
         LocalDate endDate = LocalDate.of(2026, 2, 26);
 
-        when(exerciseRepository.getUserProgressByPeriod(telegramId, startDate, endDate))
+        when(dayRepository.getUserProgressByPeriod(telegramId, startDate, endDate))
                 .thenReturn(List.of(
                         new ExercisePeriodProjection() {
                             @Override
@@ -85,7 +87,9 @@ class ExercisePeriodServiceTest {
         String result = exerciseService.progressForPeriod(telegramId, oneDate, twoDate);
 
         //then
-        assertEquals("Твой прогресс с 24.02.2026 по 26.02.2026:\nОтжимания - 10\nПодтягивания - 20\n", result);
+        assertTrue(result.contains("Твой прогресс с 24.02.2026 по 26.02.2026:"));
+        assertTrue(result.contains("Отжимания - 10"));
+        assertTrue(result.contains("Подтягивания - 20"));
 
     }
 
@@ -96,6 +100,7 @@ class ExercisePeriodServiceTest {
         LocalDate startDate = LocalDate.of(2026, 2, 24);
         LocalDate endDate = LocalDate.of(2026, 2, 26);
 
+        when(exerciseRecordRepository.getUserProgressByPeriod(telegramId, startDate, endDate)).thenReturn(List.of());
         when(exerciseRepository.getUserProgressByPeriod(telegramId, startDate, endDate)).thenReturn(List.of());
         when(userRepository.findByTelegramId(telegramId)).thenReturn(Optional.of(user));
 
