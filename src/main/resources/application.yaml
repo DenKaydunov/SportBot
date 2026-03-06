@@ -27,4 +27,4 @@ spring:
     change-log: db/changelog/db.changelog-master.yaml
 
 bot:
-  token: 8407449913:AAHJwdWjdu-ns36M-2Gm8Lh3JmFbmh8lza8
+  token: ${SPORT_BOT_TOKEN}
