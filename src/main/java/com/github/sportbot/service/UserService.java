@@ -50,18 +50,20 @@ public class UserService {
         User user = getUserByTelegramId(telegramId);
 
         if (!user.getIsSubscribed()) {
-            return messageSource.getMessage(
-                    "unsubscribe.user.false",
-                    null,
-                    Locale.forLanguageTag("ru-RU")
-            );
-        } else {
+            return getMessage("unsubscribe.user.false");
+        }
             user.setIsSubscribed(false);
             userRepository.save(user);
-            return messageSource.getMessage(
-                    "unsubscribe.user.true",
-                    null,
-                    Locale.forLanguageTag("ru-RU"));
-        }
+            return getMessage("unsubscribe.user.true");
+
     }
+
+    private String getMessage(String message){
+        return messageSource.getMessage(
+                message,
+                null,
+                Locale.forLanguageTag("ru-RU")
+        );
+    }
+
 }
