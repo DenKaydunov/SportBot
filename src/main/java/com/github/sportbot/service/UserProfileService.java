@@ -17,6 +17,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class UserProfileService {
 
+    public static final String UNKNOWN_VALUE = "не указан";
     private final ExerciseService exerciseService;
 
     private final UserService userService;
@@ -53,19 +54,17 @@ public class UserProfileService {
     public String getProfile(@NotNull Long telegramId, String lang) {
         User user = userService.getUserByTelegramId(telegramId);
 
+
+        String ageValue = user.getAge() != null ? user.getAge().toString() : UNKNOWN_VALUE;
+        String sexValue = mapSexToText(user.getSex());
+        String languageValue = resolveLanguage(user.getLanguage(), lang);
+        Locale locale = resolveLocale(user.getLanguage(), lang);
+        String remindTimeValue = user.getRemindTime() != null ? user.getRemindTime().toString() : UNKNOWN_VALUE;
+
         int countPushUps = exerciseService.getTotalReps(user, "push_up");
         int countPullUps = exerciseService.getTotalReps(user, "pull_up");
         int countSquats = exerciseService.getTotalReps(user, "squat");
         int countAbs = exerciseService.getTotalReps(user, "abs");
-        String ageValue = user.getAge() != null ? user.getAge().toString() : "не указан";
-        String sexValue = mapSexToText(user.getSex());
-        String languageValue = resolveLanguage(user.getLanguage(), lang);
-        Locale locale = resolveLocale(user.getLanguage(), lang);
-        String remindTimeValue = user.getRemindTime() != null ? user.getRemindTime().toString() : "не указано";
-
-        int countPushUps = exerciseService.getTotalReps(user, PUSH_UP);
-        int countPullUps = exerciseService.getTotalReps(user, PULL_UP);
-        int countSquats = exerciseService.getTotalReps(user, SQUAT);
 
         int maxPushUps = userMaxService.getLastMaxByExerciseCode(user, "push_up");
         int maxPullUps = userMaxService.getLastMaxByExerciseCode(user, "pull_up");
@@ -122,7 +121,7 @@ public class UserProfileService {
 
     private String mapSexToText(Sex sex) {
         if (sex == null) {
-            return "не указан";
+            return UNKNOWN_VALUE;
         }
         return switch (sex) {
             case MAN -> "мужчина";
@@ -133,7 +132,7 @@ public class UserProfileService {
     private String resolveLanguage(String storedLanguage, String requestedLang) {
         String lang = firstNonBlank(storedLanguage, requestedLang);
         if (lang == null) {
-            return "не указан";
+            return UNKNOWN_VALUE;
         }
         String lower = lang.toLowerCase(Locale.ROOT);
         if (Objects.equals(lower, "ru")) {

@@ -1,5 +1,6 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.dto.UpdateProfileRequest;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.Sex;
 import com.github.sportbot.repository.UserRepository;
@@ -10,8 +11,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 
 import java.time.LocalTime;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class UserProfileServiceTest {
@@ -44,11 +44,10 @@ class UserProfileServiceTest {
                 exerciseService,
                 userService,
                 userMaxService,
+                userRepository,
                 messageSource,
                 rankService,
                 streakService
-                userRepository,
-                messageSource
         );
     }
 
@@ -84,7 +83,7 @@ class UserProfileServiceTest {
         // Then
         assertTrue(profile.contains("📝 Имя: Denis Kaydunov"));
         assertTrue(profile.contains("📈 Возраст: 30"));
-        assertTrue(profile.contains("🎭 Пол: мужчина"));
+        assertTrue(profile.contains("📭 Пол: мужчина"));
         assertTrue(profile.contains("🌐 Язык: русский"));
         assertTrue(profile.contains("⏰ Время тренировки: 13:00"));
         assertTrue(profile.contains("отжиманий: 13 663/0"));
@@ -143,10 +142,10 @@ class UserProfileServiceTest {
         String result = userProfileService.updateProfile(request);
 
         assertTrue(result.contains("Профиль Test User обновлён."));
-        assertTrue(user.getAge().equals(25));
-        assertTrue(user.getSex() == Sex.WOMAN);
-        assertTrue(user.getFullName().equals("Test User"));
-        assertTrue(user.getLanguage().equals("en"));
+        assertEquals(25, user.getAge());
+        assertEquals(Sex.WOMAN, user.getSex());
+        assertEquals("Test User", user.getFullName());
+        assertEquals("en", user.getLanguage());
         verify(userRepository).save(user);
     }
 
