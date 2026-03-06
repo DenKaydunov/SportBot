@@ -19,9 +19,11 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class StreakService {
 
+    public static final Locale LOCALE = Locale.forLanguageTag("ru-RU");
     private final UserRepository userRepository;
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final MessageSource messageSource;
+
 
     /**
      * Обновляет стрик пользователя на основе даты тренировки.
@@ -44,7 +46,7 @@ public class StreakService {
             user.setBestStreak(1);
             user.setLastWorkoutDate(workoutDate);
         } else if (workoutDate.equals(lastWorkoutDate)) {
-            // Уже тренировался в этот день - стрик не меняется
+            // Уже тренировался в этот день - стрик не меняется,
             // Но нужно убедиться, что стрик не равен 0 (для первой тренировки)
             if (user.getCurrentStreak() == 0) {
                 user.setCurrentStreak(1);
@@ -55,7 +57,7 @@ public class StreakService {
         } else if (workoutDate.isAfter(lastWorkoutDate)) {
             // Новая тренировка после последней
             long daysBetween = workoutDate.toEpochDay() - lastWorkoutDate.toEpochDay();
-            
+
             if (daysBetween <= 1) {
                 // Последняя тренировка была вчера или позавчера - продолжаем стрик
                 int newStreak = user.getCurrentStreak() + 1;
@@ -127,10 +129,9 @@ public class StreakService {
      * Получает информацию о стрике пользователя в виде строки.
      *
      * @param user пользователь
-     * @param locale локаль для сообщений
      * @return форматированная строка со стриком
      */
-    public String getStreakInfo(User user, Locale locale) {
+    public String getStreakInfo(User user) {
         int currentStreak = user.getCurrentStreak();
         int bestStreak = user.getBestStreak();
         LocalDate lastWorkoutDate = user.getLastWorkoutDate();
@@ -140,7 +141,7 @@ public class StreakService {
             return messageSource.getMessage(
                     "streak.no_workouts",
                     null,
-                    locale
+                    LOCALE
             );
         }
 
@@ -151,7 +152,7 @@ public class StreakService {
             return messageSource.getMessage(
                     "streak.lost",
                     new Object[]{bestStreak, daysSinceLastWorkout},
-                    locale
+                    LOCALE
             );
         }
 
@@ -161,13 +162,13 @@ public class StreakService {
             return messageSource.getMessage(
                     "streak.active_record",
                     new Object[]{currentStreak},
-                    locale
+                    LOCALE
             );
         } else {
             return messageSource.getMessage(
                     "streak.active",
                     new Object[]{currentStreak, bestStreak},
-                    locale
+                    LOCALE
             );
         }
     }
@@ -192,6 +193,7 @@ public class StreakService {
         return user.getBestStreak();
     }
 
+    //TODO refactoring
     public String saveStreak(Long telegramId){
        User user = userRepository.findByTelegramId(telegramId)
                .orElseThrow(UserNotFoundException::new);

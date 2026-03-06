@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Locale;
 
 /**
  * Контроллер для работы со стриками (сериями дней подряд с тренировками).
@@ -24,22 +23,16 @@ public class StreakController {
      * Получает информацию о стрике пользователя.
      *
      * @param telegramId Telegram ID пользователя
-     * @param lang язык (по умолчанию ru)
      * @return форматированная строка со стриком
      */
     @GetMapping
     public String getStreak(
             @RequestParam
             @Parameter(example = "1000001") @NotNull
-            Long telegramId,
-
-            @RequestParam(required = false, defaultValue = "ru")
-            @Parameter(example = "ru")
-            String lang
+            Long telegramId
     ) {
         var user = userService.getUserByTelegramId(telegramId);
-        Locale locale = Locale.forLanguageTag(lang);
-        return streakService.getStreakInfo(user, locale);
+        return streakService.getStreakInfo(user);
     }
 
     /**
@@ -75,14 +68,13 @@ public class StreakController {
     }
 
     /**
-     *
-     * @param telegramId
+     * Попытка сохранить страйк используя валюту
+     * @param telegramId Telegram ID пользователя
      * @return результат сохранения Streak за Ton
      */
     @PostMapping("/save")
     public String saveStreak(@Parameter(example = "1000001") @NotNull
                              Long telegramId){
-        String message = streakService.saveStreak(telegramId);
-        return message;
+        return streakService.saveStreak(telegramId);
     }
 }

@@ -76,7 +76,7 @@ GET /api/v1/streak/best?telegramId={telegramId}
 - `last_workout_date` (DATE) - дата последней тренировки
 
 ### Миграция
-Миграция находится в `db/changelog/changes/0008-add-streaks.sql`
+Миграция находится в `db/changelog/changes/0009-add-streaks.sql`
 
 ## Локализация
 

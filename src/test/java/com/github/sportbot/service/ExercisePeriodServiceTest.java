@@ -2,7 +2,7 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.model.User;
 import com.github.sportbot.repository.ExercisePeriodProjection;
-import com.github.sportbot.repository.ExercisePeriodRepository;
+import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class ExercisePeriodServiceTest {
 
     @Mock
-    private ExercisePeriodRepository dayRepository;
+    private ExerciseRecordRepository exerciseRepository;
     @Mock
     private UserRepository userRepository;
 
@@ -55,7 +55,7 @@ class ExercisePeriodServiceTest {
         LocalDate startDate = LocalDate.of(2026, 2, 24);
         LocalDate endDate = LocalDate.of(2026, 2, 26);
 
-        when(dayRepository.getUserProgressByPeriod(telegramId, startDate, endDate))
+        when(exerciseRepository.getUserProgressByPeriod(telegramId, startDate, endDate))
                 .thenReturn(List.of(
                         new ExercisePeriodProjection() {
                             @Override
@@ -96,7 +96,7 @@ class ExercisePeriodServiceTest {
         LocalDate startDate = LocalDate.of(2026, 2, 24);
         LocalDate endDate = LocalDate.of(2026, 2, 26);
 
-        when(dayRepository.getUserProgressByPeriod(telegramId, startDate, endDate)).thenReturn(List.of());
+        when(exerciseRepository.getUserProgressByPeriod(telegramId, startDate, endDate)).thenReturn(List.of());
         when(userRepository.findByTelegramId(telegramId)).thenReturn(Optional.of(user));
 
 

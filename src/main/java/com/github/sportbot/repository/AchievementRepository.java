@@ -15,7 +15,7 @@ public interface AchievementRepository extends JpaRepository<Achievement, Long> 
         WHERE a.user.id = :userId
         ORDER BY a.achievedDate
     """)
-    List<Integer> findMilestoneIdsByUserId(@Param("userId")Integer id);
+    List<Long> findMilestoneIdsByUserId(@Param("userId")Integer id);
 
     @Query("""
         SELECT a

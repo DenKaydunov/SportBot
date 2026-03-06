@@ -1,33 +1,19 @@
 package com.github.sportbot.service;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-
+import com.github.sportbot.dto.ExerciseEntryRequest;
+import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.*;
-import com.github.sportbot.repository.AchievementRepository;
-import com.github.sportbot.repository.MilestoneRepository;
+import com.github.sportbot.repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.github.sportbot.dto.ExerciseEntryRequest;
-import com.github.sportbot.exception.UserNotFoundException;
-import com.github.sportbot.model.ExerciseRecord;
-import com.github.sportbot.model.ExerciseType;
-import com.github.sportbot.model.ExerciseTypeEnum;
-import com.github.sportbot.model.User;
-import com.github.sportbot.repository.ExercisePeriodProjection;
-import com.github.sportbot.repository.ExercisePeriodRepository;
-import com.github.sportbot.repository.ExerciseRecordRepository;
-import com.github.sportbot.repository.UserRepository;
-
-import lombok.RequiredArgsConstructor;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +31,6 @@ public class ExerciseService {
     private final AchievementRepository achievementRepository;
     private final AchievementService achievementService;
     private final NotificationService notificationService;
-    private final ExercisePeriodRepository dayRepository;
 
 
     @Transactional
@@ -88,8 +73,8 @@ public class ExerciseService {
         return message + rankMessage + streakMessage + milestone;
     }
 
-    public int getTotalReps(User user, ExerciseTypeEnum exerciseCode) {
-        ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode.getType());
+    public int getTotalReps(User user, String exerciseCode) {
+        ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
         return exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
     }
 
@@ -100,7 +85,7 @@ public class ExerciseService {
         LocalDate lastWorkoutDate = user.getLastWorkoutDate();
 
         // Если это первая тренировка или стрик увеличился
-        if (lastWorkoutDate == null || (workoutDate.equals(LocalDate.now()) && lastWorkoutDate != null && lastWorkoutDate.equals(LocalDate.now()
+        if (lastWorkoutDate == null || (workoutDate.equals(LocalDate.now()) && lastWorkoutDate.equals(LocalDate.now()
                 .minusDays(1)))) {
 
             int currentStreak = user.getCurrentStreak();
@@ -116,7 +101,7 @@ public class ExerciseService {
         int currentStreak = user.getCurrentStreak();
 
         List<StreakMilestone> milestone = milestoneRepository.findAllByOrderByDaysRequiredAsc();
-        List<Integer> achieve = achievementRepository.findMilestoneIdsByUserId(user.getId());
+        List<Long> achieve = achievementRepository.findMilestoneIdsByUserId(user.getId());
 
         // Определяем milestone, который пользователь получает сейчас
         Optional<StreakMilestone> justAchieved = milestone.stream()
@@ -134,28 +119,30 @@ public class ExerciseService {
 
         if (justAchieved.isPresent()){
             StreakMilestone m = justAchieved.get();
-            message.append("\n🏆 Поздравляем! Достигнут milestone: ")
-                    .append(m.getTitle())
-                    .append(" (")
+            message.append("\n🏆 Поздравляем! Награда за ")
                     .append(m.getDaysRequired())
-                    .append(" дней), ")
+                    .append(" дней подряд: ")
+                    .append(m.getTitle())
+                    .append(" - ")
                     .append(m.getDescription())
-                    .append(" - награда: ")
+                    .append(" (награда: ")
                     .append(m.getRewardTon())
-                    .append(" Ton");
+                    .append(" Ton)");
         }
 
         if (nextMilestone.isPresent()) {
             int daysToNext = nextMilestone.get().getDaysRequired() - currentStreak;
-            message.append("\nДо следующего milestone осталось: ")
+            message.append("\n⏰ Тренируйся ещё ")
                     .append(daysToNext)
-                    .append(" дней");
-        } else { message.append("\nВсе milestones достигнуты!");
+                    .append(" дней подряд для следующей награды.");
+        } else {
+            message.append("\n✅ Все награды за стрик получены!");
         }
         return message.toString();
     }
-}
-     * Provides user exercises for a specified date
+
+
+    /** Provides user exercises for a specified date
      * <p>
      * Твой прогресс за 25.02.2026:
      * Приседания - 0
@@ -168,7 +155,7 @@ public class ExerciseService {
             Long telegramId,
             LocalDate startDate,
             LocalDate endDate) {
-        return dayRepository.getUserProgressByPeriod(telegramId, startDate, endDate);
+        return exerciseRecordRepository.getUserProgressByPeriod(telegramId, startDate, endDate);
     }
 
     public String progressForPeriod(
@@ -196,10 +183,10 @@ public class ExerciseService {
 
     private void appendHeader(StringBuilder sb, LocalDate start, LocalDate end) {
         if (start.equals(end)) {
-            sb.append("Твой прогресс за ").append(start.format(DATE_FORMATTER)).append(":\n");
+            sb.append("Твой прогресс за ").append(start.format(ExerciseService.DATE_FORMATTER)).append(":\n");
         } else {
-            sb.append("Твой прогресс с ").append(start.format(DATE_FORMATTER))
-                    .append(" по ").append(end.format(DATE_FORMATTER)).append(":\n");
+            sb.append("Твой прогресс с ").append(start.format(ExerciseService.DATE_FORMATTER))
+                    .append(" по ").append(end.format(ExerciseService.DATE_FORMATTER)).append(":\n");
         }
     }
 

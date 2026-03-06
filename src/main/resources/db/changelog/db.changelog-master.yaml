@@ -14,6 +14,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/0007-add-ranks.sql
   - include:
-      file: db/changelog/changes/0008-add-streaks.sql
+      file: db/changelog/changes/0008-add-subscriptions.sql
   - include:
-      file: db/changelog/changes/0009-add-achievements.sql
+      file: db/changelog/changes/0009-add-streaks.sql
+  - include:
+      file: db/changelog/changes/0010-add-achievements.sql

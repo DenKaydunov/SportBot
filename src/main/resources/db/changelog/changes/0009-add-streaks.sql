@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset sportbot:8
+--changeset deniskaydunov:8
 ALTER TABLE users
     ADD COLUMN current_streak INTEGER NOT NULL DEFAULT 0,
     ADD COLUMN best_streak INTEGER NOT NULL DEFAULT 0,

@@ -4,7 +4,6 @@ import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
-import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.ExerciseRecord;
 import com.github.sportbot.repository.*;
@@ -22,6 +21,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -48,6 +48,18 @@ class ExerciseServiceTest {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private StreakService streakService;
+
+    @Mock
+    private AchievementService achievementService;
+
+    @Mock
+    private MilestoneRepository milestoneRepository;
+
+    @Mock
+    private AchievementRepository achievementRepository;
 
     @InjectMocks
     private ExerciseService exerciseService;
@@ -82,6 +94,10 @@ class ExerciseServiceTest {
                 .thenReturn(100);
         when(rankService.assignRankIfEligible(any(User.class), any(ExerciseType.class), anyInt()))
                 .thenReturn("");
+        doNothing().when(streakService).updateStreak(any(User.class), any(LocalDate.class));
+        doNothing().when(achievementService).checkStreakMilestones(anyLong());
+        when(milestoneRepository.findAllByOrderByDaysRequiredAsc()).thenReturn(new ArrayList<>());
+        when(achievementRepository.findMilestoneIdsByUserId(anyInt())).thenReturn(new ArrayList<>());
 
         when(messageSource.getMessage(eq("workout.reps_recorded"), any(Object[].class), any()))
                 .thenReturn("Отжимания: сделано 10 повторений. Общее число: 100.");
@@ -90,7 +106,7 @@ class ExerciseServiceTest {
         String result = exerciseService.saveExerciseResult(testRequest);
 
         // Then
-        verify(userRepository).findByTelegramId(TELEGRAM_ID);
+        verify(userRepository, times(2)).findByTelegramId(TELEGRAM_ID); // Called twice: initial load and reload after streak update
         verify(exerciseTypeService).getExerciseType(testRequest);
         verify(notificationService).notifyFollowersAboutWorkout(testUser, testExerciseType, 10);
         verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(testUser, testExerciseType);
@@ -103,7 +119,7 @@ class ExerciseServiceTest {
         assertEquals(testExerciseType, savedExercise.getExerciseType());
         assertEquals(10, savedExercise.getCount());
         assertEquals(LocalDate.now(), savedExercise.getDate());
-        assertEquals("Отжимания: сделано 10 повторений. Общее число: 100.", result);
+        assertTrue(result.contains("Отжимания: сделано 10 повторений. Общее число: 100."));
     }
 
     @Test
@@ -113,6 +129,10 @@ class ExerciseServiceTest {
         when(exerciseTypeService.getExerciseType(testRequest)).thenReturn(testExerciseType);
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(any(User.class), any()))
                 .thenReturn(120);
+        doNothing().when(streakService).updateStreak(any(User.class), any(LocalDate.class));
+        doNothing().when(achievementService).checkStreakMilestones(anyLong());
+        when(milestoneRepository.findAllByOrderByDaysRequiredAsc()).thenReturn(new ArrayList<>());
+        when(achievementRepository.findMilestoneIdsByUserId(anyInt())).thenReturn(new ArrayList<>());
 
         when(messageSource.getMessage(eq("workout.reps_recorded"), any(Object[].class), any()))
                 .thenReturn("Отжимания: сделано 10 повторений. Общее число: 120.");
@@ -125,7 +145,7 @@ class ExerciseServiceTest {
         String result = exerciseService.saveExerciseResult(testRequest);
 
         // Then
-        assertEquals("Отжимания: сделано 10 повторений. Общее число: 120." + promotion, result);
+        assertTrue(result.startsWith("Отжимания: сделано 10 повторений. Общее число: 120." + promotion));
         verify(rankService).assignRankIfEligible(testUser, testExerciseType, 120);
     }
 
@@ -175,7 +195,7 @@ class ExerciseServiceTest {
         when(exerciseTypeService.getExerciseType("push_up")).thenReturn(testExerciseType);
 
         // When
-        int totalReps = exerciseService.getTotalReps(user, ExerciseTypeEnum.PUSH_UP);
+        int totalReps = exerciseService.getTotalReps(user, "push_up");
 
         // Then
         assertEquals(150, totalReps);

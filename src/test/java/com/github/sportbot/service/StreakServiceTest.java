@@ -12,14 +12,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
 
 import java.time.LocalDate;
-import java.util.Locale;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class StreakServiceTest {
+class StreakServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -131,7 +130,7 @@ public class StreakServiceTest {
         when(messageSource.getMessage(eq("streak.no_workouts"), any(), any()))
                 .thenReturn("\uD83D\uDD25 Стрик: пока нет тренировок. Начни сегодня!");
 
-        String result = streakService.getStreakInfo(user, Locale.ENGLISH);
+        String result = streakService.getStreakInfo(user);
 
         assertEquals("\uD83D\uDD25 Стрик: пока нет тренировок. Начни сегодня!", result);
     }
@@ -146,7 +145,7 @@ public class StreakServiceTest {
         when(messageSource.getMessage(eq("streak.lost"), any(), any()))
                 .thenReturn("\uD83D\uDD25 Стрик потерян. Лучший результат: 5 дней. Прошло дней без тренировки: 3");
 
-        String result = streakService.getStreakInfo(user, Locale.ENGLISH);
+        String result = streakService.getStreakInfo(user);
 
         assertEquals("\uD83D\uDD25 Стрик потерян. Лучший результат: 5 дней. Прошло дней без тренировки: 3", result);
     }
@@ -162,7 +161,7 @@ public class StreakServiceTest {
         when(messageSource.getMessage(eq("streak.active_record"), any(), any()))
                 .thenReturn("\uD83D\uDD25 Стрик: 5 дней подряд (новый рекорд! \uD83C\uDF89)");
 
-        String result = streakService.getStreakInfo(user, Locale.ENGLISH);
+        String result = streakService.getStreakInfo(user);
 
         assertEquals("\uD83D\uDD25 Стрик: 5 дней подряд (новый рекорд! \uD83C\uDF89)", result);
     }
@@ -178,7 +177,7 @@ public class StreakServiceTest {
         when(messageSource.getMessage(eq("streak.active"), any(), any()))
                 .thenReturn("\uD83D\uDD25 Стрик: 3 дней подряд (рекорд: 5 дней)");
 
-        String result = streakService.getStreakInfo(user, Locale.ENGLISH);
+        String result = streakService.getStreakInfo(user);
 
         assertEquals("\uD83D\uDD25 Стрик: 3 дней подряд (рекорд: 5 дней)", result);
     }

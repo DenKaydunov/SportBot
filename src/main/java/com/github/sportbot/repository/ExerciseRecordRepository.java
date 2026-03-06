@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, Long> {
 
@@ -37,5 +38,20 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
      */
     @Query("SELECT COUNT(w) > 0 FROM ExerciseRecord w WHERE w.user = :user AND w.date = :date")
     boolean hasWorkoutOnDate(@Param("user") User user, @Param("date") LocalDate date);
+
+    @Query("""
+           SELECT et.title AS exerciseType,
+           COALESCE(SUM(er.count), 0) 
+           AS totalCount
+           FROM ExerciseType et
+           LEFT JOIN ExerciseRecord er
+           ON er.exerciseType = et
+           AND er.user.telegramId = :telegramId
+           AND er.date BETWEEN :startDate AND :endDate
+           GROUP BY et.title
+""")
+    List<ExercisePeriodProjection> getUserProgressByPeriod(@Param("telegramId") Long telegramId,
+                                                           @Param("startDate") LocalDate startDate,
+                                                           @Param("endDate") LocalDate endDate);
 
 }

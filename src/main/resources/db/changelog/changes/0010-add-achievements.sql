@@ -25,6 +25,6 @@ CREATE TABLE achievements (
 );
 
 INSERT INTO streak_milestone (days_required, reward_ton, title, description) VALUES
-    (100, 5, 'Bronze streak', '100 дней подряд без перерыва' ),
-    (200, 10, 'Silver streak', '200 дней подряд дисциплины' ),
-    (500, 25, 'Gold streak', '500 дней настоящей силы' );
+    (10, 5, 'Bronze streak', '10 дней подряд без перерыва' ),
+    (20, 10, 'Silver streak', '20 дней подряд дисциплины' ),
+    (50, 25, 'Gold streak', '50 дней настоящей силы' );
