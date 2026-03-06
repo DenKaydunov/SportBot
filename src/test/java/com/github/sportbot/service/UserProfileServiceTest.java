@@ -1,6 +1,5 @@
 package com.github.sportbot.service;
 
-import com.github.sportbot.model.ExerciseTypeEnum;
 import com.github.sportbot.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +18,7 @@ class UserProfileServiceTest {
     private UserMaxService userMaxService;
     private MessageSource messageSource;
     private RankService rankService;
+    private StreakService streakService;
 
     private UserProfileService userProfileService;
 
@@ -33,13 +33,15 @@ class UserProfileServiceTest {
         this.exerciseService = mock(ExerciseService.class);
         this.userMaxService = mock(UserMaxService.class);
         this.rankService = mock(RankService.class);
+        this.streakService = mock(StreakService.class);
 
         this.userProfileService = new UserProfileService(
                 exerciseService,
                 userService,
                 userMaxService,
                 messageSource,
-                rankService
+                rankService,
+                streakService
         );
     }
 
@@ -53,16 +55,17 @@ class UserProfileServiceTest {
         user.setRemindTime(LocalTime.of(13, 0));
 
         when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
-        when(exerciseService.getTotalReps(user, ExerciseTypeEnum.PUSH_UP)).thenReturn(13663);
-        when(exerciseService.getTotalReps(user, ExerciseTypeEnum.PULL_UP)).thenReturn(2009);
-        when(exerciseService.getTotalReps(user, ExerciseTypeEnum.SQUAT)).thenReturn(2293);
-        when(exerciseService.getTotalReps(user, ExerciseTypeEnum.ABS)).thenReturn(2293);
+        when(exerciseService.getTotalReps(user, "push_up")).thenReturn(13663);
+        when(exerciseService.getTotalReps(user, "pull_up")).thenReturn(2009);
+        when(exerciseService.getTotalReps(user, "squat")).thenReturn(2293);
+        when(exerciseService.getTotalReps(user, "abs")).thenReturn(2293);
 
-        when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.PUSH_UP)).thenReturn(0);
-        when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.PULL_UP)).thenReturn(15);
-        when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.SQUAT)).thenReturn(50);
-        when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.ABS)).thenReturn(50);
+        when(userMaxService.getLastMaxByExerciseCode(user, "push_up")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "pull_up")).thenReturn(15);
+        when(userMaxService.getLastMaxByExerciseCode(user, "squat")).thenReturn(50);
+        when(userMaxService.getLastMaxByExerciseCode(user, "abs")).thenReturn(50);
         when(rankService.getRankTitle(user)).thenReturn("-");
+        when(streakService.getStreakInfo(user)).thenReturn("🔥 Стрик: 5 дней подряд (рекорд: 10 дней)");
 
         // When
         String profile = userProfileService.getProfile(telegramId, lang);
@@ -87,18 +90,19 @@ class UserProfileServiceTest {
         user.setFullName("Ranked User");
 
         when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
-        when(exerciseService.getTotalReps(user, ExerciseTypeEnum.PUSH_UP)).thenReturn(0);
-        when(exerciseService.getTotalReps(user, ExerciseTypeEnum.PULL_UP)).thenReturn(0);
-        when(exerciseService.getTotalReps(user, ExerciseTypeEnum.SQUAT)).thenReturn(0);
-        when(exerciseService.getTotalReps(user, ExerciseTypeEnum.ABS)).thenReturn(0);
+        when(exerciseService.getTotalReps(user, "push_up")).thenReturn(0);
+        when(exerciseService.getTotalReps(user, "pull_up")).thenReturn(0);
+        when(exerciseService.getTotalReps(user, "squat")).thenReturn(0);
+        when(exerciseService.getTotalReps(user, "abs")).thenReturn(0);
 
-        when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.PUSH_UP)).thenReturn(0);
-        when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.PULL_UP)).thenReturn(0);
-        when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.SQUAT)).thenReturn(0);
-        when(userMaxService.getLastMaxByExerciseCode(user, ExerciseTypeEnum.ABS)).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "push_up")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "pull_up")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "squat")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "abs")).thenReturn(0);
 
         // stub rank service to return some rank title
         when(rankService.getRankTitle(user)).thenReturn("Джон Уик");
+        when(streakService.getStreakInfo(user)).thenReturn("🔥 Стрик: 100 дней подряд (новый рекорд! 🎉)");
 
         // When
         String profile = userProfileService.getProfile(telegramId, lang);

@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Locale;
 
-import static com.github.sportbot.model.ExerciseTypeEnum.*;
-
 @Service
 @RequiredArgsConstructor
 public class UserProfileService {
@@ -20,6 +18,7 @@ public class UserProfileService {
     private final UserMaxService userMaxService;
     private final MessageSource messageSource;
     private final RankService rankService;
+    private final StreakService streakService;
 
     /**
      * Return user profile.
@@ -49,17 +48,18 @@ public class UserProfileService {
         Locale locale = Locale.forLanguageTag(lang);
         User user = userService.getUserByTelegramId(telegramId);
 
-        int countPushUps = exerciseService.getTotalReps(user, PUSH_UP);
-        int countPullUps = exerciseService.getTotalReps(user, PULL_UP);
-        int countSquats = exerciseService.getTotalReps(user, SQUAT);
-        int countAbs = exerciseService.getTotalReps(user, ABS);
+        int countPushUps = exerciseService.getTotalReps(user, "push_up");
+        int countPullUps = exerciseService.getTotalReps(user, "pull_up");
+        int countSquats = exerciseService.getTotalReps(user, "squat");
+        int countAbs = exerciseService.getTotalReps(user, "abs");
 
-        int maxPushUps = userMaxService.getLastMaxByExerciseCode(user, PUSH_UP);
-        int maxPullUps = userMaxService.getLastMaxByExerciseCode(user, PULL_UP);
-        int maxSquats = userMaxService.getLastMaxByExerciseCode(user, SQUAT);
-        int maxAbs = userMaxService.getLastMaxByExerciseCode(user, ABS);
+        int maxPushUps = userMaxService.getLastMaxByExerciseCode(user, "push_up");
+        int maxPullUps = userMaxService.getLastMaxByExerciseCode(user, "pull_up");
+        int maxSquats = userMaxService.getLastMaxByExerciseCode(user, "squat");
+        int maxAbs = userMaxService.getLastMaxByExerciseCode(user, "abs");
 
         String rank = rankService.getRankTitle(user);
+        String streakInfo = streakService.getStreakInfo(user);
 
         return messageSource.getMessage(
                 "profile.template",
@@ -70,7 +70,8 @@ public class UserProfileService {
                         countPullUps, maxPullUps,
                         countSquats, maxSquats,
                         countAbs, maxAbs,
-                        rank
+                        rank,
+                        streakInfo
                 },
                 locale
         );

@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class ExercisePeriodServiceTest {
 
     @Mock
-    private ExerciseRecordRepository exerciseRecordRepository;
+    private ExerciseRecordRepository exerciseRepository;
     @Mock
     private UserRepository userRepository;
 
@@ -56,7 +56,7 @@ class ExercisePeriodServiceTest {
         LocalDate startDate = LocalDate.of(2026, 2, 24);
         LocalDate endDate = LocalDate.of(2026, 2, 26);
 
-        when(exerciseRecordRepository.getUserProgressByPeriod(telegramId, startDate, endDate))
+        when(exerciseRepository.getUserProgressByPeriod(telegramId, startDate, endDate))
                 .thenReturn(List.of(
                         new ExercisePeriodProjection() {
                             @Override
@@ -99,7 +99,8 @@ class ExercisePeriodServiceTest {
         LocalDate startDate = LocalDate.of(2026, 2, 24);
         LocalDate endDate = LocalDate.of(2026, 2, 26);
 
-        when(exerciseRecordRepository.getUserProgressByPeriod(telegramId, startDate, endDate)).thenReturn(List.of());
+        when(exerciseRepository.getUserProgressByPeriod(telegramId, startDate, endDate)).thenReturn(List.of());
+        when(exerciseRepository.getUserProgressByPeriod(telegramId, startDate, endDate)).thenReturn(List.of());
         when(userRepository.findByTelegramId(telegramId)).thenReturn(Optional.of(user));
 
 

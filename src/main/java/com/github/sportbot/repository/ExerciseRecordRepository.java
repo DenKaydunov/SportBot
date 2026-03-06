@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, Long> {
 
@@ -23,7 +24,7 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
 
     @Query("""
            SELECT et.title AS exerciseType,
-           COALESCE(SUM(er.count), 0) 
+           COALESCE(SUM(er.count), 0)
            AS totalCount
            FROM ExerciseType et
            LEFT JOIN ExerciseRecord er
@@ -35,4 +36,13 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
     List<ExercisePeriodProjection> getUserProgressByPeriod(@Param("telegramId") Long telegramId,
                                                            @Param("startDate") LocalDate startDate,
                                                            @Param("endDate") LocalDate endDate);
+
+    /**
+     * Находит максимальную дату тренировки пользователя до указанной даты (не включая её).
+     * @param user Объект пользователя.
+     * @param beforeDate Дата, до которой искать.
+     * @return Optional с максимальной датой или пустой Optional.
+     */
+    @Query("SELECT MAX(w.date) FROM ExerciseRecord w WHERE w.user = :user AND w.date < :beforeDate")
+    Optional<LocalDate> findMaxDateByUserBeforeDate(@Param("user") User user, @Param("beforeDate") LocalDate beforeDate);
 }
