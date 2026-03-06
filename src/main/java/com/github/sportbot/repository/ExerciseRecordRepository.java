@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, Long> {
 
@@ -23,7 +24,7 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
 
     @Query("""
            SELECT et.title AS exerciseType,
-           COALESCE(SUM(er.count), 0) 
+           COALESCE(SUM(er.count), 0)
            AS totalCount
            FROM ExerciseType et
            LEFT JOIN ExerciseRecord er
@@ -42,30 +43,5 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
      * @return Optional с максимальной датой или пустой Optional.
      */
     @Query("SELECT MAX(w.date) FROM ExerciseRecord w WHERE w.user = :user AND w.date < :beforeDate")
-    java.util.Optional<LocalDate> findMaxDateByUserBeforeDate(@Param("user") User user, @Param("beforeDate") LocalDate beforeDate);
-
-    /**
-     * Проверяет, есть ли тренировки у пользователя в указанную дату.
-     * @param user Объект пользователя.
-     * @param date Дата для проверки.
-     * @return true, если есть тренировки в эту дату.
-     */
-    @Query("SELECT COUNT(w) > 0 FROM ExerciseRecord w WHERE w.user = :user AND w.date = :date")
-    boolean hasWorkoutOnDate(@Param("user") User user, @Param("date") LocalDate date);
-
-    @Query("""
-           SELECT et.title AS exerciseType,
-           COALESCE(SUM(er.count), 0) 
-           AS totalCount
-           FROM ExerciseType et
-           LEFT JOIN ExerciseRecord er
-           ON er.exerciseType = et
-           AND er.user.telegramId = :telegramId
-           AND er.date BETWEEN :startDate AND :endDate
-           GROUP BY et.title
-""")
-    List<ExercisePeriodProjection> getUserProgressByPeriod(@Param("telegramId") Long telegramId,
-                                                           @Param("startDate") LocalDate startDate,
-                                                           @Param("endDate") LocalDate endDate);
-
+    Optional<LocalDate> findMaxDateByUserBeforeDate(@Param("user") User user, @Param("beforeDate") LocalDate beforeDate);
 }
