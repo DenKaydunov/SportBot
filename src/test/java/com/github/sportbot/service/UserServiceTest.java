@@ -5,6 +5,7 @@ import com.github.sportbot.dto.UserRegistrationResponse;
 import com.github.sportbot.exception.UserAlreadyExistsException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.mapper.UserMapper;
+import com.github.sportbot.model.Sex;
 import com.github.sportbot.model.User;
 import com.github.sportbot.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +49,10 @@ class UserServiceTest {
                 "sendPulse123",
                 true,
                 "John Doe",
-                null,
+                "ru",
+                Sex.MAN,
+                25,
+                23456789,
                 LocalTime.now()
         );
 
