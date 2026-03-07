@@ -16,7 +16,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -55,6 +54,9 @@ public class ExerciseService {
 
         // Обновляем стрик пользователя
         streakService.updateStreak(user, exercise.getDate());
+
+        String achievement = getAchievementUpdateMessage(user);
+
         achievementService.checkStreakMilestones(req.telegramId());
 
         // Перезагружаем пользователя для получения обновленных данных стрика
@@ -71,9 +73,10 @@ public class ExerciseService {
         // Добавляем информацию о стрике, если он изменился
         String streakMessage = getStreakUpdateMessage(user, exercise.getDate());
 
-        String milestone = getAchievementUpdateMessage(user);
 
-        return message + rankMessage + streakMessage + milestone;
+        String nextAchievement = getNextAchievementUpdateMessage(user);
+
+        return message + rankMessage + streakMessage + achievement + nextAchievement;
     }
 
     public int getTotalReps(User user, String exerciseCode) {
@@ -102,48 +105,46 @@ public class ExerciseService {
 
     private String getAchievementUpdateMessage(User user){
         int currentStreak = user.getCurrentStreak();
-
         List<StreakMilestone> milestone = milestoneRepository.findAllByOrderByDaysRequiredAsc();
         List<Long> achieve = achievementRepository.findMilestoneIdsByUserId(user.getId());
 
-        // Определяем milestone, который пользователь получает сейчас
-        Optional<StreakMilestone> justAchieved = milestone.stream()
-                .filter(m -> !achieve.contains(m.getId()))
-                .filter(m -> m.getDaysRequired() == currentStreak)
-                .findFirst();
-
-        // Определяем следующий milestone
-        Optional<StreakMilestone> nextMilestone = milestone.stream()
-                .filter(m -> !achieve.contains(m.getId()))
-                .filter(m -> m.getDaysRequired() > currentStreak)
-                .findFirst();
-
         StringBuilder message = new StringBuilder();
 
-        if (justAchieved.isPresent()){
-            StreakMilestone m = justAchieved.get();
-            message.append("\n🏆 Поздравляем! Награда за ")
-                    .append(m.getDaysRequired())
-                    .append(" дней подряд: ")
-                    .append(m.getTitle())
-                    .append(" - ")
-                    .append(m.getDescription())
-                    .append(" (награда: ")
-                    .append(m.getRewardTon())
-                    .append(" Ton)");
-        }
-
-        if (nextMilestone.isPresent()) {
-            int daysToNext = nextMilestone.get().getDaysRequired() - currentStreak;
-            message.append("\n⏰ Тренируйся ещё ")
-                    .append(daysToNext)
-                    .append(" дней подряд для следующей награды.");
-        } else {
-            message.append("\n✅ Все награды за стрик получены!");
+        for(StreakMilestone m : milestone) {
+            System.out.println(achieve);
+            if (!achieve.contains(m.getId()) && currentStreak >= m.getDaysRequired()) {
+                message.append("\n🏆 Поздравляем! Награда за ")
+                        .append(m.getDaysRequired())
+                        .append(" дней подряд: ")
+                        .append(m.getTitle())
+                        .append(" - ")
+                        .append(m.getDescription())
+                        .append(" (награда: ")
+                        .append(m.getRewardTon())
+                        .append(" Ton)");
+            }
         }
         return message.toString();
     }
 
+    private String getNextAchievementUpdateMessage(User user) {
+        int currentStreak = user.getCurrentStreak();
+        List<StreakMilestone> milestone = milestoneRepository.findAllByOrderByDaysRequiredAsc();
+        List<Long> achieve = achievementRepository.findMilestoneIdsByUserId(user.getId());
+        StringBuilder message = new StringBuilder("\n✅ Все награды за стрик получены!");
+
+        for (StreakMilestone m : milestone) {
+            if (!achieve.contains(m.getId()) && m.getDaysRequired() > currentStreak) {
+                int daysToNext = m.getDaysRequired() - currentStreak;
+                message.setLength(0);
+                message.append("\n⏰ Тренируйся ещё ")
+                        .append(daysToNext)
+                        .append(" дней подряд для следующей награды.");
+                break;
+            }
+        }
+        return message.toString();
+    }
 
     /** Provides user exercises for a specified date
      * <p>
