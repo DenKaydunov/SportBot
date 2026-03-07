@@ -48,14 +48,17 @@ public class UserService {
 
     public String unsubscribeUser(Long telegramId) {
         User user = getUserByTelegramId(telegramId);
+        String message;
 
         if (!user.getIsSubscribed()) {
-            return getMessage("unsubscribe.user.false");
-        }
+            message = getMessage("unsubscribe.user.false");
+        } else {
+            message = getMessage("unsubscribe.user.true");
             user.setIsSubscribed(false);
             userRepository.save(user);
-            return getMessage("unsubscribe.user.true");
+        }
 
+        return message;
     }
 
     private String getMessage(String message){
