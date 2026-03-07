@@ -2,6 +2,7 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.dto.RegistrationRequest;
 import com.github.sportbot.dto.UserRegistrationResponse;
+import com.github.sportbot.exception.UserAlreadyExistsException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.mapper.UserMapper;
 import com.github.sportbot.model.User;
@@ -24,7 +25,10 @@ public class UserService {
 
     @Transactional
     public UserRegistrationResponse registerUser(RegistrationRequest request) {
-        getUserByTelegramId(request.telegramId());
+        userRepository.findByTelegramId(request.telegramId())
+                .ifPresent(user -> {
+                    throw new UserAlreadyExistsException();
+                });
         User user = userMapper.toEntity(request);
         user = userRepository.save(user);
         String message = getLocalizedResponseMessage();
