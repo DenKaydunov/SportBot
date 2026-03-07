@@ -3,9 +3,9 @@ package com.github.sportbot.dto;
 import java.util.List;
 import java.util.Map;
 
-public record CongratulationBlock(
+public record Congratulation(
         String exerciseType,
-        Map<Integer, List<String>> thresholdsToUsers
+        Map<Integer, List<String>> targetsToUsers
 )
 {}
 

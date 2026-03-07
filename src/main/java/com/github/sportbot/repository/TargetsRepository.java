@@ -1,14 +1,13 @@
 package com.github.sportbot.repository;
 
-import com.github.sportbot.model.Thresholds;
+import com.github.sportbot.model.Targets;
 import io.micrometer.common.lang.NonNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface ThresholdsRepository extends JpaRepository<Thresholds, Long> {
+public interface TargetsRepository extends JpaRepository<Targets, Long> {
 
-    @Override
     @NonNull
-    List<Thresholds> findAll();
+    List<Targets> findAll();
 }

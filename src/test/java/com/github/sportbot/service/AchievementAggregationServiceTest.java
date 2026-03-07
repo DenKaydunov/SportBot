@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.github.sportbot.model.ExerciseType;
-import com.github.sportbot.model.Thresholds;
+import com.github.sportbot.model.Targets;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserExerciseTotal;
 import com.github.sportbot.repository.ExerciseRecordRepository;
-import com.github.sportbot.repository.ThresholdsRepository;
+import com.github.sportbot.repository.TargetsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -24,7 +24,7 @@ class AchievementAggregationServiceTest {
     private ExerciseRecordRepository exerciseRecordRepository;
 
     @Mock
-    private ThresholdsRepository thresholdsRepository;
+    private TargetsRepository targetsRepository;
 
     @InjectMocks
     private AchievementAggregationService service;
@@ -36,11 +36,11 @@ class AchievementAggregationServiceTest {
 
     @Test
     void testGetMonthlyAchievements() {
-        // 1️⃣ Мокируем пороги
-        when(thresholdsRepository.findAll()).thenReturn(List.of(
-                new Thresholds(1L,500, null),
-                new Thresholds(2L,1000, null),
-                new Thresholds(3L,5000, null)
+
+        when(targetsRepository.findAll()).thenReturn(List.of(
+                new Targets(1L,500, null),
+                new Targets(2L,1000, null),
+                new Targets(3L,5000, null)
         ));
 
         User user1 = User.builder().id(10).fullName("Андрей").isSubscribed(true).build();
@@ -49,12 +49,13 @@ class AchievementAggregationServiceTest {
         User user4 = User.builder().id(10).fullName("Николай").isSubscribed(true).build();
 
         ExerciseType type1 = ExerciseType.builder().code("push_up").title("Подтягивания").build();
-        ExerciseType type2 = ExerciseType.builder().code("pull_up").title("Отжжимания").build();
+        ExerciseType type2 = ExerciseType.builder().code("pull_up").title("Отжимания").build();
 
 
         List<UserExerciseTotal> totals = List.of(
                 new UserExerciseTotal(user1, type1, 1200L),
                 new UserExerciseTotal(user2, type1, 600L),
+                new UserExerciseTotal(user2, type2, 1100L),
                 new UserExerciseTotal(user3, type2, 6000L),
                 new UserExerciseTotal(user4, type2, 400L)
         );
@@ -62,7 +63,7 @@ class AchievementAggregationServiceTest {
         when(exerciseRecordRepository.getTotalForMonth(any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(totals);
 
-        String message = service.getMonthlyAchievements();
+        String message = service.getAchievementForMonth();
 
         assertNotNull(message);
         assertTrue(message.contains("Подтягивания"));
@@ -72,5 +73,7 @@ class AchievementAggregationServiceTest {
         assertFalse(message.contains("Николай"));
         assertTrue(message.contains("500+: Алина"));
         assertTrue(message.contains("1000+: Андрей"));
+        assertTrue(message.contains("Отжимания"));
+        assertTrue(message.contains("1000+: Алина"));
     }
 }

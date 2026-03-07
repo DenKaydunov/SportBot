@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Thresholds {
+public class Targets {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
