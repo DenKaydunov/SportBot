@@ -170,17 +170,22 @@ public class ExerciseService {
         LocalDate finalEndDate = (endDate == null) ? startDate : endDate;
         verifyDates(startDate, finalEndDate);
 
-        List<ExercisePeriodProjection> summary = exerciseRecordRepository.getUserProgressByPeriod(telegramId, startDate, endDate);
+        List<ExercisePeriodProjection> summary = exerciseRecordRepository.getUserProgressByPeriod(telegramId, startDate, finalEndDate);
 
         StringBuilder report = new StringBuilder();
         appendHeader(report, startDate, finalEndDate);
 
-        if (summary.isEmpty()) {
-            report.append("Тренировок за этот период не найдено. 😴");
-        } else {
-            summary.forEach(exercise -> report.append(String.format("%s - %d%n", exercise.getExerciseType(), exercise.getTotalCount())));
+        int totalCount = 0;
+
+        for (ExercisePeriodProjection list : summary){
+            totalCount += list.getTotalCount();
         }
 
+        if (totalCount > 0)  {
+            summary.forEach(exercise -> report.append(String.format("%s - %d%n", exercise.getExerciseType(), exercise.getTotalCount())));
+        } else {
+            report.append("Тренировок за этот период не найдено. 😴");
+        }
         return report.toString();
     }
 
