@@ -72,4 +72,33 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    @Query(value = """
+                WITH totals AS (
+                    SELECT
+                        u.id                                 AS user_id,
+                        COALESCE(u.full_name, 'Без имени')   AS user_name,
+                        COALESCE(SUM(er.count), 0)           AS total
+                    FROM users u
+                    LEFT JOIN exercise_record er ON er.user_id = u.id
+                    GROUP BY u.id, u.full_name
+                ),
+                ranked AS (
+                    SELECT
+                        user_id,
+                        user_name,
+                        total,
+                        DENSE_RANK() OVER (ORDER BY total DESC) AS position
+                    FROM totals
+                )
+                SELECT user_id, user_name, total, position
+                FROM ranked
+                WHERE position <= :limit OR user_id = :userId
+                ORDER BY position ASC, user_id ASC
+            """, nativeQuery = true)
+    List<Object[]> findTopAllWithUser(
+            @Param("limit") int limit,
+            @Param("userId") Long userId
+    );
+
 }

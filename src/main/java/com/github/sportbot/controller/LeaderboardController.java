@@ -133,4 +133,12 @@ public class LeaderboardController {
     ) {
         return leaderboardService.getLeaderboardByDatesPaged(exerciseCode, tagCode, pageable, startDate, endDate);
     }
+
+    @GetMapping("/top")
+    public String getTop(
+            @RequestParam Long userId,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        return leaderboardService.getTopAllExercises(userId, limit);
+    }
 }
