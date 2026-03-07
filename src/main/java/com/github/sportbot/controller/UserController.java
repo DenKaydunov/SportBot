@@ -17,9 +17,4 @@ public class UserController {
     public UserRegistrationResponse registerUser(@RequestBody RegistrationRequest request) {
         return userService.registerUser(request);
     }
-
-    @PostMapping("/unsubscribe/{telegramId}")
-    public String unsubscribeUser(@PathVariable Long telegramId){
-        return userService.unsubscribeUser(telegramId);
-    }
 }
