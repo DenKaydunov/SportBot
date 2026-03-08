@@ -111,7 +111,6 @@ public class ExerciseService {
         StringBuilder message = new StringBuilder();
 
         for(StreakMilestone m : milestone) {
-            System.out.println(achieve);
             if (!achieve.contains(m.getId()) && currentStreak >= m.getDaysRequired()) {
                 message.append("\n🏆 Поздравляем! Награда за ")
                         .append(m.getDaysRequired())
@@ -119,7 +118,7 @@ public class ExerciseService {
                         .append(m.getTitle())
                         .append(" - ")
                         .append(m.getDescription())
-                        .append(" (награда: ")
+                        .append(" (Награда: ")
                         .append(m.getRewardTon())
                         .append(" Ton)");
             }
