@@ -3,7 +3,7 @@ package com.github.sportbot.service;
 import com.github.sportbot.dto.AchievementRow;
 import com.github.sportbot.dto.Congratulation;
 import com.github.sportbot.model.ExerciseType;
-import com.github.sportbot.model.Targets;
+import com.github.sportbot.model.AchievementTarget;
 import com.github.sportbot.model.UserExerciseTotal;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.TargetsRepository;
@@ -29,7 +29,7 @@ public class AchievementAggregationService {
 
         List<Integer> targets = targetsRepository.findAll()
                                                  .stream()
-                                                 .map(Targets::getValue)
+                                                 .map(AchievementTarget::getValue)
                                                  .sorted()
                                                  .toList();
 
@@ -42,8 +42,8 @@ public class AchievementAggregationService {
                                                        List<Integer> targets)
     {
         Map<String, Map<Integer, List<String>>> map = totals.stream()
-                .filter(u -> userService.isSubscribedUser(u.user().getTelegramId()))
-                .map(record -> toAchievementRow(record, targets))
+                .filter(projection -> userService.isSubscribedUser(projection.user().getTelegramId()))
+                .map(projection -> toAchievementRow(projection, targets))
                 .flatMap(Optional::stream)
                 .filter(row -> row.target() > 0)
                 .collect(Collectors.groupingBy(
@@ -59,12 +59,12 @@ public class AchievementAggregationService {
                 .toList();
     }
 
-    private Optional<AchievementRow> toAchievementRow(UserExerciseTotal record, List<Integer> targets) {
-        return resolveExerciseType(record)
+    private Optional<AchievementRow> toAchievementRow(UserExerciseTotal projection, List<Integer> targets) {
+        return resolveExerciseType(projection)
                 .map(type -> new AchievementRow(
                         type,
-                        resolveTarget(record.total(), targets),
-                        record.user().getFullName()
+                        resolveTarget(projection.total(), targets),
+                        projection.user().getFullName()
                 ));
     }
 

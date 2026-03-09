@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Targets {
+public class AchievementTarget {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

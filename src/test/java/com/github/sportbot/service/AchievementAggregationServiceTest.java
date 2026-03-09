@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.github.sportbot.model.ExerciseType;
-import com.github.sportbot.model.Targets;
+import com.github.sportbot.model.AchievementTarget;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserExerciseTotal;
 import com.github.sportbot.repository.ExerciseRecordRepository;
@@ -45,9 +45,9 @@ class AchievementAggregationServiceTest {
         when(userService.isSubscribedUser(13L)).thenReturn(true);
 
         when(targetsRepository.findAll()).thenReturn(List.of(
-                new Targets(1L,500, null),
-                new Targets(2L,1000, null),
-                new Targets(3L,5000, null)
+                new AchievementTarget(1L,500, null),
+                new AchievementTarget(2L,1000, null),
+                new AchievementTarget(3L,5000, null)
         ));
 
         User user1 = User.builder().telegramId(10L).fullName("Андрей").build();
