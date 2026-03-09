@@ -3,6 +3,7 @@ package com.github.sportbot.repository;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.ExerciseRecord;
+import com.github.sportbot.model.UserExerciseTotal;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -45,4 +46,16 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
      */
     @Query("SELECT MAX(w.date) FROM ExerciseRecord w WHERE w.user = :user AND w.date < :beforeDate")
     Optional<LocalDate> findMaxDateByUserBeforeDate(@Param("user") User user, @Param("beforeDate") LocalDate beforeDate);
+
+    @Query("""
+           SELECT er.user AS user, 
+           er.exerciseType AS type, 
+           SUM(er.count) AS total
+           FROM ExerciseRecord er
+           WHERE er.date BETWEEN :startDate AND :endDate
+           GROUP BY er.user, er.exerciseType
+           """)
+    List<UserExerciseTotal> getTotalForMonth(@Param("startDate") LocalDate startDate,
+                                             @Param("endDate") LocalDate endDate);
+
 }

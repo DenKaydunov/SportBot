@@ -26,7 +26,9 @@ public class UserService {
     @Transactional
     public UserRegistrationResponse registerUser(RegistrationRequest request) {
         userRepository.findByTelegramId(request.telegramId())
-                .ifPresent(user -> {throw new UserAlreadyExistsException();});
+                .ifPresent(user -> {
+                    throw new UserAlreadyExistsException();
+                });
         User user = userMapper.toEntity(request);
         user = userRepository.save(user);
         String message = getLocalizedResponseMessage();
@@ -45,4 +47,32 @@ public class UserService {
         return userRepository.findByTelegramId(telegramId)
                 .orElseThrow(UserNotFoundException::new);
     }
+
+    public String unsubscribeUser(Long telegramId) {
+        User user = getUserByTelegramId(telegramId);
+        String message;
+
+        if (!user.getIsSubscribed()) {
+            message = getMessage("unsubscribe.user.false");
+        } else {
+            message = getMessage("unsubscribe.user.true");
+            user.setIsSubscribed(false);
+            userRepository.save(user);
+        }
+
+        return message;
+    }
+
+    private String getMessage(String message){
+        return messageSource.getMessage(
+                message,
+                null,
+                Locale.forLanguageTag("ru-RU")
+        );
+    }
+
+    public boolean isSubscribedUser(Long telegramId){
+        return userRepository.existsByTelegramIdAndIsSubscribedTrue(telegramId);
+    }
+
 }
