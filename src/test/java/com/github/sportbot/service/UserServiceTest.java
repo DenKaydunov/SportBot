@@ -1,7 +1,7 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.dto.RegistrationRequest;
-import com.github.sportbot.dto.UserRegistrationResponse;
+import com.github.sportbot.dto.UserResponse;
 import com.github.sportbot.exception.UserAlreadyExistsException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.mapper.UserMapper;
@@ -79,7 +79,7 @@ class UserServiceTest {
                 .thenReturn("Пользователь успешно зарегистрирован");
 
         // When
-        UserRegistrationResponse response = userService.registerUser(request);
+        UserResponse response = userService.registerUser(request);
 
         // Then
         assertNotNull(response);
@@ -129,5 +129,69 @@ class UserServiceTest {
         assertThrows(UserNotFoundException.class, () -> userService.getUserByTelegramId(123456L));
 
         verify(userRepository).findByTelegramId(123456L);
+    }
+
+    @Test
+    void getOrCreateUser_UserExists_ReturnsExistingUser() {
+        // Given
+        Long telegramId = 123456L;
+        String fullName = "John Doe";
+        when(userRepository.findByTelegramId(telegramId)).thenReturn(Optional.of(existingUser));
+
+        // When
+        User result = userService.getOrCreateUser(telegramId, fullName);
+
+        // Then
+        assertEquals(existingUser, result);
+        verify(userRepository).findByTelegramId(telegramId);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void getOrCreateUser_UserDoesNotExist_CreatesNewUser() {
+        // Given
+        Long telegramId = 999999L;
+        String fullName = "New User";
+        User newUser = User.builder()
+                .telegramId(telegramId)
+                .fullName(fullName)
+                .build();
+
+        when(userRepository.findByTelegramId(telegramId)).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        // When
+        User result = userService.getOrCreateUser(telegramId, fullName);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(telegramId, result.getTelegramId());
+        assertEquals(fullName, result.getFullName());
+        verify(userRepository).findByTelegramId(telegramId);
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void getOrCreateUser_UserDoesNotExist_WithNullName_CreatesUserWithDefaultName() {
+        // Given
+        Long telegramId = 999999L;
+        String expectedName = "User " + telegramId;
+        User newUser = User.builder()
+                .telegramId(telegramId)
+                .fullName(expectedName)
+                .build();
+
+        when(userRepository.findByTelegramId(telegramId)).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        // When
+        User result = userService.getOrCreateUser(telegramId, null);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(telegramId, result.getTelegramId());
+        assertEquals(expectedName, result.getFullName());
+        verify(userRepository).findByTelegramId(telegramId);
+        verify(userRepository).save(any(User.class));
     }
 }

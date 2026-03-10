@@ -1,5 +1,6 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.exception.SubscriptionException;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.SubscriptionRepository;
@@ -8,10 +9,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
-public class SubscriptionService {
+public class SubscriptionService implements MessageLocalizer {
+
+    public static final String SUBSCRIBED = "subscription.message.success";
+    public static final String ALREADY_SUBSCRIBED = "subscription.already_subscribed";
+    public static final String UNSUBSCRIBED = "unsubscription.message.success";
+    public static final String NOT_SUBSCRIBED = "subscription.not_subscribed";
 
     private final SubscriptionRepository subscriptionRepository;
     private final UserService userService;
@@ -20,15 +27,17 @@ public class SubscriptionService {
     private final ExerciseTypeService exerciseTypeService;
     private final org.springframework.context.MessageSource messageSource;
 
+
     @Transactional
     public String subscribe(Long followerId, Long followingId) {
         if (followerId.equals(followingId)) {
-            throw new IllegalArgumentException("Cannot subscribe to yourself");
+            throw new SubscriptionException();
         }
+
         User follower = userService.getUserByTelegramId(followerId);
         User following = userService.getUserByTelegramId(followingId);
 
-        String messageKey;
+        String message;
         if (!subscriptionRepository.existsByFollowerAndFollowing(follower, following)) {
             Subscription subscription = Subscription.builder()
                     .follower(follower)
@@ -36,15 +45,35 @@ public class SubscriptionService {
                     .build();
             subscriptionRepository.save(subscription);
             notificationService.notifySubscription(follower, following);
-            messageKey = "subscription.subscribed";
+            message = localize(SUBSCRIBED, following);
         } else {
-            messageKey = "subscription.already_subscribed";
+            message = localize(ALREADY_SUBSCRIBED, following);
         }
-        return messageSource.getMessage(
-                messageKey,
-                new Object[]{following.getFullName()},
-                java.util.Locale.forLanguageTag("ru-RU")
-        );
+        return message;
+    }
+
+    @Transactional
+    public String subscribe(Long followerId, String followerName, Long followingId) {
+        if (followerId.equals(followingId)) {
+            throw new SubscriptionException();
+        }
+
+        User follower = userService.getOrCreateUser(followerId, followerName);
+        User following = userService.getUserByTelegramId(followingId);
+
+        String message;
+        if (!subscriptionRepository.existsByFollowerAndFollowing(follower, following)) {
+            Subscription subscription = Subscription.builder()
+                    .follower(follower)
+                    .following(following)
+                    .build();
+            subscriptionRepository.save(subscription);
+            notificationService.notifySubscription(follower, following);
+            message = localize(SUBSCRIBED, following);
+        } else {
+            message = localize(ALREADY_SUBSCRIBED, following);
+        }
+        return message;
     }
 
     @Transactional
@@ -52,18 +81,14 @@ public class SubscriptionService {
         User follower = userService.getUserByTelegramId(followerId);
         User following = userService.getUserByTelegramId(followingId);
 
-        String messageKey;
+        String message;
         if (subscriptionRepository.existsByFollowerAndFollowing(follower, following)) {
             subscriptionRepository.deleteByFollowerAndFollowing(follower, following);
-            messageKey = "subscription.unsubscribed";
+            message = localize(UNSUBSCRIBED, following);
         } else {
-            messageKey = "subscription.not_subscribed";
+            message = localize(NOT_SUBSCRIBED, following);
         }
-        return messageSource.getMessage(
-                messageKey,
-                new Object[]{following.getFullName()},
-                java.util.Locale.forLanguageTag("ru-RU")
-        );
+        return message;
     }
 
     @Transactional(readOnly = true)
@@ -104,5 +129,13 @@ public class SubscriptionService {
         }
 
         return sb.toString();
+    }
+
+    public String localize(String messageKey, Object user) {
+        return messageSource.getMessage(
+                messageKey,
+                new Object[]{((User)user).getFullName()},
+                Locale.forLanguageTag("ru-RU")
+        );
     }
 }

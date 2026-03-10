@@ -1,6 +1,8 @@
 package com.github.sportbot.controller;
 
+import com.github.sportbot.bot.SportBot;
 import com.github.sportbot.service.SubscriptionService;
+import com.github.sportbot.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -22,6 +24,12 @@ class SubscriptionControllerIntegrationTest {
 
     @MockBean
     private SubscriptionService subscriptionService;
+
+    @MockBean
+    private UserService userService;
+
+    @MockBean
+    private SportBot sportBot;
 
 
     @Test
