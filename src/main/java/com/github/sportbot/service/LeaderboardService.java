@@ -1,7 +1,7 @@
 package com.github.sportbot.service;
 
-import com.github.sportbot.model.ExerciseType;
-import com.github.sportbot.model.Period;
+import com.github.sportbot.config.WorkoutProperties;
+import com.github.sportbot.model.*;
 import com.github.sportbot.repository.LeaderBoardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -9,7 +9,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +22,8 @@ public class LeaderboardService {
     private final LeaderBoardRepository leaderBoardRepository;
     private final ExerciseTypeService exerciseTypeService;
     private final TagService tagService;
+    private final WorkoutProperties workoutProperties;
+    private final UserService userService;
 
     public String getLeaderboardByPeriod(String exerciseCode, int limit, String periodCode) {
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
@@ -131,7 +137,7 @@ public class LeaderboardService {
 
         return sb.toString();
     }
-
+//??
     public String getTopAllExercises(Long userId, int limit) {
         int safeLimit = Math.max(1, Math.min(limit, 100)); // защита от мусора
         List<Object[]> rows = leaderBoardRepository.findTopAllWithUser(safeLimit, userId);
@@ -186,7 +192,106 @@ public class LeaderboardService {
             default -> pos + " место —";
         };
     }
+    //??
+    public String getTopUsersRating(Long telegramId){
+        List<UserExerciseTotal> totals = leaderBoardRepository.getTotalUsersRating();
+        Map<User, Double> userTotals = sumUserScore(totals);
+        List<UserScore> scoreList = getTopUser(userTotals);
+        User user = userService.getUserByTelegramId(telegramId);
+        int userPosition = userPosition(scoreList, user);
+        String allRating = messageBuildRating(scoreList, userPosition);
+        String userRating = messageBuildUserRating(scoreList, userPosition);
+        return allRating + userRating;
+    }
 
+    private Map<User, Double> sumUserScore(List<UserExerciseTotal> totals){
+        return totals.stream()
+                .collect(Collectors.groupingBy(
+                        UserExerciseTotal::user,
+                        Collectors.summingDouble(uet ->
+                                uet.total() * workoutProperties.getCoefficient(uet.exerciseType().getCode())
+                        )));
+    }
+
+    private List<UserScore> getTopUser(Map<User, Double> totals){
+        return totals.entrySet().stream()
+                .filter(u -> u.getKey().getIsSubscribed())
+                .sorted(Map.Entry.<User, Double> comparingByValue(Comparator.reverseOrder()))
+                .map(entry -> new UserScore(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
+    private int userPosition(List<UserScore> scoreList, User user){
+        return IntStream.range(0, scoreList.size())
+                .filter(i -> scoreList.get(i).user().equals(user))
+                .findFirst()
+                .orElse(-1);
+    }
+
+    /**
+     *
+     * @param scoreList
+     * @param userPosition
+     * @return Example:
+     * 🏆Top 10:
+     * 🥇 1 место Иван - 110.00
+     * 🥈 2 место Андрей - 98.00
+     * ➡️🥉 3 место Сергей - 86.00
+     * ⭐ 4 место Анна - 75.38
+     * ⭐ 5 место Николай - 73.83
+     */
+    private String messageBuildRating(List<UserScore> scoreList, int userPosition){
+        StringBuilder message = new StringBuilder("🏆Top 10:");
+        String[] medals = {"🥇", "🥈", "🥉"};
+        int count = 1;
+
+        for (UserScore us : scoreList){
+            String medal = (count <= 3) ? medals[count - 1] : "⭐";
+            if (count == (userPosition + 1)){
+                message.append("➡️");
+            }
+            message.append(String.format("%n%s %d место %s - %.2f",
+                    medal, count, us.user().getFullName(), us.totalScore()));
+            count++;
+            if (count > 5){
+                break;
+            }
+        }
+        return message.toString();
+    }
+
+    /**
+     *
+     * @param scoreList
+     * @param userPosition
+     * @return Example:
+     * ...
+     * ⭐ 7 место Анна - 75.38
+     * ➡️⭐ 8 место Николай - 73.83
+     * ⭐ 9 место Николай - 73.83
+     * ...
+     */
+    private String messageBuildUserRating(List<UserScore> scoreList, int userPosition){
+        StringBuilder message = new StringBuilder();
+
+        int start = Math.max(0, userPosition - 1);
+        int end = Math.min(scoreList.size() - 1, userPosition + 1);
+
+        if (userPosition >= 5){
+            message.append("\n...");
+        for (int i = start; i <= end; i++) {
+            if (i == userPosition) {
+                message.append("➡️");
+            }
+            message.append(String.format("%n⭐ %d место %s - %.2f",
+                    i + 1,
+                    scoreList.get(i).user().getFullName(),
+                    scoreList.get(i).totalScore()));
+        }
+            message.append("\n...");
+        }
+        return message.toString();
+    }
 
     private record LeaderboardEntry(String name, long total) {
     }

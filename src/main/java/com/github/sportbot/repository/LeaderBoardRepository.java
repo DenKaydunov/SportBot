@@ -1,5 +1,6 @@
 package com.github.sportbot.repository;
 
+import com.github.sportbot.model.UserExerciseTotal;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -100,5 +101,12 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
             @Param("limit") int limit,
             @Param("userId") Long userId
     );
+
+    @Query("""
+    SELECT new com.github.sportbot.model.UserExerciseTotal(er.user, er.exerciseType, SUM(er.count))
+    FROM ExerciseRecord er
+    GROUP BY er.user, er.exerciseType
+""")
+    List<UserExerciseTotal> getTotalUsersRating();
 
 }

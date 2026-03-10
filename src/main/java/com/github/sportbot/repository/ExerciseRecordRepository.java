@@ -48,13 +48,11 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
     Optional<LocalDate> findMaxDateByUserBeforeDate(@Param("user") User user, @Param("beforeDate") LocalDate beforeDate);
 
     @Query("""
-           SELECT er.user AS user, 
-           er.exerciseType AS type, 
-           SUM(er.count) AS total
-           FROM ExerciseRecord er
-           WHERE er.date BETWEEN :startDate AND :endDate
-           GROUP BY er.user, er.exerciseType
-           """)
+    SELECT new com.github.sportbot.model.UserExerciseTotal(er.user, er.exerciseType, SUM(er.count))
+    FROM ExerciseRecord er
+    WHERE er.date BETWEEN :startDate AND :endDate
+    GROUP BY er.user, er.exerciseType
+""")
     List<UserExerciseTotal> getTotalForMonth(@Param("startDate") LocalDate startDate,
                                              @Param("endDate") LocalDate endDate);
 
