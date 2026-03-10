@@ -89,7 +89,8 @@ public class SportBot extends TelegramLongPollingBot {
     public String getBotUsername() { return "Sport Bot"; }
 
     private void handleSimpleText(Update update) {
-        sendTgMessage(update.getMessage().getFrom().getId(),
-                "Ты написал: " + update.getMessage().getText());
+        //only for testing
+//        sendTgMessage(update.getMessage().getFrom().getId(),
+//                "Ты написал: " + update.getMessage().getText());
     }
 }
