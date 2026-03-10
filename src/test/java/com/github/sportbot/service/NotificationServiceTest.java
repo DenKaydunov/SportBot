@@ -9,13 +9,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.springframework.context.MessageSource;
 
 import java.util.List;
+import java.util.Locale;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,6 +25,9 @@ class NotificationServiceTest {
 
     @Mock
     private SubscriptionService subscriptionService;
+
+    @Mock
+    private MessageSource messageSource;
 
     @InjectMocks
     private NotificationService notificationService;
@@ -53,22 +55,26 @@ class NotificationServiceTest {
                 .code("push_up")
                 .title("Отжимания")
                 .build();
+
+        // Setup MessageSource mock (lenient because not all tests use it)
+        lenient().when(messageSource.getMessage(
+                eq(NotificationService.NOTIFICATION_SUBSCRIPTION),
+                any(Object[].class),
+                any(Locale.class)
+        )).thenAnswer(invocation -> "🔥 На вас подписался пользователь: Follower User");
     }
 
     @Test
-    void notifySubscription_SendsMessageToFollowing() throws TelegramApiException {
+    void notifySubscription_SendsMessageToFollowing() {
         // When
         notificationService.notifySubscription(follower, following);
 
         // Then
-        verify(sportBot).execute(argThat((SendMessage message) ->
-                message.getChatId().equals("200") &&
-                message.getText().contains("Follower User")
-        ));
+        verify(sportBot).sendTgMessage(eq(200L), contains("Follower User"));
     }
 
     @Test
-    void notifyFollowersAboutWorkout_SendsMessagesToAllFollowers() throws TelegramApiException {
+    void notifyFollowersAboutWorkout_SendsMessagesToAllFollowers() {
         // Given
         User follower1 = User.builder().id(3).telegramId(300L).fullName("Follower 1").build();
         User follower2 = User.builder().id(4).telegramId(400L).fullName("Follower 2").build();
@@ -80,23 +86,21 @@ class NotificationServiceTest {
         notificationService.notifyFollowersAboutWorkout(following, exerciseType, 50);
 
         // Then
-        verify(sportBot, times(2)).execute(any(SendMessage.class));
-        verify(sportBot).execute(argThat((SendMessage message) ->
-                message.getChatId().equals("300") &&
-                message.getText().contains("Following User") &&
-                message.getText().contains("Отжимания") &&
-                message.getText().contains("50")
+        verify(sportBot, times(2)).sendTgMessage(anyLong(), (String) any());
+        verify(sportBot).sendTgMessage(eq(300L), argThat((String message) ->
+                message.contains("Following User") &&
+                message.contains("Отжимания") &&
+                message.contains("50")
         ));
-        verify(sportBot).execute(argThat((SendMessage message) ->
-                message.getChatId().equals("400") &&
-                message.getText().contains("Following User") &&
-                message.getText().contains("Отжимания") &&
-                message.getText().contains("50")
+        verify(sportBot).sendTgMessage(eq(400L), argThat((String message) ->
+                message.contains("Following User") &&
+                message.contains("Отжимания") &&
+                message.contains("50")
         ));
     }
 
     @Test
-    void notifyFollowersAboutNewRecord_SendsMessagesToAllFollowers() throws TelegramApiException {
+    void notifyFollowersAboutNewRecord_SendsMessagesToAllFollowers() {
         // Given
         User follower1 = User.builder().id(3).telegramId(300L).fullName("Follower 1").build();
 
@@ -107,43 +111,16 @@ class NotificationServiceTest {
         notificationService.notifyFollowersAboutNewRecord(following, exerciseType, 100);
 
         // Then
-        verify(sportBot).execute(argThat((SendMessage message) ->
-                message.getChatId().equals("300") &&
-                message.getText().contains("Following User") &&
-                message.getText().contains("побил личный рекорд") &&
-                message.getText().contains("Отжимания") &&
-                message.getText().contains("100")
+        verify(sportBot).sendTgMessage(eq(300L), argThat((String message) ->
+                message.contains("Following User") &&
+                message.contains("побил личный рекорд") &&
+                message.contains("Отжимания") &&
+                message.contains("100")
         ));
     }
 
     @Test
-    void sendTelegramMessage_Success() throws TelegramApiException {
-        // When
-        notificationService.sendTelegramMessage(100L, "Test message");
-
-        // Then
-        verify(sportBot).execute(argThat((SendMessage message) ->
-                message.getChatId().equals("100") &&
-                message.getText().equals("Test message")
-        ));
-    }
-
-    @Test
-    void sendTelegramMessage_TelegramApiException_LogsError() throws TelegramApiException {
-        // Given
-        doThrow(new TelegramApiException("API Error"))
-                .when(sportBot).execute(any(SendMessage.class));
-
-        // When
-        notificationService.sendTelegramMessage(100L, "Test message");
-
-        // Then
-        verify(sportBot).execute(any(SendMessage.class));
-        // Verify that no exception is thrown (error is logged instead)
-    }
-
-    @Test
-    void notifyFollowersAboutWorkout_NoFollowers_DoesNotSendMessages() throws TelegramApiException {
+    void notifyFollowersAboutWorkout_NoFollowers_DoesNotSendMessages() {
         // Given
         when(subscriptionService.getFollowers(following.getTelegramId()))
                 .thenReturn(List.of());
@@ -152,6 +129,6 @@ class NotificationServiceTest {
         notificationService.notifyFollowersAboutWorkout(following, exerciseType, 50);
 
         // Then
-        verify(sportBot, never()).execute(any(SendMessage.class));
+        verify(sportBot, never()).sendTgMessage(anyLong(), (String) any());
     }
 }

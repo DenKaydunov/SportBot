@@ -1,5 +1,6 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.bot.SportBot;
 import com.github.sportbot.model.User;
 import com.github.sportbot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ public class AchievementAggregationScheduler {
 
     private final AchievementAggregationService achievementService;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
+    private final SportBot sportBot;
 
     @Scheduled(cron = "0 0 12 1 * *")
     public void sendAchievementForMonth(){
@@ -23,7 +24,7 @@ public class AchievementAggregationScheduler {
         List<User> subscribeUser = userRepository.findAllByIsSubscribedTrue();
         for (User user : subscribeUser){
             if (!message.isEmpty()){
-                notificationService.sendTelegramMessage(user.getTelegramId(), message);
+                sportBot.sendTgMessage(user.getTelegramId(), message);
             }
         }
     }
