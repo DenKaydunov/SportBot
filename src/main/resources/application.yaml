@@ -20,11 +20,11 @@ spring:
   data:
     web:
       pageable:
-        one-indexed-parameters: true
+        one-indexed-parameters: false
 
   liquibase:
     enabled: true
     change-log: db/changelog/db.changelog-master.yaml
 
 bot:
-  token: ${SPORT_BOT_TOKEN}
+  token: ${TG_BOT_TOKEN}
