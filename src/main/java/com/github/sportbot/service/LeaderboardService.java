@@ -59,7 +59,7 @@ public class LeaderboardService {
                                         LocalDate startDate,
                                         LocalDate endDate) {
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
-        Long tag= tagService.getIdByCode(tagCode);
+        Long tag = tagService.getIdByCode(tagCode);
         String displayName = String.format("c %s по %s", startDate, endDate);
 
         return buildAndFormatLeaderboard(exerciseType, tag, limit, startDate, endDate, displayName);
@@ -137,64 +137,9 @@ public class LeaderboardService {
 
         return sb.toString();
     }
-//??
-    public String getTopAllExercises(Long userId, int limit) {
-        int safeLimit = Math.max(1, Math.min(limit, 100)); // защита от мусора
-        List<Object[]> rows = leaderBoardRepository.findTopAllWithUser(safeLimit, userId);
 
-        // top = все строки position <= limit
-        List<Object[]> topRows = rows.stream()
-                .filter(r -> ((Number) r[3]).intValue() <= safeLimit)
-                .toList();
-
-        // userRow = строка userId (может уже быть в top)
-        Object[] userRow = rows.stream()
-                .filter(r -> ((Number) r[0]).longValue() == userId)
-                .findFirst()
-                .orElse(null);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Топ:\n");
-
-        for (Object[] r : topRows) {
-            long id = ((Number) r[0]).longValue();
-            String name = (String) r[1];
-            long total = ((Number) r[2]).longValue();
-            int pos = ((Number) r[3]).intValue();
-
-            sb.append(formatPlace(pos))
-                    .append(" ")
-                    .append(name)
-                    .append(" + ")
-                    .append(total)
-                    .append(" упр\n");
-        }
-
-        if (userRow != null) {
-            int userPos = ((Number) userRow[3]).intValue();
-            long userTotal = ((Number) userRow[2]).longValue();
-
-            sb.append("\nТвое место — ")
-                    .append(userPos)
-                    .append(" (ты + ")
-                    .append(userTotal)
-                    .append(" упр)");
-        }
-
-        return sb.toString();
-    }
-
-    private String formatPlace(int pos) {
-        return switch (pos) {
-            case 1 -> "🥇 1 место —";
-            case 2 -> "🥈 2 место —";
-            case 3 -> "🥉 3 место —";
-            default -> pos + " место —";
-        };
-    }
-    //??
-    public String getTopUsersRating(Long telegramId){
-        List<UserExerciseTotal> totals = leaderBoardRepository.getTotalUsersRating();
+    public String getRating(Long telegramId) {
+        List<UserExerciseSummary> totals = leaderBoardRepository.getTotalUsersRating();
         Map<User, Double> userTotals = sumUserScore(totals);
         List<UserScore> scoreList = getTopUser(userTotals);
         User user = userService.getUserByTelegramId(telegramId);
@@ -204,24 +149,24 @@ public class LeaderboardService {
         return allRating + userRating;
     }
 
-    private Map<User, Double> sumUserScore(List<UserExerciseTotal> totals){
+    private Map<User, Double> sumUserScore(List<UserExerciseSummary> totals) {
         return totals.stream()
                 .collect(Collectors.groupingBy(
-                        UserExerciseTotal::user,
+                        UserExerciseSummary::user,
                         Collectors.summingDouble(uet ->
                                 uet.total() * workoutProperties.getCoefficient(uet.exerciseType().getCode())
                         )));
     }
 
-    private List<UserScore> getTopUser(Map<User, Double> totals){
+    private List<UserScore> getTopUser(Map<User, Double> totals) {
         return totals.entrySet().stream()
                 .filter(u -> u.getKey().getIsSubscribed())
-                .sorted(Map.Entry.<User, Double> comparingByValue(Comparator.reverseOrder()))
+                .sorted(Map.Entry.<User, Double>comparingByValue(Comparator.reverseOrder()))
                 .map(entry -> new UserScore(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
-    private int userPosition(List<UserScore> scoreList, User user){
+    private int userPosition(List<UserScore> scoreList, User user) {
         return IntStream.range(0, scoreList.size())
                 .filter(i -> scoreList.get(i).user().equals(user))
                 .findFirst()
@@ -229,31 +174,37 @@ public class LeaderboardService {
     }
 
     /**
+     * Builds a formatted message for the top 5 leaderboard, including user positions, medals, and scores.
      *
-     * @param scoreList
-     * @param userPosition
-     * @return Example:
-     * 🏆Top 10:
-     * 🥇 1 место Иван - 110.00
-     * 🥈 2 место Андрей - 98.00
-     * ➡️🥉 3 место Сергей - 86.00
-     * ⭐ 4 место Анна - 75.38
-     * ⭐ 5 место Николай - 73.83
+     * @param scoreList List of {@link UserScore} representing all users’ scores, sorted in descending order.
+     * @param userPosition Position of the target user in the leaderboard (zero-based index), or -1 if not found.
+     * @return A formatted string displaying the top 5 leaderboard. If the target user is in the top 5,
+     *         they are marked with ⬅️. Example output:
+     *         🏆Top 5:
+     *         🥇 1 место Иван - 110.00
+     *         🥈 2 место Андрей - 98.00
+     *         🥉 3 место Сергей - 86.00 ⬅️
+     *         ⭐ 4 место Анна - 75.38
+     *         ⭐ 5 место Николай - 73.83
      */
-    private String messageBuildRating(List<UserScore> scoreList, int userPosition){
-        StringBuilder message = new StringBuilder("🏆Top 10:");
+    private String messageBuildRating(List<UserScore> scoreList, int userPosition) {
+        StringBuilder message = new StringBuilder("🏆Top 5:");
         String[] medals = {"🥇", "🥈", "🥉"};
         int count = 1;
 
-        for (UserScore us : scoreList){
+        for (UserScore us : scoreList) {
             String medal = (count <= 3) ? medals[count - 1] : "⭐";
-            if (count == (userPosition + 1)){
-                message.append("➡️");
+
+            if (userPosition >= 0 && count == (userPosition + 1)) {
+                message.append(String.format("%n%s %d место %s - %.2f ⬅️",
+                        medal, count, us.user().getFullName(), us.totalScore()));
+            } else {
+                message.append(String.format("%n%s %d место %s - %.2f",
+                        medal, count, us.user().getFullName(), us.totalScore()));
             }
-            message.append(String.format("%n%s %d место %s - %.2f",
-                    medal, count, us.user().getFullName(), us.totalScore()));
+
             count++;
-            if (count > 5){
+            if (count > 5) {
                 break;
             }
         }
@@ -261,35 +212,54 @@ public class LeaderboardService {
     }
 
     /**
+     * Строит строку с контекстом позиции пользователя в рейтинге.
      *
-     * @param scoreList
-     * @param userPosition
-     * @return Example:
-     * ...
-     * ⭐ 7 место Анна - 75.38
-     * ➡️⭐ 8 место Николай - 73.83
-     * ⭐ 9 место Николай - 73.83
-     * ...
+     * @param scoreList полный список рейтинга
+     * @param userPosition позиция пользователя (0-based), или -1 если не найден
+     * @return Форматированная строка с позицией и контекстом
+     *
+     * Примеры вывода:
+     * - Пользователь в топ-5: возвращает пустую строку (позиция уже показана в топе)
+     * - Пользователь вне топ-5:
+     *   ...
+     *   ⭐ 7 место Анна - 75.38
+     *   ⭐ 8 место Николай - 73.83 ⬅️
+     *   ⭐ 9 место Петр - 70.15
+     *   ...
+     * - Пользователь не найден (userPosition == -1): возвращает пустую строку
      */
-    private String messageBuildUserRating(List<UserScore> scoreList, int userPosition){
-        StringBuilder message = new StringBuilder();
+    private String messageBuildUserRating(List<UserScore> scoreList, int userPosition) {
+        // Случай 1: Пользователь не в рейтинге (не подписан или нет упражнений)
+        if (userPosition == -1) {
+            return "";
+        }
 
+        // Случай 2: Пользователь в топ-5 - позиция уже показана с ⬅️ в messageBuildRating
+        if (userPosition < 5) {
+            return "";  // Не дублируем информацию
+        }
+
+        // Случай 3: Пользователь вне топ-5 - показываем контекст (± 1 позицию)
+        StringBuilder message = new StringBuilder();
         int start = Math.max(0, userPosition - 1);
         int end = Math.min(scoreList.size() - 1, userPosition + 1);
 
-        if (userPosition >= 5){
-            message.append("\n...");
+        message.append("\n...");
         for (int i = start; i <= end; i++) {
             if (i == userPosition) {
-                message.append("➡️");
+                message.append(String.format("%n⭐ %d место %s - %.2f ⬅️",
+                        i + 1,
+                        scoreList.get(i).user().getFullName(),
+                        scoreList.get(i).totalScore()));
+            } else {
+                message.append(String.format("%n⭐ %d место %s - %.2f",
+                        i + 1,
+                        scoreList.get(i).user().getFullName(),
+                        scoreList.get(i).totalScore()));
             }
-            message.append(String.format("%n⭐ %d место %s - %.2f",
-                    i + 1,
-                    scoreList.get(i).user().getFullName(),
-                    scoreList.get(i).totalScore()));
         }
-            message.append("\n...");
-        }
+        message.append("\n...");
+
         return message.toString();
     }
 

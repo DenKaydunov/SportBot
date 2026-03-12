@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.AchievementTarget;
 import com.github.sportbot.model.User;
-import com.github.sportbot.model.UserExerciseTotal;
+import com.github.sportbot.model.UserExerciseSummary;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.TargetsRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,12 +59,12 @@ class AchievementAggregationServiceTest {
         ExerciseType type2 = ExerciseType.builder().code("pull_up").title("Отжимания").build();
 
 
-        List<UserExerciseTotal> totals = List.of(
-                new UserExerciseTotal(user1, type1, 1200L),
-                new UserExerciseTotal(user2, type1, 600L),
-                new UserExerciseTotal(user2, type2, 1100L),
-                new UserExerciseTotal(user3, type2, 6000L),
-                new UserExerciseTotal(user4, type2, 400L)
+        List<UserExerciseSummary> totals = List.of(
+                new UserExerciseSummary(user1, type1, 1200L),
+                new UserExerciseSummary(user2, type1, 600L),
+                new UserExerciseSummary(user2, type2, 1100L),
+                new UserExerciseSummary(user3, type2, 6000L),
+                new UserExerciseSummary(user4, type2, 400L)
         );
 
         when(exerciseRecordRepository.getTotalForMonth(any(LocalDate.class), any(LocalDate.class)))

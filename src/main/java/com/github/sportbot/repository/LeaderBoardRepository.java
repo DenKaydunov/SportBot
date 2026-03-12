@@ -1,6 +1,6 @@
 package com.github.sportbot.repository;
 
-import com.github.sportbot.model.UserExerciseTotal;
+import com.github.sportbot.model.UserExerciseSummary;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -74,39 +74,12 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
             @Param("endDate") LocalDate endDate
     );
 
-    @Query(value = """
-                WITH totals AS (
-                    SELECT
-                        u.id                                 AS user_id,
-                        COALESCE(u.full_name, 'Без имени')   AS user_name,
-                        COALESCE(SUM(er.count), 0)           AS total
-                    FROM users u
-                    LEFT JOIN exercise_record er ON er.user_id = u.id
-                    GROUP BY u.id, u.full_name
-                ),
-                ranked AS (
-                    SELECT
-                        user_id,
-                        user_name,
-                        total,
-                        DENSE_RANK() OVER (ORDER BY total DESC) AS position
-                    FROM totals
-                )
-                SELECT user_id, user_name, total, position
-                FROM ranked
-                WHERE position <= :limit OR user_id = :userId
-                ORDER BY position ASC, user_id ASC
-            """, nativeQuery = true)
-    List<Object[]> findTopAllWithUser(
-            @Param("limit") int limit,
-            @Param("userId") Long userId
-    );
 
     @Query("""
-    SELECT new com.github.sportbot.model.UserExerciseTotal(er.user, er.exerciseType, SUM(er.count))
+    SELECT new com.github.sportbot.model.UserExerciseSummary(er.user, er.exerciseType, SUM(er.count))
     FROM ExerciseRecord er
     GROUP BY er.user, er.exerciseType
 """)
-    List<UserExerciseTotal> getTotalUsersRating();
+    List<UserExerciseSummary> getTotalUsersRating();
 
 }

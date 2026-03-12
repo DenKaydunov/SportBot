@@ -11,11 +11,12 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "workout")
 @Data
 public class WorkoutProperties {
+    public static final double DEFAULT_COEFFICIENT = 1.0;
     private double incrementPerDay;
     private List<Double> coefficients;
     private Map<String, Double> coefficient;
 
     public double getCoefficient(String exerciseTypeCode) {
-        return coefficient.getOrDefault(exerciseTypeCode, 1.0);
+        return coefficient.getOrDefault(exerciseTypeCode, DEFAULT_COEFFICIENT);
     }
 }

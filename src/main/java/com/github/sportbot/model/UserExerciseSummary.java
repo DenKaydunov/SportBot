@@ -1,6 +1,6 @@
 package com.github.sportbot.model;
 
-public record UserExerciseTotal(
+public record UserExerciseSummary(
         User user,
         ExerciseType exerciseType,
         Long total

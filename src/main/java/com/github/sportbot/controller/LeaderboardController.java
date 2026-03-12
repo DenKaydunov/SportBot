@@ -133,18 +133,12 @@ public class LeaderboardController {
     ) {
         return leaderboardService.getLeaderboardByDatesPaged(exerciseCode, tagCode, pageable, startDate, endDate);
     }
-    //??
-    @GetMapping("/rating")
-    public String getTop(
-            @RequestParam Long userId,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
-        return leaderboardService.getTopAllExercises(userId, limit);
-    }
-    //??
 
-    @GetMapping("/rating/{telegramId}")
-    public String getTopUsersMonthly(@PathVariable Long telegramId){
-        return leaderboardService.getTopUsersRating(telegramId);
+    @GetMapping("/rating")
+    public String getRating(
+            @RequestParam
+            @Parameter(example = "1000001")
+            Long telegramId){
+        return leaderboardService.getRating(telegramId);
     }
 }
