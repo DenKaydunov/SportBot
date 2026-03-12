@@ -4,7 +4,7 @@ import com.github.sportbot.dto.AchievementRow;
 import com.github.sportbot.dto.Congratulation;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.AchievementTarget;
-import com.github.sportbot.model.UserExerciseTotal;
+import com.github.sportbot.model.UserExerciseSummary;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.TargetsRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,12 +33,12 @@ public class AchievementAggregationService {
                                                  .sorted()
                                                  .toList();
 
-        List<UserExerciseTotal> totals = exerciseRecordRepository.getTotalForMonth(startDay, endDay);
+        List<UserExerciseSummary> totals = exerciseRecordRepository.getTotalForMonth(startDay, endDay);
         List<Congratulation> achievementsList = buildAchievementsList(totals, targets);
         return messageBuild(achievementsList);
     }
 
-    private List<Congratulation> buildAchievementsList(List<UserExerciseTotal> totals,
+    private List<Congratulation> buildAchievementsList(List<UserExerciseSummary> totals,
                                                        List<Integer> targets)
     {
         Map<String, Map<Integer, List<String>>> map = totals.stream()
@@ -59,7 +59,7 @@ public class AchievementAggregationService {
                 .toList();
     }
 
-    private Optional<AchievementRow> toAchievementRow(UserExerciseTotal projection, List<Integer> targets) {
+    private Optional<AchievementRow> toAchievementRow(UserExerciseSummary projection, List<Integer> targets) {
         return resolveExerciseType(projection)
                 .map(type -> new AchievementRow(
                         type,
@@ -68,7 +68,7 @@ public class AchievementAggregationService {
                 ));
     }
 
-    private Optional<String> resolveExerciseType(UserExerciseTotal total){
+    private Optional<String> resolveExerciseType(UserExerciseSummary total){
         return Optional.ofNullable(total.exerciseType())
                 .map(ExerciseType::getTitle)
                 .filter(title -> !title.isBlank());

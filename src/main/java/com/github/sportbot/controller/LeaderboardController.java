@@ -133,4 +133,12 @@ public class LeaderboardController {
     ) {
         return leaderboardService.getLeaderboardByDatesPaged(exerciseCode, tagCode, pageable, startDate, endDate);
     }
+
+    @GetMapping("/rating")
+    public String getRating(
+            @RequestParam
+            @Parameter(example = "1000001")
+            Long telegramId){
+        return leaderboardService.getRating(telegramId);
+    }
 }
