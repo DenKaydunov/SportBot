@@ -181,14 +181,14 @@ public class LeaderboardService {
      * @return A formatted string displaying the top 5 leaderboard. If the target user is in the top 5,
      *         they are marked with ⬅️. Example output:
      *         🏆Top 5:
-     *         🥇 1 место Иван - 110.00
-     *         🥈 2 место Андрей - 98.00
-     *         🥉 3 место Сергей - 86.00 ⬅️
-     *         ⭐ 4 место Анна - 75.38
-     *         ⭐ 5 место Николай - 73.83
+     *         🥇 1. Иван - 110.00
+     *         🥈 2. Андрей - 98.00
+     *         🥉 3. Сергей - 86.00 ⬅️
+     *         ⭐ 4. Анна - 75.38
+     *         ⭐ 5. Николай - 73.83
      */
     private String messageBuildRating(List<UserScore> scoreList, int userPosition) {
-        StringBuilder message = new StringBuilder("🏆Top 5:");
+        StringBuilder message = new StringBuilder("🏆    Рейтинг    🏆");
         String[] medals = {"🥇", "🥈", "🥉"};
         int count = 1;
 
@@ -196,10 +196,10 @@ public class LeaderboardService {
             String medal = (count <= 3) ? medals[count - 1] : "⭐";
 
             if (userPosition >= 0 && count == (userPosition + 1)) {
-                message.append(String.format("%n%s %d место %s - %.2f ⬅️",
+                message.append(String.format("%n%s %d. %s - %.2f ⬅️",
                         medal, count, us.user().getFullName(), us.totalScore()));
             } else {
-                message.append(String.format("%n%s %d место %s - %.2f",
+                message.append(String.format("%n%s %d. %s - %.2f",
                         medal, count, us.user().getFullName(), us.totalScore()));
             }
 
@@ -217,14 +217,13 @@ public class LeaderboardService {
      * @param scoreList полный список рейтинга
      * @param userPosition позиция пользователя (0-based), или -1 если не найден
      * @return Форматированная строка с позицией и контекстом
-     *
      * Примеры вывода:
      * - Пользователь в топ-5: возвращает пустую строку (позиция уже показана в топе)
      * - Пользователь вне топ-5:
      *   ...
-     *   ⭐ 7 место Анна - 75.38
-     *   ⭐ 8 место Николай - 73.83 ⬅️
-     *   ⭐ 9 место Петр - 70.15
+     *   ⭐ 7. Анна - 75.38
+     *   ⭐ 8. Николай - 73.83 ⬅️
+     *   ⭐ 9. Петр - 70.15
      *   ...
      * - Пользователь не найден (userPosition == -1): возвращает пустую строку
      */
@@ -247,12 +246,12 @@ public class LeaderboardService {
         message.append("\n...");
         for (int i = start; i <= end; i++) {
             if (i == userPosition) {
-                message.append(String.format("%n⭐ %d место %s - %.2f ⬅️",
+                message.append(String.format("%n⭐ %d. %s - %.2f ⬅️",
                         i + 1,
                         scoreList.get(i).user().getFullName(),
                         scoreList.get(i).totalScore()));
             } else {
-                message.append(String.format("%n⭐ %d место %s - %.2f",
+                message.append(String.format("%n⭐ %d. %s - %.2f",
                         i + 1,
                         scoreList.get(i).user().getFullName(),
                         scoreList.get(i).totalScore()));
