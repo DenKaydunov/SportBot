@@ -149,10 +149,11 @@ public class StreakService {
         if (!lastWorkoutDate.equals(today) && !lastWorkoutDate.equals(today.minusDays(1))) {
             // Стрик потерян
             long daysSinceLastWorkout = today.toEpochDay() - lastWorkoutDate.toEpochDay();
+            Locale locale = Locale.forLanguageTag(user.getLanguage());
             return messageSource.getMessage(
                     "streak.lost",
                     new Object[]{bestStreak, daysSinceLastWorkout},
-                    LOCALE
+                    locale
             );
         }
 

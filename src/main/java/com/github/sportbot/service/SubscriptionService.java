@@ -26,6 +26,7 @@ public class SubscriptionService implements MessageLocalizer {
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final ExerciseTypeService exerciseTypeService;
     private final org.springframework.context.MessageSource messageSource;
+    private final LocaleService localeService;
 
 
     @Transactional
@@ -135,7 +136,7 @@ public class SubscriptionService implements MessageLocalizer {
         return messageSource.getMessage(
                 messageKey,
                 new Object[]{((User)user).getFullName()},
-                Locale.forLanguageTag("ru-RU")
+                localeService.getUserLocale((User)user)
         );
     }
 }

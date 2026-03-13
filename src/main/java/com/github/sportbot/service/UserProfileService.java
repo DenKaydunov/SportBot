@@ -26,6 +26,7 @@ public class UserProfileService {
     private final MessageSource messageSource;
     private final RankService rankService;
     private final StreakService streakService;
+    private final LocaleService localeService;
 
     /**
      * Return user profile.
@@ -57,8 +58,6 @@ public class UserProfileService {
 
         String ageValue = user.getAge() != null ? user.getAge().toString() : UNKNOWN_VALUE;
         String sexValue = mapSexToText(user.getSex());
-        String languageValue = resolveLanguage(user.getLanguage(), lang);
-        Locale locale = resolveLocale(user.getLanguage(), lang);
         String remindTimeValue = user.getRemindTime() != null ? user.getRemindTime().toString() : UNKNOWN_VALUE;
 
         int countPushUps = exerciseService.getTotalReps(user, "push_up");
@@ -80,7 +79,7 @@ public class UserProfileService {
                         user.getFullName(),
                         ageValue,
                         sexValue,
-                        languageValue,
+                        user.getLanguage(),
                         remindTimeValue,
                         countPushUps, maxPushUps,
                         countPullUps, maxPullUps,
@@ -89,7 +88,7 @@ public class UserProfileService {
                         rank,
                         streakInfo
                 },
-                locale
+                localeService.getUserLocale(user)
         );
     }
 
@@ -115,7 +114,7 @@ public class UserProfileService {
         return messageSource.getMessage(
                 "profile.updated",
                 new Object[]{user.getFullName()},
-                resolveLocale(user.getLanguage(), request.language())
+                localeService.getUserLocale(user)
         );
     }
 
@@ -127,18 +126,6 @@ public class UserProfileService {
             case MAN -> "мужчина";
             case WOMAN -> "женщина";
         };
-    }
-
-    private String resolveLanguage(String storedLanguage, String requestedLang) {
-        String lang = firstNonBlank(storedLanguage, requestedLang);
-        if (lang == null) {
-            return UNKNOWN_VALUE;
-        }
-        String lower = lang.toLowerCase(Locale.ROOT);
-        if (Objects.equals(lower, "ru")) {
-            return "русский";
-        }
-        return lower;
     }
 
     private Locale resolveLocale(String storedLanguage, String requestedLang) {

@@ -25,6 +25,7 @@ public class UserProgramService {
     private final ExerciseTypeService exerciseTypeService;
     private final UserService userService;
     private final UserMaxService userMaxService;
+    private final LocaleService localeService;
 
     /**
      * Получение плана тренировок для пользователя
@@ -38,7 +39,7 @@ public class UserProgramService {
         List<Integer> sets = calculateWorkoutSets(program.getCurrentMax(), program.getDayNumber());
         int total = sets.stream().mapToInt(Integer::intValue).sum();
 
-        String msg = localizeWorkoutMessage(sets, total);
+        String msg = localizeWorkoutMessage(sets, total, user);
         return new WorkoutPlanResponse(sets, total, msg);
     }
 
@@ -89,11 +90,11 @@ public class UserProgramService {
                 .toList();
     }
 
-    private String localizeWorkoutMessage(List<Integer> sets, int total) {
+    private String localizeWorkoutMessage(List<Integer> sets, int total, User user) {
         return messageSource.getMessage(
                 "workout.today_sets",
                 new Object[]{sets.toString().replaceAll("[\\[\\]]", ""), total},
-                Locale.forLanguageTag("ru-RU")
+                localeService.getUserLocale(user)
         );
     }
 

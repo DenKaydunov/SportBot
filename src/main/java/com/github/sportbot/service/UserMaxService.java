@@ -28,7 +28,7 @@ public class UserMaxService {
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final UserMaxHistoryRepository userMaxHistoryRepository;
     private final MessageSource messageSource;
-
+    private final LocaleService localeService;
 
 
     @Transactional
@@ -58,7 +58,7 @@ public class UserMaxService {
         return messageSource.getMessage(
                 "workout.max_reps",
                 new Object[]{exerciseType.getTitle(), user.getFullName(), maxValue, totalReps},
-                Locale.forLanguageTag("ru-RU")
+                localeService.getUserLocale(user)
         );
     }
 
