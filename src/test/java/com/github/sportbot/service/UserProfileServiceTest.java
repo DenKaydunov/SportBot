@@ -10,6 +10,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.support.ResourceBundleMessageSource;
 
 import java.time.LocalTime;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -30,6 +31,7 @@ class UserProfileServiceTest {
     @BeforeEach
     void setUp() {
         ResourceBundleMessageSource realMessageSource = new ResourceBundleMessageSource();
+        Locale.setDefault(new Locale("ru"));
         realMessageSource.setBasename("messages");
         realMessageSource.setDefaultEncoding("UTF-8");
         this.messageSource = realMessageSource;
