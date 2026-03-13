@@ -27,7 +27,6 @@ public class UserLocaleInterceptor implements HandlerInterceptor {
                 String lang = userLocaleService.getUserLang(telegramId);
                 Locale locale = Locale.forLanguageTag(lang);
                 localeResolver.setLocale(request, response, locale);
-                System.out.println("Set locale: " + locale.toLanguageTag());;
             } catch (NumberFormatException ignored) {
             }
         }

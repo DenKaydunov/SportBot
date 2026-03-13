@@ -13,7 +13,7 @@ import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
-public class SubscriptionService implements MessageLocalizer {
+public class SubscriptionService {
 
     public static final String SUBSCRIBED = "subscription.message.success";
     public static final String ALREADY_SUBSCRIBED = "subscription.already_subscribed";
@@ -46,9 +46,9 @@ public class SubscriptionService implements MessageLocalizer {
                     .build();
             subscriptionRepository.save(subscription);
             notificationService.notifySubscription(follower, following);
-            message = localize(SUBSCRIBED, following);
+            message = localize(SUBSCRIBED, following, follower);
         } else {
-            message = localize(ALREADY_SUBSCRIBED, following);
+            message = localize(ALREADY_SUBSCRIBED, following, follower);
         }
         return message;
     }
@@ -70,9 +70,9 @@ public class SubscriptionService implements MessageLocalizer {
                     .build();
             subscriptionRepository.save(subscription);
             notificationService.notifySubscription(follower, following);
-            message = localize(SUBSCRIBED, following);
+            message = localize(SUBSCRIBED, following, follower);
         } else {
-            message = localize(ALREADY_SUBSCRIBED, following);
+            message = localize(ALREADY_SUBSCRIBED, following, follower);
         }
         return message;
     }
@@ -85,9 +85,9 @@ public class SubscriptionService implements MessageLocalizer {
         String message;
         if (subscriptionRepository.existsByFollowerAndFollowing(follower, following)) {
             subscriptionRepository.deleteByFollowerAndFollowing(follower, following);
-            message = localize(UNSUBSCRIBED, following);
+            message = localize(UNSUBSCRIBED, following, follower);
         } else {
-            message = localize(NOT_SUBSCRIBED, following);
+            message = localize(NOT_SUBSCRIBED, following, follower);
         }
         return message;
     }
@@ -132,11 +132,11 @@ public class SubscriptionService implements MessageLocalizer {
         return sb.toString();
     }
 
-    public String localize(String messageKey, Object user) {
+    public String localize(String messageKey, Object user, User userLang) {
         return messageSource.getMessage(
                 messageKey,
                 new Object[]{((User)user).getFullName()},
-                localeService.getUserLocale((User)user)
+                localeService.getUserLocale(userLang)
         );
     }
 }

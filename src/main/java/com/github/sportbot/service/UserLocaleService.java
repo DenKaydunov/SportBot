@@ -26,7 +26,7 @@ public class UserLocaleService {
 
     public Locale getUserLocale(User user){
         String lang = user.getLanguage();
-        if (lang == null || lang.isBlank()){
+        if (lang == null || (!"ru".equals(lang) && !"en".equals(lang))){
             lang = "ru";
         }
         return Locale.forLanguageTag(lang);

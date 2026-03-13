@@ -40,6 +40,8 @@ class UserProgramServiceTest {
     @Mock
     private UserMaxService userMaxService;
 
+    @Mock UserLocaleService localeService;
+
     @InjectMocks
     private UserProgramService userProgramService;
 
@@ -77,6 +79,7 @@ class UserProgramServiceTest {
         when(userProgramRepository.findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId()))
                 .thenReturn(Optional.of(existingProgram));
         when(userMaxService.getLastMax(user, exerciseType)).thenReturn(50);
+        when(localeService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("ru"));
 
         when(workoutProperties.getIncrementPerDay()).thenReturn(0.05);
         when(workoutProperties.getCoefficients()).thenReturn(List.of(0.5, 0.7, 0.9));
@@ -84,7 +87,7 @@ class UserProgramServiceTest {
         when(messageSource.getMessage(
                 eq("workout.today_sets"),
                 any(),
-                eq(Locale.forLanguageTag("ru-RU"))
+                eq(Locale.forLanguageTag("ru"))
         )).thenReturn("Сегодня твоя тренировка: 25, 35, 45 — всего 105");
 
         // When
@@ -100,7 +103,7 @@ class UserProgramServiceTest {
         verify(exerciseTypeService).getExerciseType("push_up");
         verify(userProgramRepository).findByIdUserIdAndIdExerciseTypeId(user.getId(), exerciseType.getId());
         verify(userMaxService).getLastMax(user, exerciseType);
-        verify(messageSource).getMessage(eq("workout.today_sets"), any(), eq(Locale.forLanguageTag("ru-RU")));
+        verify(messageSource).getMessage(eq("workout.today_sets"), any(), eq(Locale.forLanguageTag("ru")));
     }
 
     @Test

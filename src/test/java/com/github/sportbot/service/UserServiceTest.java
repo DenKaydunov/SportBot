@@ -35,6 +35,9 @@ class UserServiceTest {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private UserLocaleService localeService;
+
     @InjectMocks
     private UserService userService;
 
@@ -75,7 +78,8 @@ class UserServiceTest {
         when(userRepository.findByTelegramId(request.telegramId())).thenReturn(Optional.empty());
         when(userMapper.toEntity(request)).thenReturn(mappedUser);
         when(userRepository.save(mappedUser)).thenReturn(mappedUser);
-        when(messageSource.getMessage("user.registered", null, Locale.forLanguageTag("ru-RU")))
+        when(localeService.getUserLocale(mappedUser)).thenReturn(Locale.forLanguageTag("ru"));
+        when(messageSource.getMessage("user.registered", null, Locale.forLanguageTag("ru")))
                 .thenReturn("Пользователь успешно зарегистрирован");
 
         // When
@@ -90,7 +94,7 @@ class UserServiceTest {
         verify(userRepository).findByTelegramId(request.telegramId());
         verify(userMapper).toEntity(request);
         verify(userRepository).save(mappedUser);
-        verify(messageSource).getMessage("user.registered", null, Locale.forLanguageTag("ru-RU"));
+        verify(messageSource).getMessage("user.registered", null, Locale.forLanguageTag("ru"));
     }
 
     @Test
