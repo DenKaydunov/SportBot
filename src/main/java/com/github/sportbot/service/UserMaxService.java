@@ -28,7 +28,7 @@ public class UserMaxService {
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final UserMaxHistoryRepository userMaxHistoryRepository;
     private final MessageSource messageSource;
-    private final LocaleService localeService;
+    private final UserLocaleService localeService;
 
 
     @Transactional

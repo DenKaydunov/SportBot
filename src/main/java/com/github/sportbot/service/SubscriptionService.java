@@ -26,7 +26,7 @@ public class SubscriptionService implements MessageLocalizer {
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final ExerciseTypeService exerciseTypeService;
     private final org.springframework.context.MessageSource messageSource;
-    private final LocaleService localeService;
+    private final UserLocaleService localeService;
 
 
     @Transactional

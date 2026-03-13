@@ -25,7 +25,7 @@ public class UserProgramService {
     private final ExerciseTypeService exerciseTypeService;
     private final UserService userService;
     private final UserMaxService userMaxService;
-    private final LocaleService localeService;
+    private final UserLocaleService localeService;
 
     /**
      * Получение плана тренировок для пользователя

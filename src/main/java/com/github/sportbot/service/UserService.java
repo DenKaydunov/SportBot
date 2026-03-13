@@ -29,7 +29,7 @@ public class UserService{
     private final UserRepository userRepository;
     private final MessageSource messageSource;
     private final UserMapper userMapper;
-    private final LocaleService localeService;
+    private final UserLocaleService localeService;
 
     @Transactional
     public UserResponse registerUser(RegistrationRequest request) {

@@ -23,4 +23,12 @@ public class UserLocaleService {
                 .map(User::getLanguage)
                 .orElse("ru");
     }
+
+    public Locale getUserLocale(User user){
+        String lang = user.getLanguage();
+        if (lang == null || lang.isBlank()){
+            lang = "ru";
+        }
+        return Locale.forLanguageTag(lang);
+    }
 }

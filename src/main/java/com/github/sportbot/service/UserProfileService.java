@@ -26,7 +26,7 @@ public class UserProfileService {
     private final MessageSource messageSource;
     private final RankService rankService;
     private final StreakService streakService;
-    private final LocaleService localeService;
+    private final UserLocaleService localeService;
 
     /**
      * Return user profile.
@@ -58,6 +58,7 @@ public class UserProfileService {
 
         String ageValue = user.getAge() != null ? user.getAge().toString() : UNKNOWN_VALUE;
         String sexValue = mapSexToText(user.getSex());
+        String localeValue = resolveLanguage(user.getLanguage(), lang);
         String remindTimeValue = user.getRemindTime() != null ? user.getRemindTime().toString() : UNKNOWN_VALUE;
 
         int countPushUps = exerciseService.getTotalReps(user, "push_up");
@@ -79,7 +80,7 @@ public class UserProfileService {
                         user.getFullName(),
                         ageValue,
                         sexValue,
-                        user.getLanguage(),
+                        localeValue,
                         remindTimeValue,
                         countPushUps, maxPushUps,
                         countPullUps, maxPullUps,
@@ -128,12 +129,16 @@ public class UserProfileService {
         };
     }
 
-    private Locale resolveLocale(String storedLanguage, String requestedLang) {
+    private String resolveLanguage(String storedLanguage, String requestedLang) {
         String lang = firstNonBlank(storedLanguage, requestedLang);
-        if (lang == null || !lang.equalsIgnoreCase("ru")) {
-            return Locale.forLanguageTag("ru");
+        if (lang == null) {
+            return UNKNOWN_VALUE;
         }
-        return Locale.forLanguageTag("ru");
+        String lower = lang.toLowerCase(Locale.ROOT);
+        if (Objects.equals(lower, "ru")) {
+            return "русский";
+        }
+        return lower;
     }
 
     private String firstNonBlank(String... values) {

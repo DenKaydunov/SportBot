@@ -23,6 +23,7 @@ class UserProfileServiceTest {
     private MessageSource messageSource;
     private RankService rankService;
     private StreakService streakService;
+    private UserLocaleService localeService;
 
     private UserProfileService userProfileService;
 
@@ -39,6 +40,7 @@ class UserProfileServiceTest {
         this.rankService = mock(RankService.class);
         this.streakService = mock(StreakService.class);
         this.userRepository = mock(UserRepository.class);
+        this.localeService = mock(UserLocaleService.class);
 
         this.userProfileService = new UserProfileService(
                 exerciseService,
@@ -47,7 +49,8 @@ class UserProfileServiceTest {
                 userRepository,
                 messageSource,
                 rankService,
-                streakService
+                streakService,
+                localeService
         );
     }
 
