@@ -16,11 +16,13 @@ public class NotificationService implements MessageLocalizer {
     private final SportBot sportBot;
     private final SubscriptionService subscriptionService;
     private final MessageSource messageSource;
+    private final UserService userService;
 
-    public NotificationService(@Lazy SportBot sportBot, @Lazy SubscriptionService subscriptionService, MessageSource messageSource) {
+    public NotificationService(@Lazy SportBot sportBot, @Lazy SubscriptionService subscriptionService, MessageSource messageSource, UserService userService) {
         this.sportBot = sportBot;
         this.subscriptionService = subscriptionService;
         this.messageSource = messageSource;
+        this.userService = userService;
     }
 
     public void notifySubscription(User follower, User following) {
@@ -50,7 +52,7 @@ public class NotificationService implements MessageLocalizer {
         return messageSource.getMessage(
                 messageKey,
                 new Object[]{((User)user).getFullName()},
-                java.util.Locale.forLanguageTag("ru-RU")
+                userService.getUserLocale((User) user)
         );
     }
 }

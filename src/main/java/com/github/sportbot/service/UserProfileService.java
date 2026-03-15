@@ -26,7 +26,6 @@ public class UserProfileService {
     private final MessageSource messageSource;
     private final RankService rankService;
     private final StreakService streakService;
-    private final UserLocaleService localeService;
 
     /**
      * Return user profile.
@@ -89,7 +88,7 @@ public class UserProfileService {
                         rank,
                         streakInfo
                 },
-                localeService.getUserLocale(user)
+                userService.getUserLocale(user)
         );
     }
 
@@ -115,7 +114,7 @@ public class UserProfileService {
         return messageSource.getMessage(
                 "profile.updated",
                 new Object[]{user.getFullName()},
-                localeService.getUserLocale(user)
+                userService.getUserLocale(user)
         );
     }
 
@@ -137,6 +136,9 @@ public class UserProfileService {
         String lower = lang.toLowerCase(Locale.ROOT);
         if (Objects.equals(lower, "ru")) {
             return "русский";
+        }
+        if (Objects.equals(lower, "en")) {
+            return "english";
         }
         return lower;
     }

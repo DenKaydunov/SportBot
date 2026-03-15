@@ -20,6 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,6 +65,9 @@ class ExerciseServiceTest {
     @Mock
     private AchievementRepository achievementRepository;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
     private ExerciseService exerciseService;
 
@@ -103,6 +107,7 @@ class ExerciseServiceTest {
         doNothing().when(achievementService).checkStreakMilestones(anyLong());
         when(milestoneRepository.findAllByOrderByDaysRequiredAsc()).thenReturn(new ArrayList<>());
         when(achievementRepository.findMilestoneIdsByUserId(anyInt())).thenReturn(new ArrayList<>());
+        when(userService.getUserLocale(any())).thenReturn(Locale.forLanguageTag("ru"));
 
         when(messageSource.getMessage(eq("workout.reps_recorded"), any(Object[].class), any()))
                 .thenReturn("Отжимания: сделано 10 повторений. Общее число: 100.");

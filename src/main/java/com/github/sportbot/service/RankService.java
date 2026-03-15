@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +22,7 @@ public class RankService {
     private final RankRepository rankRepository;
     private final UserRankRepository userRankRepository;
     private final MessageSource messageSource;
+    private final UserService userService;
 
     /**
      * Assigns a rank to the user for the given exercise type if the total reps meet a threshold
@@ -46,9 +46,9 @@ public class RankService {
 
         if (isPromotion(user, userRank, currentRank)) {
             saveUserRank(user, currentRank);
-            message = buildPromotionMessage(userRank, currentRank);
+            message = buildPromotionMessage(userRank, currentRank, user);
         } else {
-            message = buildNextRankHint(exerciseType, currentRank, totalReps);
+            message = buildNextRankHint(exerciseType, currentRank, totalReps, user);
         }
         return message;
     }
@@ -68,16 +68,16 @@ public class RankService {
         return rankRepository.existsByExerciseType(exerciseType);
     }
 
-    private String buildPromotionMessage(Optional<UserRank> currentForType, Rank achievedRank) {
+    private String buildPromotionMessage(Optional<UserRank> currentForType, Rank achievedRank, User user) {
         Object previousTitle = currentForType.map(ur -> ur.getRank().getTitle()).orElse("—");
         return messageSource.getMessage(
                 "workout.rank_promoted",
                 new Object[]{previousTitle, achievedRank.getTitle()},
-                Locale.forLanguageTag("ru-RU")
+                userService.getUserLocale(user)
         );
     }
 
-    private String buildNextRankHint(ExerciseType exerciseType, Rank achievedRank, int totalReps) {
+    private String buildNextRankHint(ExerciseType exerciseType, Rank achievedRank, int totalReps, User user) {
         return rankRepository
                 .findTopByExerciseTypeAndThresholdGreaterThanOrderByThresholdAsc(exerciseType, achievedRank.getThreshold())
                 .map(next -> {
@@ -86,7 +86,7 @@ public class RankService {
                         return messageSource.getMessage(
                                 "workout.rank_next_left",
                                 new Object[]{remaining},
-                                Locale.forLanguageTag("ru-RU")
+                                userService.getUserLocale(user)
                         );
                     }
                     return "";

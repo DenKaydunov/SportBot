@@ -10,8 +10,6 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Locale;
-
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +23,6 @@ public class UserProgramService {
     private final ExerciseTypeService exerciseTypeService;
     private final UserService userService;
     private final UserMaxService userMaxService;
-    private final UserLocaleService localeService;
 
     /**
      * Получение плана тренировок для пользователя
@@ -94,7 +91,7 @@ public class UserProgramService {
         return messageSource.getMessage(
                 "workout.today_sets",
                 new Object[]{sets.toString().replaceAll("[\\[\\]]", ""), total},
-                localeService.getUserLocale(user)
+                userService.getUserLocale(user)
         );
     }
 

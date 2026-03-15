@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +25,6 @@ public class SubscriptionService {
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final ExerciseTypeService exerciseTypeService;
     private final org.springframework.context.MessageSource messageSource;
-    private final UserLocaleService localeService;
 
 
     @Transactional
@@ -136,7 +134,7 @@ public class SubscriptionService {
         return messageSource.getMessage(
                 messageKey,
                 new Object[]{((User)user).getFullName()},
-                localeService.getUserLocale(userLang)
+                userService.getUserLocale(userLang)
         );
     }
 }

@@ -29,7 +29,6 @@ public class UserService{
     private final UserRepository userRepository;
     private final MessageSource messageSource;
     private final UserMapper userMapper;
-    private final UserLocaleService localeService;
 
     @Transactional
     public UserResponse registerUser(RegistrationRequest request) {
@@ -91,6 +90,14 @@ public class UserService{
     }
 
     private String getMessage(String messageKey, User user) {
-        return messageSource.getMessage(messageKey, null, localeService.getUserLocale(user));
+        return messageSource.getMessage(messageKey, null, getUserLocale(user));
+    }
+
+    public Locale getUserLocale(User user){
+        String lang = user.getLanguage();
+        if (!"ru".equals(lang) && !"en".equals(lang)){
+            lang = "ru";
+        }
+        return Locale.forLanguageTag(lang);
     }
 }
