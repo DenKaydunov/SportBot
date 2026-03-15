@@ -160,12 +160,13 @@ class StreakServiceTest {
     @Test
     void shouldReturnActiveRecordMessage() {
         LocalDate today = LocalDate.now();
+        user.setLanguage("en");
         Locale locale = userService.getUserLocale(user);
 
         user.setLastWorkoutDate(today);
         user.setCurrentStreak(5);
         user.setBestStreak(5);
-        user.setLanguage("ru");
+
 
         when(messageSource.getMessage(eq("streak.active_record"), any(), eq(locale)))
                 .thenReturn("\uD83D\uDD25 Стрик: 5 дней подряд (новый рекорд! \uD83C\uDF89)");

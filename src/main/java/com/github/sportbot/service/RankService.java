@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -36,6 +37,7 @@ public class RankService {
      */
     @Transactional
     public String assignRankIfEligible(User user, ExerciseType exerciseType, int totalReps) {
+        Locale locale = userService.getUserLocale(user);
         String message = "";
         if (!hasRanksConfigured(exerciseType)) {
             return message;
@@ -46,9 +48,9 @@ public class RankService {
 
         if (isPromotion(user, userRank, currentRank)) {
             saveUserRank(user, currentRank);
-            message = buildPromotionMessage(userRank, currentRank, user);
+            message = buildPromotionMessage(userRank, currentRank, locale);
         } else {
-            message = buildNextRankHint(exerciseType, currentRank, totalReps, user);
+            message = buildNextRankHint(exerciseType, currentRank, totalReps, locale);
         }
         return message;
     }
@@ -68,29 +70,24 @@ public class RankService {
         return rankRepository.existsByExerciseType(exerciseType);
     }
 
-    private String buildPromotionMessage(Optional<UserRank> currentForType, Rank achievedRank, User user) {
+    private String buildPromotionMessage(Optional<UserRank> currentForType, Rank achievedRank, Locale locale) {
         Object previousTitle = currentForType.map(ur -> ur.getRank().getTitle()).orElse("—");
         return messageSource.getMessage(
                 "workout.rank_promoted",
                 new Object[]{previousTitle, achievedRank.getTitle()},
-                userService.getUserLocale(user)
+                locale
         );
     }
 
-    private String buildNextRankHint(ExerciseType exerciseType, Rank achievedRank, int totalReps, User user) {
+    private String buildNextRankHint(ExerciseType exerciseType, Rank achievedRank, int totalReps, Locale locale) {
         return rankRepository
                 .findTopByExerciseTypeAndThresholdGreaterThanOrderByThresholdAsc(exerciseType, achievedRank.getThreshold())
-                .map(next -> {
-                    int remaining = Math.max(0, next.getThreshold() - totalReps);
-                    if (remaining > 0) {
-                        return messageSource.getMessage(
-                                "workout.rank_next_left",
-                                new Object[]{remaining},
-                                userService.getUserLocale(user)
-                        );
-                    }
-                    return "";
-                })
+                .map(next -> Math.max(0, next.getThreshold() - totalReps))
+                .filter(remaining -> remaining > 0)
+                .map(remaining -> messageSource.getMessage(
+                        "workout.rank_next_left",
+                        new Object[]{remaining},
+                        locale))
                 .orElse("");
     }
 

@@ -18,7 +18,10 @@ public class NotificationService implements MessageLocalizer {
     private final MessageSource messageSource;
     private final UserService userService;
 
-    public NotificationService(@Lazy SportBot sportBot, @Lazy SubscriptionService subscriptionService, MessageSource messageSource, UserService userService) {
+    public NotificationService(@Lazy SportBot sportBot,
+                               @Lazy SubscriptionService subscriptionService,
+                               MessageSource messageSource, 
+                               UserService userService) {
         this.sportBot = sportBot;
         this.subscriptionService = subscriptionService;
         this.messageSource = messageSource;

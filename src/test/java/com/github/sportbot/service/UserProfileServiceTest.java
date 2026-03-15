@@ -31,7 +31,7 @@ class UserProfileServiceTest {
     void setUp() {
         ResourceBundleMessageSource realMessageSource = new ResourceBundleMessageSource();
         Locale.setDefault(new Locale("ru"));
-        realMessageSource.setBasename("messages");
+        realMessageSource.setBasename("messages/messages");
         realMessageSource.setDefaultEncoding("UTF-8");
         this.messageSource = realMessageSource;
 
@@ -93,6 +93,19 @@ class UserProfileServiceTest {
         assertTrue(profile.contains("приседаний: 2 293/50"));
         assertTrue(profile.contains("пресс: 2 293/50"));
         assertTrue(profile.contains("📊")); // статус
+
+
+
+
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("en"));
+        profile = userProfileService.getProfile(telegramId, lang);
+
+        assertTrue(profile.contains("push-ups: 13,663/0"));
+        assertTrue(profile.contains("pull-ups: 2,009/15"));
+        assertTrue(profile.contains("squats: 2,293/50"));
+        assertTrue(profile.contains("abs: 2,293/50"));
+
+
     }
 
     @Test

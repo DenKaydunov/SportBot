@@ -90,6 +90,7 @@ public class ExerciseService {
      */
     private String getStreakUpdateMessage(User user, LocalDate workoutDate) {
         LocalDate lastWorkoutDate = user.getLastWorkoutDate();
+        Locale locale = userService.getUserLocale(user);
 
         // Если это первая тренировка или стрик увеличился
         if (lastWorkoutDate == null || (workoutDate.equals(LocalDate.now()) && lastWorkoutDate.equals(LocalDate.now()
@@ -97,7 +98,9 @@ public class ExerciseService {
 
             int currentStreak = user.getCurrentStreak();
             if (currentStreak > 1) {
-                return messageSource.getMessage("workout.streak_updated", new Object[] { currentStreak }, userService.getUserLocale(user));
+                return messageSource.getMessage("workout.streak_updated",
+                        new Object[] { currentStreak },
+                        locale);
             }
         }
 

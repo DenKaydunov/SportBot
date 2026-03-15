@@ -38,7 +38,7 @@ public class UserService{
                 });
         User user = userMapper.toEntity(request);
         user = userRepository.save(user);
-        String message = getMessage("user.registered", user);
+        String message = getMessage(USER_REGISTERED, user);
         return new UserResponse(message, user.getTelegramId(), user.getFullName());
     }
 
