@@ -10,6 +10,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.support.ResourceBundleMessageSource;
 
 import java.time.LocalTime;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -29,7 +30,8 @@ class UserProfileServiceTest {
     @BeforeEach
     void setUp() {
         ResourceBundleMessageSource realMessageSource = new ResourceBundleMessageSource();
-        realMessageSource.setBasename("messages");
+        Locale.setDefault(new Locale("ru"));
+        realMessageSource.setBasename("messages/messages");
         realMessageSource.setDefaultEncoding("UTF-8");
         this.messageSource = realMessageSource;
 
@@ -91,6 +93,19 @@ class UserProfileServiceTest {
         assertTrue(profile.contains("приседаний: 2 293/50"));
         assertTrue(profile.contains("пресс: 2 293/50"));
         assertTrue(profile.contains("📊")); // статус
+
+
+
+
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("en"));
+        profile = userProfileService.getProfile(telegramId, lang);
+
+        assertTrue(profile.contains("push-ups: 13,663/0"));
+        assertTrue(profile.contains("pull-ups: 2,009/15"));
+        assertTrue(profile.contains("squats: 2,293/50"));
+        assertTrue(profile.contains("abs: 2,293/50"));
+
+
     }
 
     @Test

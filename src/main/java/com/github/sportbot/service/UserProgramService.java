@@ -10,8 +10,6 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Locale;
-
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +36,7 @@ public class UserProgramService {
         List<Integer> sets = calculateWorkoutSets(program.getCurrentMax(), program.getDayNumber());
         int total = sets.stream().mapToInt(Integer::intValue).sum();
 
-        String msg = localizeWorkoutMessage(sets, total);
+        String msg = localizeWorkoutMessage(sets, total, user);
         return new WorkoutPlanResponse(sets, total, msg);
     }
 
@@ -89,11 +87,11 @@ public class UserProgramService {
                 .toList();
     }
 
-    private String localizeWorkoutMessage(List<Integer> sets, int total) {
+    private String localizeWorkoutMessage(List<Integer> sets, int total, User user) {
         return messageSource.getMessage(
                 "workout.today_sets",
                 new Object[]{sets.toString().replaceAll("[\\[\\]]", ""), total},
-                Locale.forLanguageTag("ru-RU")
+                userService.getUserLocale(user)
         );
     }
 

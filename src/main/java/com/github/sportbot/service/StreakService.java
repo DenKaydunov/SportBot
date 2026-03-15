@@ -23,6 +23,7 @@ public class StreakService {
     private final UserRepository userRepository;
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final MessageSource messageSource;
+    private final UserService userService;
 
 
     /**
@@ -141,7 +142,7 @@ public class StreakService {
             return messageSource.getMessage(
                     "streak.no_workouts",
                     null,
-                    LOCALE
+                    userService.getUserLocale(user)
             );
         }
 
@@ -152,7 +153,7 @@ public class StreakService {
             return messageSource.getMessage(
                     "streak.lost",
                     new Object[]{bestStreak, daysSinceLastWorkout},
-                    LOCALE
+                    userService.getUserLocale(user)
             );
         }
 
@@ -162,13 +163,13 @@ public class StreakService {
             return messageSource.getMessage(
                     "streak.active_record",
                     new Object[]{currentStreak},
-                    LOCALE
+                    userService.getUserLocale(user)
             );
         } else {
             return messageSource.getMessage(
                     "streak.active",
                     new Object[]{currentStreak, bestStreak},
-                    LOCALE
+                    userService.getUserLocale(user)
             );
         }
     }
@@ -203,7 +204,11 @@ public class StreakService {
 
        //проверяем что BalanceTon не 0
        if (user.getBalanceTon() < 1 || user.getBalanceTon() == null ){
-           return "Недостаточно Ton для сохранения Streak";
+           return messageSource.getMessage(
+                   "streak.no_ton",
+                   null,
+                   userService.getUserLocale(user)
+           );
        }
 
         if (lastWorkoutDate != null && (lastWorkoutDate.equals(today.minusDays(1)) ||
@@ -213,7 +218,7 @@ public class StreakService {
             //Списываем устанавливаем новую дату отсчета streak
             user.setLastWorkoutDate(LocalDate.now());
             userRepository.save(user);
-            return "Streak сохранён за 1 Ton";
-        } else return "Streak нельзя сохранить, от последней тренировки прошло более 2-х дней.";
+            return messageSource.getMessage("streak.save.true", null, userService.getUserLocale(user));
+        } else return messageSource.getMessage("streak.save.false", null, userService.getUserLocale(user));
     }
 }

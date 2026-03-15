@@ -33,6 +33,7 @@ public class ExerciseService {
     private final AchievementRepository achievementRepository;
     private final AchievementService achievementService;
     private final NotificationService notificationService;
+    private final UserService userService;
 
 
     @Transactional
@@ -67,7 +68,7 @@ public class ExerciseService {
 
         String message = messageSource.getMessage("workout.reps_recorded",
                 new Object[]{exerciseType.getTitle(), req.count(), total},
-                Locale.forLanguageTag("ru-RU"));
+                userService.getUserLocale(user));
         String rankMessage = rankService.assignRankIfEligible(user, exerciseType, total);
 
         // Добавляем информацию о стрике, если он изменился
@@ -89,6 +90,7 @@ public class ExerciseService {
      */
     private String getStreakUpdateMessage(User user, LocalDate workoutDate) {
         LocalDate lastWorkoutDate = user.getLastWorkoutDate();
+        Locale locale = userService.getUserLocale(user);
 
         // Если это первая тренировка или стрик увеличился
         if (lastWorkoutDate == null || (workoutDate.equals(LocalDate.now()) && lastWorkoutDate.equals(LocalDate.now()
@@ -96,7 +98,9 @@ public class ExerciseService {
 
             int currentStreak = user.getCurrentStreak();
             if (currentStreak > 1) {
-                return messageSource.getMessage("workout.streak_updated", new Object[] { currentStreak }, Locale.forLanguageTag("ru-RU"));
+                return messageSource.getMessage("workout.streak_updated",
+                        new Object[] { currentStreak },
+                        locale);
             }
         }
 

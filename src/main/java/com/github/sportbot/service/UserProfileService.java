@@ -57,8 +57,7 @@ public class UserProfileService {
 
         String ageValue = user.getAge() != null ? user.getAge().toString() : UNKNOWN_VALUE;
         String sexValue = mapSexToText(user.getSex());
-        String languageValue = resolveLanguage(user.getLanguage(), lang);
-        Locale locale = resolveLocale(user.getLanguage(), lang);
+        String localeValue = resolveLanguage(user.getLanguage(), lang);
         String remindTimeValue = user.getRemindTime() != null ? user.getRemindTime().toString() : UNKNOWN_VALUE;
 
         int countPushUps = exerciseService.getTotalReps(user, "push_up");
@@ -80,7 +79,7 @@ public class UserProfileService {
                         user.getFullName(),
                         ageValue,
                         sexValue,
-                        languageValue,
+                        localeValue,
                         remindTimeValue,
                         countPushUps, maxPushUps,
                         countPullUps, maxPullUps,
@@ -89,7 +88,7 @@ public class UserProfileService {
                         rank,
                         streakInfo
                 },
-                locale
+                userService.getUserLocale(user)
         );
     }
 
@@ -115,7 +114,7 @@ public class UserProfileService {
         return messageSource.getMessage(
                 "profile.updated",
                 new Object[]{user.getFullName()},
-                resolveLocale(user.getLanguage(), request.language())
+                userService.getUserLocale(user)
         );
     }
 
@@ -138,15 +137,10 @@ public class UserProfileService {
         if (Objects.equals(lower, "ru")) {
             return "русский";
         }
-        return lower;
-    }
-
-    private Locale resolveLocale(String storedLanguage, String requestedLang) {
-        String lang = firstNonBlank(storedLanguage, requestedLang);
-        if (lang == null || !lang.equalsIgnoreCase("ru")) {
-            return Locale.forLanguageTag("ru");
+        if (Objects.equals(lower, "en")) {
+            return "english";
         }
-        return Locale.forLanguageTag("ru");
+        return lower;
     }
 
     private String firstNonBlank(String... values) {

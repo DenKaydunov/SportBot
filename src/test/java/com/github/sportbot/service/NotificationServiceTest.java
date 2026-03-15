@@ -29,6 +29,9 @@ class NotificationServiceTest {
     @Mock
     private MessageSource messageSource;
 
+    @Mock
+    UserService userService;
+
     @InjectMocks
     private NotificationService notificationService;
 
@@ -42,6 +45,7 @@ class NotificationServiceTest {
                 .id(1)
                 .telegramId(100L)
                 .fullName("Follower User")
+                .language("ru")
                 .build();
 
         following = User.builder()
@@ -67,6 +71,7 @@ class NotificationServiceTest {
     @Test
     void notifySubscription_SendsMessageToFollowing() {
         // When
+        when(userService.getUserLocale(any())).thenReturn(Locale.forLanguageTag("ru"));
         notificationService.notifySubscription(follower, following);
 
         // Then

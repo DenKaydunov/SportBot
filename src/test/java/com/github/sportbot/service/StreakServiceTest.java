@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
 
 import java.time.LocalDate;
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +30,9 @@ class StreakServiceTest {
     @Mock
     private MessageSource messageSource;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
     private StreakService streakService;
 
@@ -40,6 +44,7 @@ class StreakServiceTest {
         user.setCurrentStreak(0);
         user.setBestStreak(0);
         user.setLastWorkoutDate(null);
+        user.setLanguage("ru");
     }
 
     @Test
@@ -127,7 +132,8 @@ class StreakServiceTest {
 
     @Test
     void shouldReturnNoWorkoutsMessage() {
-        when(messageSource.getMessage(eq("streak.no_workouts"), any(), any()))
+        Locale locale = userService.getUserLocale(user);
+        when(messageSource.getMessage(eq("streak.no_workouts"), any(), eq(locale)))
                 .thenReturn("\uD83D\uDD25 Стрик: пока нет тренировок. Начни сегодня!");
 
         String result = streakService.getStreakInfo(user);
@@ -138,11 +144,12 @@ class StreakServiceTest {
     @Test
     void shouldReturnLostStreakMessage() {
         LocalDate threeDaysAgo = LocalDate.now().minusDays(3);
+        Locale locale = userService.getUserLocale(user);
 
         user.setLastWorkoutDate(threeDaysAgo);
         user.setBestStreak(5);
 
-        when(messageSource.getMessage(eq("streak.lost"), any(), any()))
+        when(messageSource.getMessage(eq("streak.lost"), any(), eq(locale)))
                 .thenReturn("\uD83D\uDD25 Стрик потерян. Лучший результат: 5 дней. Прошло дней без тренировки: 3");
 
         String result = streakService.getStreakInfo(user);
@@ -153,12 +160,15 @@ class StreakServiceTest {
     @Test
     void shouldReturnActiveRecordMessage() {
         LocalDate today = LocalDate.now();
+        user.setLanguage("en");
+        Locale locale = userService.getUserLocale(user);
 
         user.setLastWorkoutDate(today);
         user.setCurrentStreak(5);
         user.setBestStreak(5);
 
-        when(messageSource.getMessage(eq("streak.active_record"), any(), any()))
+
+        when(messageSource.getMessage(eq("streak.active_record"), any(), eq(locale)))
                 .thenReturn("\uD83D\uDD25 Стрик: 5 дней подряд (новый рекорд! \uD83C\uDF89)");
 
         String result = streakService.getStreakInfo(user);
@@ -169,12 +179,13 @@ class StreakServiceTest {
     @Test
     void shouldReturnActiveMessage() {
         LocalDate today = LocalDate.now();
+        Locale locale = userService.getUserLocale(user);
 
         user.setLastWorkoutDate(today);
         user.setCurrentStreak(3);
         user.setBestStreak(5);
 
-        when(messageSource.getMessage(eq("streak.active"), any(), any()))
+        when(messageSource.getMessage(eq("streak.active"), any(), eq(locale)))
                 .thenReturn("\uD83D\uDD25 Стрик: 3 дней подряд (рекорд: 5 дней)");
 
         String result = streakService.getStreakInfo(user);

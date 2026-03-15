@@ -80,6 +80,7 @@ class UserMaxServiceTest {
         when(userService.getUserByTelegramId(123456L)).thenReturn(testUser);
         when(exerciseTypeService.getExerciseType(any(ExerciseEntryRequest.class))).thenReturn(testExerciseType);
         final int max = 100;
+        when(userService.getUserLocale(testUser)).thenReturn(Locale.forLanguageTag("ru"));
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(testUser, testExerciseType)).thenReturn(max);
         LocalDateTime now = LocalDateTime.now();
 
@@ -99,7 +100,7 @@ class UserMaxServiceTest {
         verify(mSource).getMessage(
                 eq("workout.max_reps"),
                 any(Object[].class),
-                eq(Locale.forLanguageTag("ru-RU"))
+                eq(Locale.forLanguageTag("ru"))
         );
     }
 

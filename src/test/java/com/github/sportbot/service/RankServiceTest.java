@@ -30,6 +30,8 @@ class RankServiceTest {
     private UserRankRepository userRankRepository;
 
     private MessageSource messageSource;
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private RankService rankService;
@@ -46,10 +48,10 @@ class RankServiceTest {
         this.messageSource = realMessageSource;
 
         // re-inject service with real message source
-        this.rankService = new RankService(rankRepository, userRankRepository, messageSource);
+        this.rankService = new RankService(rankRepository, userRankRepository, messageSource, userService);
 
         exerciseType = ExerciseType.builder().id(1L).code("pull_up").title("Подтягивания").build();
-        user = User.builder().id(10).telegramId(1000L).build();
+        user = User.builder().id(10).telegramId(1000L).language("ru").build();
     }
 
     @Test
@@ -77,7 +79,7 @@ class RankServiceTest {
         String expected = messageSource.getMessage(
                 "workout.rank_promoted",
                 new Object[]{"—", "Новичок"},
-                Locale.forLanguageTag("ru-RU")
+                Locale.forLanguageTag("ru")
         );
         assertEquals(expected, msg);
         verify(userRankRepository).save(any(UserRank.class));
@@ -110,7 +112,7 @@ class RankServiceTest {
         String expected = messageSource.getMessage(
                 "workout.rank_next_left",
                 new Object[]{13},
-                Locale.forLanguageTag("ru-RU")
+                Locale.forLanguageTag("ru")
         );
         assertEquals(expected, msg);
         verify(userRankRepository, never()).save(any());
@@ -157,7 +159,7 @@ class RankServiceTest {
         String expected = messageSource.getMessage(
                 "workout.rank_promoted",
                 new Object[]{"Стажер", "Новичок"},
-                Locale.forLanguageTag("ru-RU")
+                Locale.forLanguageTag("ru")
         );
 
         assertEquals(expected, msg);
@@ -193,7 +195,7 @@ class RankServiceTest {
         String expectedFirst = messageSource.getMessage(
                 "workout.rank_promoted",
                 new Object[]{"—", "Продвинутый"},
-                Locale.forLanguageTag("ru-RU")
+                Locale.forLanguageTag("ru")
         );
         assertEquals(expectedFirst, first);
 
