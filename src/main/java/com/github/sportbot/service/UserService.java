@@ -24,7 +24,6 @@ import java.util.Locale;
 public class UserService{
 
     public static final String USER_REGISTERED = "user.registered";
-    private static final Locale LOCALE = Locale.forLanguageTag("ru-RU");
 
     private final UserRepository userRepository;
     private final MessageSource messageSource;
@@ -38,7 +37,8 @@ public class UserService{
                 });
         User user = userMapper.toEntity(request);
         user = userRepository.save(user);
-        String message = getMessage(USER_REGISTERED, user);
+        Locale locale = Locale.forLanguageTag(user.getLanguage());
+        String message = getMessage(USER_REGISTERED, locale);
         return new UserResponse(message, user.getTelegramId(), user.getFullName());
     }
 
@@ -76,12 +76,13 @@ public class UserService{
     @Transactional
     public String unsubscribeUser(Long telegramId) {
         User user = getUserByTelegramId(telegramId);
+        Locale locale = getUserLocale(user);
         String message;
 
         if (Boolean.FALSE.equals(user.getIsSubscribed())) {
-            message = getMessage("unsubscribe.user.false", user);
+            message = getMessage("unsubscribe.user.false", locale);
         } else {
-            message = getMessage("unsubscribe.user.true", user);
+            message = getMessage("unsubscribe.user.true", locale);
             user.setIsSubscribed(false);
             userRepository.save(user);
         }
@@ -89,8 +90,8 @@ public class UserService{
         return message;
     }
 
-    private String getMessage(String messageKey, User user) {
-        return messageSource.getMessage(messageKey, null, getUserLocale(user));
+    private String getMessage(String messageKey, Locale locale) {
+        return messageSource.getMessage(messageKey, null, locale);
     }
 
     public Locale getUserLocale(User user){

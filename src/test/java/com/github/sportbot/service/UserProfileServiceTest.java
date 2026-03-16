@@ -79,7 +79,7 @@ class UserProfileServiceTest {
         when(streakService.getStreakInfo(user)).thenReturn("🔥 Стрик: 5 дней подряд (рекорд: 10 дней)");
 
         // When
-        String profile = userProfileService.getProfile(telegramId, lang);
+        String profile = userProfileService.getProfile(telegramId);
         System.out.println(profile);
 
         // Then
@@ -98,7 +98,7 @@ class UserProfileServiceTest {
 
 
         when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("en"));
-        profile = userProfileService.getProfile(telegramId, lang);
+        profile = userProfileService.getProfile(telegramId);
 
         assertTrue(profile.contains("push-ups: 13,663/0"));
         assertTrue(profile.contains("pull-ups: 2,009/15"));
@@ -132,7 +132,7 @@ class UserProfileServiceTest {
         when(streakService.getStreakInfo(user)).thenReturn("🔥 Стрик: 100 дней подряд (новый рекорд! 🎉)");
 
         // When
-        String profile = userProfileService.getProfile(telegramId, lang);
+        String profile = userProfileService.getProfile(telegramId);
 
         // Then
         assertTrue(profile.contains("0"));

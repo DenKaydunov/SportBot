@@ -19,7 +19,6 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class StreakService {
 
-    public static final Locale LOCALE = Locale.forLanguageTag("ru-RU");
     private final UserRepository userRepository;
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final MessageSource messageSource;
@@ -137,12 +136,13 @@ public class StreakService {
         int bestStreak = user.getBestStreak();
         LocalDate lastWorkoutDate = user.getLastWorkoutDate();
         LocalDate today = LocalDate.now();
+        Locale locale = userService.getUserLocale(user);
 
         if (lastWorkoutDate == null) {
             return messageSource.getMessage(
                     "streak.no_workouts",
                     null,
-                    userService.getUserLocale(user)
+                    locale
             );
         }
 
@@ -153,7 +153,7 @@ public class StreakService {
             return messageSource.getMessage(
                     "streak.lost",
                     new Object[]{bestStreak, daysSinceLastWorkout},
-                    userService.getUserLocale(user)
+                    locale
             );
         }
 
@@ -163,13 +163,13 @@ public class StreakService {
             return messageSource.getMessage(
                     "streak.active_record",
                     new Object[]{currentStreak},
-                    userService.getUserLocale(user)
+                    locale
             );
         } else {
             return messageSource.getMessage(
                     "streak.active",
                     new Object[]{currentStreak, bestStreak},
-                    userService.getUserLocale(user)
+                    locale
             );
         }
     }
@@ -201,13 +201,14 @@ public class StreakService {
 
         LocalDate lastWorkoutDate = user.getLastWorkoutDate();
         LocalDate today = LocalDate.now();
+        Locale locale = userService.getUserLocale(user);
 
        //проверяем что BalanceTon не 0
        if (user.getBalanceTon() < 1 || user.getBalanceTon() == null ){
            return messageSource.getMessage(
                    "streak.no_ton",
                    null,
-                   userService.getUserLocale(user)
+                   locale
            );
        }
 
@@ -218,7 +219,7 @@ public class StreakService {
             //Списываем устанавливаем новую дату отсчета streak
             user.setLastWorkoutDate(LocalDate.now());
             userRepository.save(user);
-            return messageSource.getMessage("streak.save.true", null, userService.getUserLocale(user));
-        } else return messageSource.getMessage("streak.save.false", null, userService.getUserLocale(user));
+            return messageSource.getMessage("streak.save.true", null, locale);
+        } else return messageSource.getMessage("streak.save.false", null, locale);
     }
 }

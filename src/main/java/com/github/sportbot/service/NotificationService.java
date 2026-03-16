@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
+
 @Service
 @Slf4j
 public class NotificationService implements MessageLocalizer {
@@ -52,10 +54,11 @@ public class NotificationService implements MessageLocalizer {
     }
 
     public String localize(String messageKey, Object user) {
+        Locale locale = userService.getUserLocale((User) user);
         return messageSource.getMessage(
                 messageKey,
                 new Object[]{((User)user).getFullName()},
-                userService.getUserLocale((User) user)
+                locale
         );
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +37,8 @@ public class SubscriptionService {
         User follower = userService.getUserByTelegramId(followerId);
         User following = userService.getUserByTelegramId(followingId);
 
+        Locale locale = userService.getUserLocale(follower);
+
         String message;
         if (!subscriptionRepository.existsByFollowerAndFollowing(follower, following)) {
             Subscription subscription = Subscription.builder()
@@ -44,9 +47,9 @@ public class SubscriptionService {
                     .build();
             subscriptionRepository.save(subscription);
             notificationService.notifySubscription(follower, following);
-            message = localize(SUBSCRIBED, following, follower);
+            message = localize(SUBSCRIBED, following, locale);
         } else {
-            message = localize(ALREADY_SUBSCRIBED, following, follower);
+            message = localize(ALREADY_SUBSCRIBED, following, locale);
         }
         return message;
     }
@@ -59,6 +62,7 @@ public class SubscriptionService {
 
         User follower = userService.getOrCreateUser(followerId, followerName);
         User following = userService.getUserByTelegramId(followingId);
+        Locale locale = userService.getUserLocale(follower);
 
         String message;
         if (!subscriptionRepository.existsByFollowerAndFollowing(follower, following)) {
@@ -68,9 +72,9 @@ public class SubscriptionService {
                     .build();
             subscriptionRepository.save(subscription);
             notificationService.notifySubscription(follower, following);
-            message = localize(SUBSCRIBED, following, follower);
+            message = localize(SUBSCRIBED, following, locale);
         } else {
-            message = localize(ALREADY_SUBSCRIBED, following, follower);
+            message = localize(ALREADY_SUBSCRIBED, following, locale);
         }
         return message;
     }
@@ -79,13 +83,14 @@ public class SubscriptionService {
     public String unsubscribe(Long followerId, Long followingId) {
         User follower = userService.getUserByTelegramId(followerId);
         User following = userService.getUserByTelegramId(followingId);
+        Locale locale = userService.getUserLocale(follower);
 
         String message;
         if (subscriptionRepository.existsByFollowerAndFollowing(follower, following)) {
             subscriptionRepository.deleteByFollowerAndFollowing(follower, following);
-            message = localize(UNSUBSCRIBED, following, follower);
+            message = localize(UNSUBSCRIBED, following, locale);
         } else {
-            message = localize(NOT_SUBSCRIBED, following, follower);
+            message = localize(NOT_SUBSCRIBED, following, locale);
         }
         return message;
     }
@@ -130,11 +135,11 @@ public class SubscriptionService {
         return sb.toString();
     }
 
-    public String localize(String messageKey, Object user, User userLang) {
+    public String localize(String messageKey, Object user, Locale locale) {
         return messageSource.getMessage(
                 messageKey,
                 new Object[]{((User)user).getFullName()},
-                userService.getUserLocale(userLang)
+                locale
         );
     }
 }

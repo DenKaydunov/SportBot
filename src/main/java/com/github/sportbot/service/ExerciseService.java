@@ -41,6 +41,7 @@ public class ExerciseService {
         User user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(req);
+        Locale locale = userService.getUserLocale(user);
 
         ExerciseRecord exercise = ExerciseRecord.builder()
                 .user(user)
@@ -66,9 +67,10 @@ public class ExerciseService {
 
         int total = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
 
-        String message = messageSource.getMessage("workout.reps_recorded",
+        String message = messageSource.getMessage(
+                "workout.reps_recorded",
                 new Object[]{exerciseType.getTitle(), req.count(), total},
-                userService.getUserLocale(user));
+                locale);
         String rankMessage = rankService.assignRankIfEligible(user, exerciseType, total);
 
         // Добавляем информацию о стрике, если он изменился
@@ -98,7 +100,8 @@ public class ExerciseService {
 
             int currentStreak = user.getCurrentStreak();
             if (currentStreak > 1) {
-                return messageSource.getMessage("workout.streak_updated",
+                return messageSource.getMessage(
+                        "workout.streak_updated",
                         new Object[] { currentStreak },
                         locale);
             }
