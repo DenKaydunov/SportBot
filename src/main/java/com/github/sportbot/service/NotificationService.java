@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
+
 @Service
 @Slf4j
 public class NotificationService implements MessageLocalizer {
@@ -16,11 +18,16 @@ public class NotificationService implements MessageLocalizer {
     private final SportBot sportBot;
     private final SubscriptionService subscriptionService;
     private final MessageSource messageSource;
+    private final UserService userService;
 
-    public NotificationService(@Lazy SportBot sportBot, @Lazy SubscriptionService subscriptionService, MessageSource messageSource) {
+    public NotificationService(@Lazy SportBot sportBot,
+                               @Lazy SubscriptionService subscriptionService,
+                               MessageSource messageSource, 
+                               UserService userService) {
         this.sportBot = sportBot;
         this.subscriptionService = subscriptionService;
         this.messageSource = messageSource;
+        this.userService = userService;
     }
 
     public void notifySubscription(User follower, User following) {
@@ -47,10 +54,11 @@ public class NotificationService implements MessageLocalizer {
     }
 
     public String localize(String messageKey, Object user) {
+        Locale locale = userService.getUserLocale((User) user);
         return messageSource.getMessage(
                 messageKey,
                 new Object[]{((User)user).getFullName()},
-                java.util.Locale.forLanguageTag("ru-RU")
+                locale
         );
     }
 }

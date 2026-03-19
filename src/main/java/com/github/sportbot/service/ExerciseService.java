@@ -33,6 +33,7 @@ public class ExerciseService {
     private final AchievementRepository achievementRepository;
     private final AchievementService achievementService;
     private final NotificationService notificationService;
+    private final UserService userService;
 
 
     @Transactional
@@ -40,6 +41,7 @@ public class ExerciseService {
         User user = userRepository.findByTelegramId(req.telegramId())
                 .orElseThrow(UserNotFoundException::new);
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(req);
+        Locale locale = userService.getUserLocale(user);
 
         ExerciseRecord exercise = ExerciseRecord.builder()
                 .user(user)
@@ -65,9 +67,10 @@ public class ExerciseService {
 
         int total = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
 
-        String message = messageSource.getMessage("workout.reps_recorded",
+        String message = messageSource.getMessage(
+                "workout.reps_recorded",
                 new Object[]{exerciseType.getTitle(), req.count(), total},
-                Locale.forLanguageTag("ru-RU"));
+                locale);
         String rankMessage = rankService.assignRankIfEligible(user, exerciseType, total);
 
         // Добавляем информацию о стрике, если он изменился
@@ -89,6 +92,7 @@ public class ExerciseService {
      */
     private String getStreakUpdateMessage(User user, LocalDate workoutDate) {
         LocalDate lastWorkoutDate = user.getLastWorkoutDate();
+        Locale locale = userService.getUserLocale(user);
 
         // Если это первая тренировка или стрик увеличился
         if (lastWorkoutDate == null || (workoutDate.equals(LocalDate.now()) && lastWorkoutDate.equals(LocalDate.now()
@@ -96,7 +100,10 @@ public class ExerciseService {
 
             int currentStreak = user.getCurrentStreak();
             if (currentStreak > 1) {
-                return messageSource.getMessage("workout.streak_updated", new Object[] { currentStreak }, Locale.forLanguageTag("ru-RU"));
+                return messageSource.getMessage(
+                        "workout.streak_updated",
+                        new Object[] { currentStreak },
+                        locale);
             }
         }
 

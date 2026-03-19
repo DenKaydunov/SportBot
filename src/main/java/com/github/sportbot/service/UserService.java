@@ -21,10 +21,9 @@ import java.util.Locale;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserService implements MessageLocalizer {
+public class UserService{
 
     public static final String USER_REGISTERED = "user.registered";
-    private static final Locale LOCALE = Locale.forLanguageTag("ru-RU");
 
     private final UserRepository userRepository;
     private final MessageSource messageSource;
@@ -38,13 +37,9 @@ public class UserService implements MessageLocalizer {
                 });
         User user = userMapper.toEntity(request);
         user = userRepository.save(user);
-        String message = localize(USER_REGISTERED, null);
+        Locale locale = Locale.forLanguageTag(user.getLanguage());
+        String message = getMessage(USER_REGISTERED, locale);
         return new UserResponse(message, user.getTelegramId(), user.getFullName());
-    }
-
-    @Override
-    public String localize(String messageKey, Object object) {
-        return getMessage(messageKey);
     }
 
     public User getUserByTelegramId(@NotNull Long telegramId) {
@@ -81,12 +76,13 @@ public class UserService implements MessageLocalizer {
     @Transactional
     public String unsubscribeUser(Long telegramId) {
         User user = getUserByTelegramId(telegramId);
+        Locale locale = getUserLocale(user);
         String message;
 
         if (Boolean.FALSE.equals(user.getIsSubscribed())) {
-            message = getMessage("unsubscribe.user.false");
+            message = getMessage("unsubscribe.user.false", locale);
         } else {
-            message = getMessage("unsubscribe.user.true");
+            message = getMessage("unsubscribe.user.true", locale);
             user.setIsSubscribed(false);
             userRepository.save(user);
         }
@@ -94,7 +90,15 @@ public class UserService implements MessageLocalizer {
         return message;
     }
 
-    private String getMessage(String messageKey) {
-        return messageSource.getMessage(messageKey, null, LOCALE);
+    private String getMessage(String messageKey, Locale locale) {
+        return messageSource.getMessage(messageKey, null, locale);
+    }
+
+    public Locale getUserLocale(User user){
+        String lang = user.getLanguage();
+        if (!"ru".equals(lang) && !"en".equals(lang)){
+            lang = "ru";
+        }
+        return Locale.forLanguageTag(lang);
     }
 }

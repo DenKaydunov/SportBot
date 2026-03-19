@@ -31,7 +31,6 @@ public class UserProfileService {
      * Return user profile.
      *
      * @param telegramId - user id from telegram
-     * @param lang - user language
      * @return Example:
      * <p>
      * 📝 Имя: Test User
@@ -51,14 +50,14 @@ public class UserProfileService {
      * 📊 Статус: Сегодня тренируем силу воли 💪
      *
      */
-    public String getProfile(@NotNull Long telegramId, String lang) {
+    public String getProfile(@NotNull Long telegramId) {
         User user = userService.getUserByTelegramId(telegramId);
 
 
         String ageValue = user.getAge() != null ? user.getAge().toString() : UNKNOWN_VALUE;
         String sexValue = mapSexToText(user.getSex());
-        String languageValue = resolveLanguage(user.getLanguage(), lang);
-        Locale locale = resolveLocale(user.getLanguage(), lang);
+        String localeUser = resolveLanguage(user.getLanguage());
+        Locale locale = userService.getUserLocale(user);
         String remindTimeValue = user.getRemindTime() != null ? user.getRemindTime().toString() : UNKNOWN_VALUE;
 
         int countPushUps = exerciseService.getTotalReps(user, "push_up");
@@ -80,7 +79,7 @@ public class UserProfileService {
                         user.getFullName(),
                         ageValue,
                         sexValue,
-                        languageValue,
+                        localeUser,
                         remindTimeValue,
                         countPushUps, maxPushUps,
                         countPullUps, maxPullUps,
@@ -98,6 +97,7 @@ public class UserProfileService {
     @Transactional
     public String updateProfile(UpdateProfileRequest request) {
         User user = userService.getUserByTelegramId(request.telegramId());
+        Locale locale = userService.getUserLocale(user);
         if (request.age() != null) {
             user.setAge(request.age());
         }
@@ -115,7 +115,7 @@ public class UserProfileService {
         return messageSource.getMessage(
                 "profile.updated",
                 new Object[]{user.getFullName()},
-                resolveLocale(user.getLanguage(), request.language())
+                locale
         );
     }
 
@@ -129,24 +129,19 @@ public class UserProfileService {
         };
     }
 
-    private String resolveLanguage(String storedLanguage, String requestedLang) {
-        String lang = firstNonBlank(storedLanguage, requestedLang);
+    private String resolveLanguage(String storedLanguage) {
+        String lang = firstNonBlank(storedLanguage);
         if (lang == null) {
             return UNKNOWN_VALUE;
         }
-        String lower = lang.toLowerCase(Locale.ROOT);
-        if (Objects.equals(lower, "ru")) {
+        String text = lang.toLowerCase(Locale.ROOT);
+        if (Objects.equals(text, "ru")) {
             return "русский";
         }
-        return lower;
-    }
-
-    private Locale resolveLocale(String storedLanguage, String requestedLang) {
-        String lang = firstNonBlank(storedLanguage, requestedLang);
-        if (lang == null || !lang.equalsIgnoreCase("ru")) {
-            return Locale.forLanguageTag("ru");
+        if (Objects.equals(text, "en")) {
+            return "english";
         }
-        return Locale.forLanguageTag("ru");
+        return text;
     }
 
     private String firstNonBlank(String... values) {

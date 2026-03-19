@@ -24,20 +24,15 @@ public class UserProfileController {
      * Returns user profile formatted for Telegram display.
      *
      * @param telegramId Telegram user ID
-     * @param lang optional language code (e.g. ru, en)
      * @return profile with progress, rank, and achievements
      */
     @GetMapping
     public String getProfile(
             @RequestParam
             @Parameter(example = "1000001") @NotNull
-            Long telegramId,
-
-            @RequestParam(required = false, defaultValue = "ru")
-            @Parameter(example = "ru")
-            String lang
+            Long telegramId
     ) {
-        return userProfileService.getProfile(telegramId, lang);
+        return userProfileService.getProfile(telegramId);
     }
 
     @PutMapping

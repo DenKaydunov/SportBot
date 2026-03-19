@@ -69,7 +69,7 @@ class SubscriptionServiceTest {
         when(messageSource.getMessage(
                 SubscriptionService.SUBSCRIBED,
                 new Object[]{following.getFullName()},
-                Locale.forLanguageTag("ru-RU")
+                userService.getUserLocale(follower)
         )).thenReturn("Вы подписались на Jane Smith");
 
         // When
@@ -103,7 +103,7 @@ class SubscriptionServiceTest {
         when(messageSource.getMessage(
                 SubscriptionService.ALREADY_SUBSCRIBED,
                 new Object[]{following.getFullName()},
-                Locale.forLanguageTag("ru-RU")
+                userService.getUserLocale(follower)
         )).thenReturn("Вы уже подписаны на Jane Smith");
 
         // When
@@ -145,7 +145,7 @@ class SubscriptionServiceTest {
         when(messageSource.getMessage(
                 SubscriptionService.UNSUBSCRIBED,
                 new Object[]{following.getFullName()},
-                Locale.forLanguageTag("ru-RU")
+                userService.getUserLocale(follower)
         )).thenReturn("Вы отписались от Jane Smith");
 
         // When
@@ -168,7 +168,7 @@ class SubscriptionServiceTest {
         when(messageSource.getMessage(
                 SubscriptionService.NOT_SUBSCRIBED,
                 new Object[]{following.getFullName()},
-                Locale.forLanguageTag("ru-RU")
+                userService.getUserLocale(follower)
         )).thenReturn("Вы не подписаны на Jane Smith");
 
         // When

@@ -13,7 +13,7 @@ import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
-public class SubscriptionService implements MessageLocalizer {
+public class SubscriptionService {
 
     public static final String SUBSCRIBED = "subscription.message.success";
     public static final String ALREADY_SUBSCRIBED = "subscription.already_subscribed";
@@ -37,6 +37,8 @@ public class SubscriptionService implements MessageLocalizer {
         User follower = userService.getUserByTelegramId(followerId);
         User following = userService.getUserByTelegramId(followingId);
 
+        Locale locale = userService.getUserLocale(follower);
+
         String message;
         if (!subscriptionRepository.existsByFollowerAndFollowing(follower, following)) {
             Subscription subscription = Subscription.builder()
@@ -45,9 +47,9 @@ public class SubscriptionService implements MessageLocalizer {
                     .build();
             subscriptionRepository.save(subscription);
             notificationService.notifySubscription(follower, following);
-            message = localize(SUBSCRIBED, following);
+            message = localize(SUBSCRIBED, following, locale);
         } else {
-            message = localize(ALREADY_SUBSCRIBED, following);
+            message = localize(ALREADY_SUBSCRIBED, following, locale);
         }
         return message;
     }
@@ -60,6 +62,7 @@ public class SubscriptionService implements MessageLocalizer {
 
         User follower = userService.getOrCreateUser(followerId, followerName);
         User following = userService.getUserByTelegramId(followingId);
+        Locale locale = userService.getUserLocale(follower);
 
         String message;
         if (!subscriptionRepository.existsByFollowerAndFollowing(follower, following)) {
@@ -69,9 +72,9 @@ public class SubscriptionService implements MessageLocalizer {
                     .build();
             subscriptionRepository.save(subscription);
             notificationService.notifySubscription(follower, following);
-            message = localize(SUBSCRIBED, following);
+            message = localize(SUBSCRIBED, following, locale);
         } else {
-            message = localize(ALREADY_SUBSCRIBED, following);
+            message = localize(ALREADY_SUBSCRIBED, following, locale);
         }
         return message;
     }
@@ -80,13 +83,14 @@ public class SubscriptionService implements MessageLocalizer {
     public String unsubscribe(Long followerId, Long followingId) {
         User follower = userService.getUserByTelegramId(followerId);
         User following = userService.getUserByTelegramId(followingId);
+        Locale locale = userService.getUserLocale(follower);
 
         String message;
         if (subscriptionRepository.existsByFollowerAndFollowing(follower, following)) {
             subscriptionRepository.deleteByFollowerAndFollowing(follower, following);
-            message = localize(UNSUBSCRIBED, following);
+            message = localize(UNSUBSCRIBED, following, locale);
         } else {
-            message = localize(NOT_SUBSCRIBED, following);
+            message = localize(NOT_SUBSCRIBED, following, locale);
         }
         return message;
     }
@@ -131,11 +135,11 @@ public class SubscriptionService implements MessageLocalizer {
         return sb.toString();
     }
 
-    public String localize(String messageKey, Object user) {
+    public String localize(String messageKey, Object user, Locale locale) {
         return messageSource.getMessage(
                 messageKey,
                 new Object[]{((User)user).getFullName()},
-                Locale.forLanguageTag("ru-RU")
+                locale
         );
     }
 }

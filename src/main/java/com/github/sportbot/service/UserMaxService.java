@@ -30,7 +30,6 @@ public class UserMaxService {
     private final MessageSource messageSource;
 
 
-
     @Transactional
     public String saveExerciseMaxResult(ExerciseEntryRequest req) {
         Long telegramId = req.telegramId();
@@ -41,6 +40,7 @@ public class UserMaxService {
 
         User user = userService.getUserByTelegramId(telegramId);
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(req);
+        Locale locale = userService.getUserLocale(user);
 
         UserMaxHistory userMaxHistory = UserMaxHistory.builder()
                 .user(user)
@@ -58,7 +58,7 @@ public class UserMaxService {
         return messageSource.getMessage(
                 "workout.max_reps",
                 new Object[]{exerciseType.getTitle(), user.getFullName(), maxValue, totalReps},
-                Locale.forLanguageTag("ru-RU")
+                locale
         );
     }
 
