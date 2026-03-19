@@ -71,7 +71,7 @@ class AchievementServiceTest {
                 .thenReturn("У тебя ещё нет достижений.");
         lenient().when(messageSource.getMessage(eq("achievement.list.header"), isNull(), any(Locale.class)))
                 .thenReturn("🏆 Твои достижения:");
-        lenient().when(messageSource.getMessage(eq("achievement.list.item"), any(Object[].class), any(Locale.class)))
+        lenient().when(messageSource.getMessage(eq("achievement.list.item.streak"), any(Object[].class), any(Locale.class)))
                 .thenAnswer(invocation -> {
                     Object[] args = invocation.getArgument(1);
                     return "• " + args[0] + " (" + args[1] + " дней) - получено: " + args[2];

@@ -18,6 +18,15 @@ public interface AchievementRepository extends JpaRepository<Achievement, Long> 
     List<Long> findMilestoneIdsByUserId(@Param("userId")Integer id);
 
     @Query("""
+        SELECT a.referralMilestone.id
+        FROM Achievement a
+        WHERE a.user.id = :userId
+        AND a.referralMilestone IS NOT NULL
+        ORDER BY a.achievedDate
+    """)
+    List<Long> findReferralMilestoneIdsByUserId(@Param("userId") Integer userId);
+
+    @Query("""
         SELECT a
         FROM Achievement a
         WHERE a.user.id = :userId

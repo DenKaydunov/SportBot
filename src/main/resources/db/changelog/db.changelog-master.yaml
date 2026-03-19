@@ -27,3 +27,5 @@ databaseChangeLog:
       file: db/changelog/changes/0015-remove-old-ranks-and-make-global.sql
   - include:
       file: db/changelog/changes/0016-add-global-ranks.sql
+  - include:
+      file: db/changelog/changes/0017-add-referral-milestones.sql

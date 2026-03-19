@@ -24,6 +24,10 @@ public class Achievement {
     private StreakMilestone milestone;
 
     @ManyToOne
+    @JoinColumn(name = "referral_milestone_id")
+    private ReferralMilestone referralMilestone;
+
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 

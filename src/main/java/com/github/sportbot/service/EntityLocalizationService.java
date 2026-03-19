@@ -2,6 +2,7 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.Rank;
+import com.github.sportbot.model.ReferralMilestone;
 import com.github.sportbot.model.StreakMilestone;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -45,6 +46,24 @@ public class EntityLocalizationService {
     public String getStreakMilestoneDescription(StreakMilestone milestone, Locale locale) {
         return messageSource.getMessage(
                 "streak.milestone." + milestone.getId() + ".description",
+                null,
+                milestone.getDescription(), // fallback to DB value
+                locale
+        );
+    }
+
+    public String getReferralMilestoneTitle(ReferralMilestone milestone, Locale locale) {
+        return messageSource.getMessage(
+                "referral.milestone." + milestone.getId() + ".title",
+                null,
+                milestone.getTitle(), // fallback to DB value
+                locale
+        );
+    }
+
+    public String getReferralMilestoneDescription(ReferralMilestone milestone, Locale locale) {
+        return messageSource.getMessage(
+                "referral.milestone." + milestone.getId() + ".description",
                 null,
                 milestone.getDescription(), // fallback to DB value
                 locale

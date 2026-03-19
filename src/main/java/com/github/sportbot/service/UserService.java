@@ -28,6 +28,7 @@ public class UserService{
     private final UserRepository userRepository;
     private final MessageSource messageSource;
     private final UserMapper userMapper;
+    private final AchievementService achievementService;
 
     @Transactional
     public UserResponse registerUser(RegistrationRequest request) {
@@ -37,6 +38,14 @@ public class UserService{
                 });
         User user = userMapper.toEntity(request);
         user = userRepository.save(user);
+
+        if (request.referrerTelegramId() != null) {
+            userRepository.findByTelegramId(request.referrerTelegramId().longValue())
+                .ifPresent(referrer ->
+                    achievementService.checkReferralMilestones(referrer.getId())
+                );
+        }
+
         Locale locale = Locale.forLanguageTag(user.getLanguage());
         String message = getMessage(USER_REGISTERED, locale);
         return new UserResponse(message, user.getTelegramId(), user.getFullName());
