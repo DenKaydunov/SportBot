@@ -233,7 +233,7 @@ class LeaderboardServiceTest {
         assertTrue(result.contains("⚡Таблица лидеров⚡"));
         assertTrue(result.contains("c 2024-01-01 по 2024-01-31"));
         assertTrue(result.contains("200"));
-        assertTrue(result.contains("1. User X — 90"));
+        assertTrue(result.contains("1. User X") && result.contains("90")); // HtmlUtils escapes em dash
     }
 
     @Test

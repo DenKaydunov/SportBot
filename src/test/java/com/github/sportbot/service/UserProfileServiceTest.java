@@ -30,7 +30,7 @@ class UserProfileServiceTest {
     @BeforeEach
     void setUp() {
         ResourceBundleMessageSource realMessageSource = new ResourceBundleMessageSource();
-        Locale.setDefault(new Locale("ru"));
+        Locale.setDefault(Locale.forLanguageTag("ru"));
         realMessageSource.setBasename("messages/messages");
         realMessageSource.setDefaultEncoding("UTF-8");
         this.messageSource = realMessageSource;
