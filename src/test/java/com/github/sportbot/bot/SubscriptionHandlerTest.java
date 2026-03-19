@@ -64,34 +64,34 @@ class SubscriptionHandlerTest {
     }
 
     private void setupMessageSourceMocks() {
-        Locale locale = Locale.forLanguageTag("ru-RU");
+        Locale locale = Locale.forLanguageTag("ru");
 
         // Сообщения без параметров
-        when(messageSource.getMessage(eq("subscription.callback.success"), isNull(), eq(locale)))
+        lenient().when(messageSource.getMessage(eq("subscription.callback.success"), isNull(), any(Locale.class)))
                 .thenReturn("Вы успешно подписались!");
-        when(messageSource.getMessage(eq("unsubscription.callback.success"), isNull(), eq(locale)))
+        lenient().when(messageSource.getMessage(eq("unsubscription.callback.success"), isNull(), any(Locale.class)))
                 .thenReturn("Вы успешно отписались!");
-        when(messageSource.getMessage(eq("error.user.not.found"), isNull(), eq(locale)))
+        lenient().when(messageSource.getMessage(eq("error.user.not.found"), isNull(), any(Locale.class)))
                 .thenReturn("Ошибка: пользователь не найден");
-        when(messageSource.getMessage(eq("error.invalid.data"), isNull(), eq(locale)))
+        lenient().when(messageSource.getMessage(eq("error.invalid.data"), isNull(), any(Locale.class)))
                 .thenReturn("Ошибка: некорректные данные");
-        when(messageSource.getMessage(eq("error.subscription.general"), isNull(), eq(locale)))
+        lenient().when(messageSource.getMessage(eq("error.subscription.general"), isNull(), any(Locale.class)))
                 .thenReturn("Произошла ошибка при подписке");
-        when(messageSource.getMessage(eq("error.unsubscription.general"), isNull(), eq(locale)))
+        lenient().when(messageSource.getMessage(eq("error.unsubscription.general"), isNull(), any(Locale.class)))
                 .thenReturn("Произошла ошибка при отписке");
 
         // Сообщения с параметрами
-        when(messageSource.getMessage(eq("subscription.message.success"), any(Object[].class), eq(locale)))
+        lenient().when(messageSource.getMessage(eq("subscription.message.success"), any(Object[].class), any(Locale.class)))
                 .thenAnswer(invocation -> {
                     Object[] args = invocation.getArgument(1);
                     return "✅ Вы подписались на пользователя: " + args[0];
                 });
-        when(messageSource.getMessage(eq("subscription.notification"), any(Object[].class), eq(locale)))
+        lenient().when(messageSource.getMessage(eq("subscription.notification"), any(Object[].class), any(Locale.class)))
                 .thenAnswer(invocation -> {
                     Object[] args = invocation.getArgument(1);
                     return "🔥 На вас подписался пользователь: " + args[0];
                 });
-        when(messageSource.getMessage(eq("unsubscription.message.success"), any(Object[].class), eq(locale)))
+        lenient().when(messageSource.getMessage(eq("unsubscription.message.success"), any(Object[].class), any(Locale.class)))
                 .thenAnswer(invocation -> {
                     Object[] args = invocation.getArgument(1);
                     return "❌ Вы отписались от пользователя: " + args[0];
@@ -106,12 +106,22 @@ class SubscriptionHandlerTest {
         String callbackData = "sub_100002";
         String callbackQueryId = "callback123";
 
+        User currentUser = User.builder()
+                .id(1)
+                .telegramId(followerId)
+                .fullName("John Doe")
+                .language("ru")
+                .build();
+
         when(callbackQuery.getData()).thenReturn(callbackData);
         when(callbackQuery.getId()).thenReturn(callbackQueryId);
         when(telegramUser.getId()).thenReturn(followerId);
         when(telegramUser.getFirstName()).thenReturn("John");
         when(telegramUser.getLastName()).thenReturn("Doe");
+        when(userService.getUserByTelegramId(followerId)).thenReturn(currentUser);
         when(userService.getUserByTelegramId(followingId)).thenReturn(dbUser);
+        when(userService.getUserLocale(currentUser)).thenReturn(Locale.forLanguageTag("ru"));
+        when(userService.getUserLocale(dbUser)).thenReturn(Locale.forLanguageTag("ru"));
         when(subscriptionService.subscribe(followerId, "John Doe", followingId))
                 .thenReturn("Вы подписались на Jane Smith");
 
@@ -120,6 +130,7 @@ class SubscriptionHandlerTest {
 
         // Then
         verify(subscriptionService).subscribe(followerId, "John Doe", followingId);
+        verify(userService).getUserByTelegramId(followerId);
         verify(userService).getUserByTelegramId(followingId);
         verify(sportBot).answerCallback(callbackQueryId, "Вы успешно подписались!");
         verify(sportBot).sendTgMessage(followerId, "✅ Вы подписались на пользователя: Jane Smith");
@@ -134,12 +145,22 @@ class SubscriptionHandlerTest {
         String callbackData = "sub_100002";
         String callbackQueryId = "callback123";
 
+        User currentUser = User.builder()
+                .id(1)
+                .telegramId(followerId)
+                .fullName("John")
+                .language("ru")
+                .build();
+
         when(callbackQuery.getData()).thenReturn(callbackData);
         when(callbackQuery.getId()).thenReturn(callbackQueryId);
         when(telegramUser.getId()).thenReturn(followerId);
         when(telegramUser.getFirstName()).thenReturn("John");
         when(telegramUser.getLastName()).thenReturn(null);
+        when(userService.getUserByTelegramId(followerId)).thenReturn(currentUser);
         when(userService.getUserByTelegramId(followingId)).thenReturn(dbUser);
+        when(userService.getUserLocale(currentUser)).thenReturn(Locale.forLanguageTag("ru"));
+        when(userService.getUserLocale(dbUser)).thenReturn(Locale.forLanguageTag("ru"));
         when(subscriptionService.subscribe(followerId, "John", followingId))
                 .thenReturn("Вы подписались на Jane Smith");
 
@@ -148,6 +169,7 @@ class SubscriptionHandlerTest {
 
         // Then
         verify(subscriptionService).subscribe(followerId, "John", followingId);
+        verify(userService).getUserByTelegramId(followerId);
         verify(userService).getUserByTelegramId(followingId);
         verify(sportBot).answerCallback(callbackQueryId, "Вы успешно подписались!");
         verify(sportBot).sendTgMessage(followerId, "✅ Вы подписались на пользователя: Jane Smith");
@@ -162,12 +184,22 @@ class SubscriptionHandlerTest {
         String callbackData = "sub_999999";
         String callbackQueryId = "callback123";
 
+        User currentUser = User.builder()
+                .id(1)
+                .telegramId(followerId)
+                .fullName("John Doe")
+                .language("ru")
+                .build();
+
         when(callbackQuery.getData()).thenReturn(callbackData);
         when(callbackQuery.getId()).thenReturn(callbackQueryId);
         when(telegramUser.getId()).thenReturn(followerId);
         when(telegramUser.getFirstName()).thenReturn("John");
         when(telegramUser.getLastName()).thenReturn("Doe");
+        when(userService.getUserByTelegramId(followerId)).thenReturn(currentUser);
         when(userService.getUserByTelegramId(followingId)).thenReturn(dbUser);
+        when(userService.getUserLocale(currentUser)).thenReturn(Locale.forLanguageTag("ru"));
+        when(userService.getUserLocale(dbUser)).thenReturn(Locale.forLanguageTag("ru"));
         when(subscriptionService.subscribe(followerId, "John Doe", followingId))
                 .thenReturn("Вы подписались на Jane Smith");
 
@@ -176,6 +208,7 @@ class SubscriptionHandlerTest {
 
         // Then
         verify(subscriptionService).subscribe(followerId, "John Doe", followingId);
+        verify(userService).getUserByTelegramId(followerId);
         verify(userService).getUserByTelegramId(followingId);
     }
 
@@ -187,10 +220,19 @@ class SubscriptionHandlerTest {
         String callbackData = "unsub_100002";
         String callbackQueryId = "callback123";
 
+        User currentUser = User.builder()
+                .id(1)
+                .telegramId(followerId)
+                .fullName("John")
+                .language("ru")
+                .build();
+
         when(callbackQuery.getData()).thenReturn(callbackData);
         when(callbackQuery.getId()).thenReturn(callbackQueryId);
         when(telegramUser.getId()).thenReturn(followerId);
+        when(userService.getUserByTelegramId(followerId)).thenReturn(currentUser);
         when(userService.getUserByTelegramId(followingId)).thenReturn(dbUser);
+        when(userService.getUserLocale(currentUser)).thenReturn(Locale.forLanguageTag("ru"));
         when(subscriptionService.unsubscribe(followerId, followingId))
                 .thenReturn("Вы отписались от Jane Smith");
 
@@ -199,6 +241,7 @@ class SubscriptionHandlerTest {
 
         // Then
         verify(subscriptionService).unsubscribe(followerId, followingId);
+        verify(userService).getUserByTelegramId(followerId);
         verify(userService).getUserByTelegramId(followingId);
         verify(sportBot).answerCallback(callbackQueryId, "Вы успешно отписались!");
         verify(sportBot).sendTgMessage(followerId, "❌ Вы отписались от пользователя: Jane Smith");

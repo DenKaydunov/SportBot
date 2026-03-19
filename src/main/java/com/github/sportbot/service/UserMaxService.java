@@ -28,6 +28,7 @@ public class UserMaxService {
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final UserMaxHistoryRepository userMaxHistoryRepository;
     private final MessageSource messageSource;
+    private final EntityLocalizationService entityLocalizationService;
 
 
     @Transactional
@@ -57,7 +58,7 @@ public class UserMaxService {
         int totalReps = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
         return messageSource.getMessage(
                 "workout.max_reps",
-                new Object[]{exerciseType.getTitle(), user.getFullName(), maxValue, totalReps},
+                new Object[]{entityLocalizationService.getExerciseTypeTitle(exerciseType, locale), user.getFullName(), maxValue, totalReps},
                 locale
         );
     }

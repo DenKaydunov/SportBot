@@ -1,6 +1,8 @@
 package com.github.sportbot.controller;
 
+import com.github.sportbot.model.User;
 import com.github.sportbot.service.LeaderboardService;
+import com.github.sportbot.service.UserService;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +18,7 @@ import java.time.LocalDate;
 public class LeaderboardController {
 
     private final LeaderboardService leaderboardService;
+    private final UserService userService;
 
     /**
      * Provides leaderboard data by period.
@@ -23,6 +26,7 @@ public class LeaderboardController {
      * @param exerciseCode type of exercise
      * @param limit count of rows
      * @param period period code (today, yesterday, week, month, all)
+     * @param telegramId telegram user ID for localization
      * @return formatted leaderboard
      */
     @GetMapping("/{exerciseCode}/by-period")
@@ -36,9 +40,14 @@ public class LeaderboardController {
 
             @RequestParam(required = false)
             @Parameter(example = "today")
-            String period
+            String period,
+
+            @RequestParam
+            @Parameter(example = "1000001")
+            Long telegramId
     ) {
-        return leaderboardService.getLeaderboardByPeriod(exerciseCode, limit, period);
+        User user = userService.getUserByTelegramId(telegramId);
+        return leaderboardService.getLeaderboardByPeriod(exerciseCode, limit, period, user);
     }
 
     /**
@@ -47,6 +56,7 @@ public class LeaderboardController {
      * @param exerciseCode type of exercise
      * @param pageable pagination parameters (page, size)
      * @param period period code (today, yesterday, week, month, all)
+     * @param telegramId telegram user ID for localization
      * @return formatted leaderboard page
      */
     @GetMapping("/{exerciseCode}/by-period/paged")
@@ -60,9 +70,14 @@ public class LeaderboardController {
 
             @RequestParam(required = false)
             @Parameter(example = "today")
-            String period
+            String period,
+
+            @RequestParam
+            @Parameter(example = "1000001")
+            Long telegramId
     ) {
-        return leaderboardService.getLeaderboardByPeriodPaged(exerciseCode, pageable, period);
+        User user = userService.getUserByTelegramId(telegramId);
+        return leaderboardService.getLeaderboardByPeriodPaged(exerciseCode, pageable, period, user);
     }
 
     /**
@@ -71,9 +86,10 @@ public class LeaderboardController {
      * @param limit count of rows
      * @param startDate start Date
      * @param endDate end Date
+     * @param telegramId telegram user ID for localization
      * @return formatted leaderboard
      */
-    @GetMapping("/{exerciseCode}/by-dates")
+    @GetMapping(value = "/{exerciseCode}/by-dates", produces = "text/plain")
     public String getLeaderboardByDates(
             @PathVariable
             @Parameter(example = "squat")
@@ -94,9 +110,14 @@ public class LeaderboardController {
             @RequestParam
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             @Parameter(example = "2025-09-05")
-            LocalDate endDate
+            LocalDate endDate,
+
+            @RequestParam
+            @Parameter(example = "1000001")
+            Long telegramId
     ) {
-        return leaderboardService.getLeaderboardByDates(exerciseCode, tagCode, limit, startDate, endDate);
+        User user = userService.getUserByTelegramId(telegramId);
+        return leaderboardService.getLeaderboardByDates(exerciseCode, tagCode, limit, startDate, endDate, user);
     }
 
     /**
@@ -106,9 +127,10 @@ public class LeaderboardController {
      * @param pageable pagination parameters (page, size)
      * @param startDate start Date
      * @param endDate end Date
+     * @param telegramId telegram user ID for localization
      * @return formatted leaderboard page
      */
-    @GetMapping("/{exerciseCode}/by-dates/paged")
+    @GetMapping(value = "/{exerciseCode}/by-dates/paged", produces = "text/plain")
     public String getLeaderboardByDatesPaged(
             @PathVariable
             @Parameter(example = "squat")
@@ -129,12 +151,17 @@ public class LeaderboardController {
             @RequestParam
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             @Parameter(example = "2025-09-05")
-            LocalDate endDate
+            LocalDate endDate,
+
+            @RequestParam
+            @Parameter(example = "1000001")
+            Long telegramId
     ) {
-        return leaderboardService.getLeaderboardByDatesPaged(exerciseCode, tagCode, pageable, startDate, endDate);
+        User user = userService.getUserByTelegramId(telegramId);
+        return leaderboardService.getLeaderboardByDatesPaged(exerciseCode, tagCode, pageable, startDate, endDate, user);
     }
 
-    @GetMapping("/rating")
+    @GetMapping(value = "/rating", produces = "text/plain")
     public String getRating(
             @RequestParam
             @Parameter(example = "1000001")

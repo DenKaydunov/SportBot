@@ -30,7 +30,7 @@ class UserProfileServiceTest {
     @BeforeEach
     void setUp() {
         ResourceBundleMessageSource realMessageSource = new ResourceBundleMessageSource();
-        Locale.setDefault(new Locale("ru"));
+        Locale.setDefault(Locale.forLanguageTag("ru"));
         realMessageSource.setBasename("messages/messages");
         realMessageSource.setDefaultEncoding("UTF-8");
         this.messageSource = realMessageSource;
@@ -57,7 +57,6 @@ class UserProfileServiceTest {
     void getProfile_ReturnsFormattedProfile() {
         // Given
         Long telegramId = 123456L;
-        String lang = "ru";
         User user = new User();
         user.setFullName("Denis Kaydunov");
         user.setRemindTime(LocalTime.of(13, 0));
@@ -75,7 +74,8 @@ class UserProfileServiceTest {
         when(userMaxService.getLastMaxByExerciseCode(user, "pull_up")).thenReturn(15);
         when(userMaxService.getLastMaxByExerciseCode(user, "squat")).thenReturn(50);
         when(userMaxService.getLastMaxByExerciseCode(user, "abs")).thenReturn(50);
-        when(rankService.getRankTitle(user)).thenReturn("-");
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("ru"));
+        when(rankService.getRankTitle(eq(user), any(Locale.class))).thenReturn("-");
         when(streakService.getStreakInfo(user)).thenReturn("🔥 Стрик: 5 дней подряд (рекорд: 10 дней)");
 
         // When
@@ -112,7 +112,6 @@ class UserProfileServiceTest {
     void getProfile_ShowsTopRankTitle_WhenPresent() {
         // Given
         Long telegramId = 123456L;
-        String lang = "ru";
         User user = new User();
         user.setFullName("Ranked User");
 
@@ -128,7 +127,8 @@ class UserProfileServiceTest {
         when(userMaxService.getLastMaxByExerciseCode(user, "abs")).thenReturn(0);
 
         // stub rank service to return some rank title
-        when(rankService.getRankTitle(user)).thenReturn("Джон Уик");
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("ru"));
+        when(rankService.getRankTitle(eq(user), any(Locale.class))).thenReturn("Джон Уик");
         when(streakService.getStreakInfo(user)).thenReturn("🔥 Стрик: 100 дней подряд (новый рекорд! 🎉)");
 
         // When

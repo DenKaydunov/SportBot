@@ -10,13 +10,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,6 +30,10 @@ class ExercisePeriodServiceTest {
     private ExerciseRecordRepository exerciseRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private UserService userService;
+    @Mock
+    private MessageSource messageSource;
 
     @InjectMocks
     private ExerciseService exerciseService;
@@ -47,7 +55,24 @@ class ExercisePeriodServiceTest {
                 .id(1)
                 .telegramId(123456L)
                 .fullName("Existing User")
+                .language("ru")
                 .build();
+
+        // Setup message source mocks
+        Locale ruLocale = Locale.forLanguageTag("ru");
+        lenient().when(userService.getUserLocale(any(User.class))).thenReturn(ruLocale);
+        lenient().when(messageSource.getMessage(eq("exercise.progress.period"), any(Object[].class), any(Locale.class)))
+                .thenAnswer(invocation -> {
+                    Object[] args = invocation.getArgument(1);
+                    return "Твой прогресс с " + args[0] + " по " + args[1] + ":";
+                });
+        lenient().when(messageSource.getMessage(eq("exercise.progress.for.date"), any(Object[].class), any(Locale.class)))
+                .thenAnswer(invocation -> {
+                    Object[] args = invocation.getArgument(1);
+                    return "Твой прогресс за " + args[0] + ":";
+                });
+        lenient().when(messageSource.getMessage(eq("exercise.no.workouts.found"), isNull(), any(Locale.class)))
+                .thenReturn("Тренировок за этот период не найдено. 😴");
     }
 
     @Test

@@ -13,10 +13,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,10 +37,20 @@ class AchievementServiceTest {
     @Mock
     private MilestoneRepository milestoneRepository;
 
+    @Mock
+    private MessageSource messageSource;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private EntityLocalizationService entityLocalizationService;
+
     @InjectMocks
     private AchievementService achievementService;
 
     private User user;
+    private Locale testLocale;
 
     @BeforeEach
     void setUp() {
@@ -47,6 +59,23 @@ class AchievementServiceTest {
         user.setTelegramId(100L);
         user.setCurrentStreak(10);
         user.setBalanceTon(0);
+        user.setLanguage("ru");
+
+        testLocale = Locale.forLanguageTag("ru");
+
+        // Setup MessageSource mocks
+        lenient().when(userService.getUserLocale(any(User.class))).thenReturn(testLocale);
+        lenient().when(entityLocalizationService.getStreakMilestoneTitle(any(StreakMilestone.class), any(Locale.class)))
+                .thenAnswer(inv -> ((StreakMilestone) inv.getArgument(0)).getTitle());
+        lenient().when(messageSource.getMessage(eq("achievement.none.yet"), isNull(), any(Locale.class)))
+                .thenReturn("У тебя ещё нет достижений.");
+        lenient().when(messageSource.getMessage(eq("achievement.list.header"), isNull(), any(Locale.class)))
+                .thenReturn("🏆 Твои достижения:");
+        lenient().when(messageSource.getMessage(eq("achievement.list.item"), any(Object[].class), any(Locale.class)))
+                .thenAnswer(invocation -> {
+                    Object[] args = invocation.getArgument(1);
+                    return "• " + args[0] + " (" + args[1] + " дней) - получено: " + args[2];
+                });
     }
 
     @Test

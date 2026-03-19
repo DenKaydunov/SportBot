@@ -19,15 +19,18 @@ public class NotificationService implements MessageLocalizer {
     private final SubscriptionService subscriptionService;
     private final MessageSource messageSource;
     private final UserService userService;
+    private final EntityLocalizationService entityLocalizationService;
 
     public NotificationService(@Lazy SportBot sportBot,
                                @Lazy SubscriptionService subscriptionService,
-                               MessageSource messageSource, 
-                               UserService userService) {
+                               MessageSource messageSource,
+                               UserService userService,
+                               EntityLocalizationService entityLocalizationService) {
         this.sportBot = sportBot;
         this.subscriptionService = subscriptionService;
         this.messageSource = messageSource;
         this.userService = userService;
+        this.entityLocalizationService = entityLocalizationService;
     }
 
     public void notifySubscription(User follower, User following) {
@@ -36,21 +39,29 @@ public class NotificationService implements MessageLocalizer {
     }
 
     public void notifyFollowersAboutNewRecord(User user, ExerciseType exerciseType, int maxValue) {
-        String achievement = String.format("побил личный рекорд в %s: %d!", exerciseType.getTitle(), maxValue);
-        notifyFollowers(user, achievement);
+        subscriptionService.getFollowers(user.getTelegramId())
+                .forEach(follower -> {
+                    Locale locale = userService.getUserLocale(follower);
+                    String message = messageSource.getMessage(
+                        "notification.friend.record",
+                        new Object[]{user.getFullName(), entityLocalizationService.getExerciseTypeTitle(exerciseType, locale), maxValue},
+                        locale
+                    );
+                    sportBot.sendTgMessage(follower.getTelegramId(), message);
+                });
     }
 
     public void notifyFollowersAboutWorkout(User user, ExerciseType exerciseType, int count) {
-        String achievement = String.format("выполнил тренировку: %s (%d)", exerciseType.getTitle(), count);
-        notifyFollowers(user, achievement);
-    }
-
-    private void notifyFollowers(User user, String achievement) {
-        Long userTelegramId = user.getTelegramId();
-        subscriptionService.getFollowers(userTelegramId)
-                .forEach(follower ->
-                        sportBot.sendTgMessage(follower.getTelegramId(),
-                                String.format("Твой друг %s %s", user.getFullName(), achievement)));
+        subscriptionService.getFollowers(user.getTelegramId())
+                .forEach(follower -> {
+                    Locale locale = userService.getUserLocale(follower);
+                    String message = messageSource.getMessage(
+                        "notification.friend.workout",
+                        new Object[]{user.getFullName(), entityLocalizationService.getExerciseTypeTitle(exerciseType, locale), count},
+                        locale
+                    );
+                    sportBot.sendTgMessage(follower.getTelegramId(), message);
+                });
     }
 
     public String localize(String messageKey, Object user) {

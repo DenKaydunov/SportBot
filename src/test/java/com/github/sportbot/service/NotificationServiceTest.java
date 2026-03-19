@@ -32,6 +32,9 @@ class NotificationServiceTest {
     @Mock
     UserService userService;
 
+    @Mock
+    private EntityLocalizationService entityLocalizationService;
+
     @InjectMocks
     private NotificationService notificationService;
 
@@ -61,11 +64,34 @@ class NotificationServiceTest {
                 .build();
 
         // Setup MessageSource mock (lenient because not all tests use it)
+        Locale ruLocale = Locale.forLanguageTag("ru");
+        lenient().when(userService.getUserLocale(any(User.class))).thenReturn(ruLocale);
+
+        // Setup EntityLocalizationService mocks
+        lenient().when(entityLocalizationService.getExerciseTypeTitle(any(ExerciseType.class), any(Locale.class)))
+                .thenAnswer(inv -> ((ExerciseType) inv.getArgument(0)).getTitle());
+
         lenient().when(messageSource.getMessage(
                 eq(NotificationService.NOTIFICATION_SUBSCRIPTION),
                 any(Object[].class),
                 any(Locale.class)
         )).thenAnswer(invocation -> "🔥 На вас подписался пользователь: Follower User");
+        lenient().when(messageSource.getMessage(
+                eq("notification.friend.workout"),
+                any(Object[].class),
+                any(Locale.class)
+        )).thenAnswer(invocation -> {
+            Object[] args = invocation.getArgument(1);
+            return "Твой друг " + args[0] + " выполнил тренировку: " + args[1] + " (" + args[2] + ")";
+        });
+        lenient().when(messageSource.getMessage(
+                eq("notification.friend.record"),
+                any(Object[].class),
+                any(Locale.class)
+        )).thenAnswer(invocation -> {
+            Object[] args = invocation.getArgument(1);
+            return "Твой друг " + args[0] + " побил личный рекорд в " + args[1] + ": " + args[2] + "!";
+        });
     }
 
     @Test

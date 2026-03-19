@@ -32,6 +32,8 @@ class RankServiceTest {
     private MessageSource messageSource;
     @Mock
     private UserService userService;
+    @Mock
+    private EntityLocalizationService entityLocalizationService;
 
     @InjectMocks
     private RankService rankService;
@@ -48,10 +50,15 @@ class RankServiceTest {
         this.messageSource = realMessageSource;
 
         // re-inject service with real message source
-        this.rankService = new RankService(rankRepository, userRankRepository, messageSource, userService);
+        this.rankService = new RankService(rankRepository, userRankRepository, messageSource, userService, entityLocalizationService);
 
         exerciseType = ExerciseType.builder().id(1L).code("pull_up").title("Подтягивания").build();
         user = User.builder().id(10).telegramId(1000L).language("ru").build();
+
+        // Setup EntityLocalizationService mock
+        lenient().when(entityLocalizationService.getRankTitle(any(com.github.sportbot.model.Rank.class), any(Locale.class)))
+                .thenAnswer(inv -> ((com.github.sportbot.model.Rank) inv.getArgument(0)).getTitle());
+        lenient().when(userService.getUserLocale(any(User.class))).thenReturn(Locale.forLanguageTag("ru"));
     }
 
     @Test

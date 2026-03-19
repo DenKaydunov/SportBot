@@ -11,13 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class UserProfileService {
 
-    public static final String UNKNOWN_VALUE = "не указан";
+    public static final String PROFILE_UNKNOWN_VALUE = "profile.unknown.value";
     private final ExerciseService exerciseService;
 
     private final UserService userService;
@@ -52,13 +51,12 @@ public class UserProfileService {
      */
     public String getProfile(@NotNull Long telegramId) {
         User user = userService.getUserByTelegramId(telegramId);
-
-
-        String ageValue = user.getAge() != null ? user.getAge().toString() : UNKNOWN_VALUE;
-        String sexValue = mapSexToText(user.getSex());
-        String localeUser = resolveLanguage(user.getLanguage());
         Locale locale = userService.getUserLocale(user);
-        String remindTimeValue = user.getRemindTime() != null ? user.getRemindTime().toString() : UNKNOWN_VALUE;
+
+        String ageValue = user.getAge() != null ? user.getAge().toString() : messageSource.getMessage(PROFILE_UNKNOWN_VALUE, null, locale);
+        String sexValue = mapSexToText(user.getSex(), locale);
+        String localeUser = resolveLanguage(user.getLanguage(), locale);
+        String remindTimeValue = user.getRemindTime() != null ? user.getRemindTime().toString() : messageSource.getMessage(PROFILE_UNKNOWN_VALUE, null, locale);
 
         int countPushUps = exerciseService.getTotalReps(user, "push_up");
         int countPullUps = exerciseService.getTotalReps(user, "pull_up");
@@ -70,7 +68,7 @@ public class UserProfileService {
         int maxSquats = userMaxService.getLastMaxByExerciseCode(user, "squat");
         int maxAbs = userMaxService.getLastMaxByExerciseCode(user, "abs");
 
-        String rank = rankService.getRankTitle(user);
+        String rank = rankService.getRankTitle(user, locale);
         String streakInfo = streakService.getStreakInfo(user);
 
         return messageSource.getMessage(
@@ -119,29 +117,32 @@ public class UserProfileService {
         );
     }
 
-    private String mapSexToText(Sex sex) {
+    private String mapSexToText(Sex sex, Locale locale) {
         if (sex == null) {
-            return UNKNOWN_VALUE;
+            return messageSource.getMessage(PROFILE_UNKNOWN_VALUE, null, locale);
         }
         return switch (sex) {
-            case MAN -> "мужчина";
-            case WOMAN -> "женщина";
+            case MAN -> messageSource.getMessage("profile.gender.man", null, locale);
+            case WOMAN -> messageSource.getMessage("profile.gender.woman", null, locale);
         };
     }
 
-    private String resolveLanguage(String storedLanguage) {
+    private String resolveLanguage(String storedLanguage, Locale locale) {
         String lang = firstNonBlank(storedLanguage);
         if (lang == null) {
-            return UNKNOWN_VALUE;
+            return messageSource.getMessage(PROFILE_UNKNOWN_VALUE, null, locale);
         }
         String text = lang.toLowerCase(Locale.ROOT);
-        if (Objects.equals(text, "ru")) {
-            return "русский";
-        }
-        if (Objects.equals(text, "en")) {
-            return "english";
-        }
-        return text;
+        String messageKey = switch (text) {
+            case "ru" -> "profile.language.ru";
+            case "en" -> "profile.language.en";
+            case "uk" -> "profile.language.uk";
+            default -> null;
+        };
+
+        return messageKey != null
+            ? messageSource.getMessage(messageKey, null, locale)
+            : text;
     }
 
     private String firstNonBlank(String... values) {

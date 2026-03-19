@@ -1,9 +1,10 @@
 package com.github.sportbot.controller;
 
+import com.github.sportbot.model.User;
 import com.github.sportbot.repository.LeaderBoardRepository;
 import com.github.sportbot.service.LeaderboardService;
+import com.github.sportbot.service.UserService;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -33,7 +34,11 @@ class LeaderboardControllerIntegrationTest {
     @MockBean
     private LeaderboardService leaderboardService;
 
+    @MockBean
+    private UserService userService;
+
     private final String exerciseCode = "squat";
+    private final Long testTelegramId = 1000001L;
 
     @Mock
     private LeaderBoardRepository leaderBoardRepository;
@@ -42,13 +47,16 @@ class LeaderboardControllerIntegrationTest {
     void shouldReturnLeaderboardByPeriod() throws Exception {
         // Given
         String expectedResponse = "Top 3 for squats today";
-        when(leaderboardService.getLeaderboardByPeriod(exerciseCode, 3, "today"))
+        User testUser = User.builder().telegramId(testTelegramId).language("ru").build();
+        when(userService.getUserByTelegramId(testTelegramId)).thenReturn(testUser);
+        when(leaderboardService.getLeaderboardByPeriod(exerciseCode, 3, "today", testUser))
                 .thenReturn(expectedResponse);
 
         // When & Then
         mockMvc.perform(get("/api/v1/leaderboard/{exerciseCode}/by-period", exerciseCode)
                         .param("limit", "3")
                         .param("period", "today")
+                        .param("telegramId", testTelegramId.toString())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse));
@@ -60,8 +68,10 @@ class LeaderboardControllerIntegrationTest {
         LocalDate startDate = LocalDate.of(2025, 9, 1);
         LocalDate endDate = LocalDate.of(2025, 9, 5);
         String expectedResponse = "Leaderboard for squats between 2025-09-01 and 2025-09-05";
+        User testUser = User.builder().telegramId(testTelegramId).language("ru").build();
 
-        when(leaderboardService.getLeaderboardByDates(exerciseCode, "TAG",5, startDate, endDate))
+        when(userService.getUserByTelegramId(testTelegramId)).thenReturn(testUser);
+        when(leaderboardService.getLeaderboardByDates(exerciseCode, "TAG",5, startDate, endDate, testUser))
                 .thenReturn(expectedResponse);
 
         // When & Then
@@ -70,6 +80,7 @@ class LeaderboardControllerIntegrationTest {
                         .param("limit", "5")
                         .param("startDate", startDate.toString())
                         .param("endDate", endDate.toString())
+                        .param("telegramId", testTelegramId.toString())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse));
@@ -81,8 +92,10 @@ class LeaderboardControllerIntegrationTest {
         LocalDate startDate = LocalDate.of(2025, 9, 1);
         LocalDate endDate = LocalDate.of(2025, 9, 5);
         String expectedResponse = "Leaderboard for squats between 2025-09-01 and 2025-09-05 (no tag)";
+        User testUser = User.builder().telegramId(testTelegramId).language("ru").build();
 
-        when(leaderboardService.getLeaderboardByDates(exerciseCode, null, 5, startDate, endDate))
+        when(userService.getUserByTelegramId(testTelegramId)).thenReturn(testUser);
+        when(leaderboardService.getLeaderboardByDates(exerciseCode, null, 5, startDate, endDate, testUser))
                 .thenReturn(expectedResponse);
 
         // When & Then
@@ -90,6 +103,7 @@ class LeaderboardControllerIntegrationTest {
                         .param("limit", "5")
                         .param("startDate", startDate.toString())
                         .param("endDate", endDate.toString())
+                        .param("telegramId", testTelegramId.toString())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse));
@@ -101,8 +115,10 @@ class LeaderboardControllerIntegrationTest {
         LocalDate startDate = LocalDate.of(2025, 9, 1);
         LocalDate endDate = LocalDate.of(2025, 9, 5);
         String expectedResponse = "Paginated leaderboard for squats between 2025-09-01 and 2025-09-05";
+        User testUser = User.builder().telegramId(testTelegramId).language("ru").build();
 
-        when(leaderboardService.getLeaderboardByDatesPaged(eq(exerciseCode), eq("TAG"), any(Pageable.class), eq(startDate), eq(endDate)))
+        when(userService.getUserByTelegramId(testTelegramId)).thenReturn(testUser);
+        when(leaderboardService.getLeaderboardByDatesPaged(eq(exerciseCode), eq("TAG"), any(Pageable.class), eq(startDate), eq(endDate), eq(testUser)))
                 .thenReturn(expectedResponse);
 
         // When & Then
@@ -112,6 +128,7 @@ class LeaderboardControllerIntegrationTest {
                         .param("size", "20")
                         .param("startDate", startDate.toString())
                         .param("endDate", endDate.toString())
+                        .param("telegramId", testTelegramId.toString())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse));
@@ -141,6 +158,7 @@ class LeaderboardControllerIntegrationTest {
                         .param("limit", "10"))
                 .andExpect(status().isOk());
 
-        verify(leaderboardService).getTopAllExercises(4L, 10);
+        verify(leaderboardService).getT
+    opAllExercises(4L, 10);
     }
 }

@@ -68,6 +68,9 @@ class ExerciseServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private EntityLocalizationService entityLocalizationService;
+
     @InjectMocks
     private ExerciseService exerciseService;
 
@@ -87,11 +90,37 @@ class ExerciseServiceTest {
                         .lastWorkoutDate(LocalDate.now().minusDays(1))
                         .exerciseRecords(new ArrayList<>())
                         .maxHistory(new ArrayList<>())
+                        .language("ru")
                         .build();
 
         testExerciseType = ExerciseType.builder().id(1L).code("pushup").title("Отжимания").build();
 
         testRequest = new ExerciseEntryRequest(TELEGRAM_ID, "push_up", 10);
+
+        // Setup common message source mocks
+        Locale ruLocale = Locale.forLanguageTag("ru");
+        lenient().when(userService.getUserLocale(any(User.class))).thenReturn(ruLocale);
+
+        // Setup EntityLocalizationService mocks
+        lenient().when(entityLocalizationService.getExerciseTypeTitle(any(ExerciseType.class), any(Locale.class)))
+                .thenAnswer(inv -> ((ExerciseType) inv.getArgument(0)).getTitle());
+        lenient().when(entityLocalizationService.getStreakMilestoneTitle(any(StreakMilestone.class), any(Locale.class)))
+                .thenAnswer(inv -> ((StreakMilestone) inv.getArgument(0)).getTitle());
+        lenient().when(entityLocalizationService.getStreakMilestoneDescription(any(StreakMilestone.class), any(Locale.class)))
+                .thenAnswer(inv -> ((StreakMilestone) inv.getArgument(0)).getDescription());
+
+        lenient().when(messageSource.getMessage(eq("exercise.achievement.congrats"), any(Object[].class), any(Locale.class)))
+                .thenAnswer(invocation -> {
+                    Object[] args = invocation.getArgument(1);
+                    return "\n🏆 Поздравляем! Награда за " + args[0] + " дней подряд: " + args[1] + " - " + args[2] + " (Награда: " + args[3] + " Ton)";
+                });
+        lenient().when(messageSource.getMessage(eq("exercise.all.achievements.earned"), isNull(), any(Locale.class)))
+                .thenReturn("\n✅ Все награды за стрик получены!");
+        lenient().when(messageSource.getMessage(eq("exercise.next.achievement.hint"), any(Object[].class), any(Locale.class)))
+                .thenAnswer(invocation -> {
+                    Object[] args = invocation.getArgument(1);
+                    return "\n⏰ Тренируйся ещё " + args[0] + " дней подряд для следующей награды.";
+                });
     }
 
     @Test
@@ -265,16 +294,16 @@ class ExerciseServiceTest {
         String result10 = ReflectionTestUtils.invokeMethod(exerciseService, "getNextAchievementUpdateMessage",user5);
 
         //Then
-        String expected1 = "\n🏆 Поздравляем! Награда за 10 дней подряд: Bronze streak - 10 дней подряд без перерыва (Награда: 5 Ton)";
-        String expected2 = "\n⏰ Тренируйся ещё 10 дней подряд для следующей награды.";
-        String expected3 = "\n🏆 Поздравляем! Награда за 20 дней подряд: Silver streak - 20 дней стабильных тренировок (Награда: 10 Ton)";
-        String expected4 = "\n⏰ Тренируйся ещё 30 дней подряд для следующей награды.";
-        String expected5 = "\n🏆 Поздравляем! Награда за 50 дней подряд: Gold streak - 50 дней настоящей силы (Награда: 25 Ton)";
+        String expected1 = "\n\n🏆 Поздравляем! Награда за 10 дней подряд: Bronze streak - 10 дней подряд без перерыва (Награда: 5 Ton)";
+        String expected2 = "\n\n⏰ Тренируйся ещё 10 дней подряд для следующей награды.";
+        String expected3 = "\n\n🏆 Поздравляем! Награда за 20 дней подряд: Silver streak - 20 дней стабильных тренировок (Награда: 10 Ton)";
+        String expected4 = "\n\n⏰ Тренируйся ещё 30 дней подряд для следующей награды.";
+        String expected5 = "\n\n🏆 Поздравляем! Награда за 50 дней подряд: Gold streak - 50 дней настоящей силы (Награда: 25 Ton)";
         String expected6 = "\n✅ Все награды за стрик получены!";
         String expected7 = "";
         String expected8 = "\n✅ Все награды за стрик получены!";
         String expected9 = "";
-        String expected10 = "\n⏰ Тренируйся ещё 28 дней подряд для следующей награды.";
+        String expected10 = "\n\n⏰ Тренируйся ещё 28 дней подряд для следующей награды.";
 
         assertEquals(expected1, result1);
         assertEquals(expected2, result2);

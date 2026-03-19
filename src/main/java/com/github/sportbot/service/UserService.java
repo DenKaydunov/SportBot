@@ -96,7 +96,7 @@ public class UserService{
 
     public Locale getUserLocale(User user){
         String lang = user.getLanguage();
-        if (!"ru".equals(lang) && !"en".equals(lang)){
+        if (!"ru".equals(lang) && !"en".equals(lang) && !"uk".equals(lang)){
             lang = "ru";
         }
         return Locale.forLanguageTag(lang);
