@@ -71,6 +71,9 @@ public class UserProfileService {
         String rank = rankService.getRankTitle(user, locale);
         String streakInfo = streakService.getStreakInfo(user);
 
+        double totalXP = rankService.calculateTotalXP(user);
+        String xpFormatted = String.format("%.1f", totalXP);
+
         return messageSource.getMessage(
                 "profile.template",
                 new Object[]{
@@ -83,6 +86,7 @@ public class UserProfileService {
                         countPullUps, maxPullUps,
                         countSquats, maxSquats,
                         countAbs, maxAbs,
+                        xpFormatted,
                         rank,
                         streakInfo
                 },
@@ -147,7 +151,7 @@ public class UserProfileService {
 
     private String firstNonBlank(String... values) {
         for (String value : values) {
-            if (value != null && !value.strip().isEmpty()) {
+            if (value != null && !value.isBlank()) {
                 return value;
             }
         }

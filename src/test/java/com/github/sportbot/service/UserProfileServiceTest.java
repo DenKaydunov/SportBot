@@ -76,6 +76,7 @@ class UserProfileServiceTest {
         when(userMaxService.getLastMaxByExerciseCode(user, "abs")).thenReturn(50);
         when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("ru"));
         when(rankService.getRankTitle(eq(user), any(Locale.class))).thenReturn("-");
+        when(rankService.calculateTotalXP(user)).thenReturn(5000.8);
         when(streakService.getStreakInfo(user)).thenReturn("🔥 Стрик: 5 дней подряд (рекорд: 10 дней)");
 
         // When
@@ -92,6 +93,7 @@ class UserProfileServiceTest {
         assertTrue(profile.contains("подтягиваний: 2 009/15"));
         assertTrue(profile.contains("приседаний: 2 293/50"));
         assertTrue(profile.contains("пресс: 2 293/50"));
+        assertTrue(profile.contains("💎 XP: 5000,8"));
         assertTrue(profile.contains("📊")); // статус
 
 

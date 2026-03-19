@@ -1,10 +1,12 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.config.WorkoutProperties;
 import com.github.sportbot.exception.RankNotFoundException;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.Rank;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserRank;
+import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.RankRepository;
 import com.github.sportbot.repository.UserRankRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -25,50 +28,67 @@ public class RankService {
     private final MessageSource messageSource;
     private final UserService userService;
     private final EntityLocalizationService entityLocalizationService;
+    private final WorkoutProperties workoutProperties;
+    private final ExerciseRecordRepository exerciseRecordRepository;
+    private final ExerciseTypeService exerciseTypeService;
 
     /**
-     * Assigns a rank to the user for the given exercise type if the total reps meet a threshold
-     * and this rank is higher than the user's current rank for that exercise type.
+     * Calculates total XP for the user based on all exercise types.
+     * XP = Σ(total_reps_per_exercise × coefficient)
+     * Uses the same logic as LeaderboardService.getRating()
+     */
+    public double calculateTotalXP(User user) {
+        return Stream.of("pull_up", "push_up", "squat", "abs")
+                .mapToDouble(code -> {
+                    ExerciseType type = exerciseTypeService.getExerciseType(code);
+                    int totalReps = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, type);
+                    return totalReps * workoutProperties.getCoefficient(code);
+                })
+                .sum();
+    }
+
+    /**
+     * Assigns a global rank to the user based on their total XP across all exercise types.
      * The method is idempotent and will not duplicate assignments.
-     *
-     * Note: If there are no ranks configured for the provided exercise type, this method is a no-op
+     * Note: If there are no global ranks configured, this method is a no-op
      * and returns an empty message.
      *
      * @return a localized promotion/next-rank message or empty string when nothing to report.
      */
     @Transactional
-    public String assignRankIfEligible(User user, ExerciseType exerciseType, int totalReps) {
+    public String assignRankIfEligible(User user) {
+        double totalXP = calculateTotalXP(user);
+        int xpThreshold = (int) Math.floor(totalXP);
         Locale locale = userService.getUserLocale(user);
-        String message = "";
-        if (!hasRanksConfigured(exerciseType)) {
-            return message;
+
+        if (!rankRepository.existsByExerciseTypeIsNull()) {
+            return "";
         }
 
-        Rank currentRank = getCurrentRank(exerciseType, totalReps);
-        Optional<UserRank> userRank = getUserRank(user, exerciseType);
+        Rank currentRank = rankRepository
+                .findTopByExerciseTypeIsNullAndThresholdLessThanEqualOrderByThresholdDesc(xpThreshold)
+                .orElseThrow(() -> new RankNotFoundException("global", xpThreshold));
 
-        if (isPromotion(user, userRank, currentRank)) {
+        Optional<UserRank> userHighestRank = userRankRepository.findTopByUserOrderByRank_ThresholdDesc(user);
+
+        if (isPromotion(user, userHighestRank, currentRank)) {
             saveUserRank(user, currentRank);
-            message = buildPromotionMessage(userRank, currentRank, locale);
+            return buildPromotionMessage(userHighestRank, currentRank, locale);
         } else {
-            message = buildNextRankHint(exerciseType, currentRank, totalReps, locale);
+            return buildNextRankHint(currentRank, xpThreshold, locale);
         }
-        return message;
     }
 
-    private Rank getCurrentRank(ExerciseType exerciseType, int totalReps) {
-        return rankRepository.findTopByExerciseTypeAndThresholdLessThanEqualOrderByThresholdDesc(exerciseType, totalReps)
-                .orElseThrow(() -> new RankNotFoundException(exerciseType.getCode(), totalReps)
-                );
-    }
-    
-    private Optional<UserRank> getUserRank(User user, ExerciseType exerciseType) {
-        return userRankRepository
-                .findTopByUserAndRank_ExerciseTypeOrderByRank_ThresholdDesc(user, exerciseType);
-    }
-    
-    private boolean hasRanksConfigured(ExerciseType exerciseType) {
-        return rankRepository.existsByExerciseType(exerciseType);
+    private String buildNextRankHint(Rank achievedRank, int totalXP, Locale locale) {
+        return rankRepository
+                .findTopByExerciseTypeIsNullAndThresholdGreaterThanOrderByThresholdAsc(achievedRank.getThreshold())
+                .map(next -> Math.max(0, next.getThreshold() - totalXP))
+                .filter(remaining -> remaining > 0)
+                .map(remaining -> messageSource.getMessage(
+                        "workout.rank_next_left",
+                        new Object[]{remaining},
+                        locale))
+                .orElse("");
     }
 
     private String buildPromotionMessage(Optional<UserRank> currentForType, Rank achievedRank, Locale locale) {
@@ -80,18 +100,6 @@ public class RankService {
                 new Object[]{previousTitle, entityLocalizationService.getRankTitle(achievedRank, locale)},
                 locale
         );
-    }
-
-    private String buildNextRankHint(ExerciseType exerciseType, Rank achievedRank, int totalReps, Locale locale) {
-        return rankRepository
-                .findTopByExerciseTypeAndThresholdGreaterThanOrderByThresholdAsc(exerciseType, achievedRank.getThreshold())
-                .map(next -> Math.max(0, next.getThreshold() - totalReps))
-                .filter(remaining -> remaining > 0)
-                .map(remaining -> messageSource.getMessage(
-                        "workout.rank_next_left",
-                        new Object[]{remaining},
-                        locale))
-                .orElse("");
     }
 
     /**

@@ -1,8 +1,10 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.config.WorkoutProperties;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserRank;
+import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.RankRepository;
 import com.github.sportbot.repository.UserRankRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,11 +36,16 @@ class RankServiceTest {
     private UserService userService;
     @Mock
     private EntityLocalizationService entityLocalizationService;
+    @Mock
+    private WorkoutProperties workoutProperties;
+    @Mock
+    private ExerciseRecordRepository exerciseRecordRepository;
+    @Mock
+    private ExerciseTypeService exerciseTypeService;
 
     @InjectMocks
     private RankService rankService;
 
-    private ExerciseType exerciseType;
     private User user;
 
     @BeforeEach
@@ -50,42 +57,51 @@ class RankServiceTest {
         this.messageSource = realMessageSource;
 
         // re-inject service with real message source
-        this.rankService = new RankService(rankRepository, userRankRepository, messageSource, userService, entityLocalizationService);
+        this.rankService = new RankService(rankRepository, userRankRepository, messageSource, userService, entityLocalizationService, workoutProperties, exerciseRecordRepository, exerciseTypeService);
 
-        exerciseType = ExerciseType.builder().id(1L).code("pull_up").title("Подтягивания").build();
         user = User.builder().id(10).telegramId(1000L).language("ru").build();
 
-        // Setup EntityLocalizationService mock
+        // Setup common mocks
+        lenient().when(userService.getUserLocale(any(User.class))).thenReturn(Locale.forLanguageTag("ru"));
         lenient().when(entityLocalizationService.getRankTitle(any(com.github.sportbot.model.Rank.class), any(Locale.class)))
                 .thenAnswer(inv -> ((com.github.sportbot.model.Rank) inv.getArgument(0)).getTitle());
-        lenient().when(userService.getUserLocale(any(User.class))).thenReturn(Locale.forLanguageTag("ru"));
+
+        // Mock coefficients
+        lenient().when(workoutProperties.getCoefficient("pull_up")).thenReturn(1.0);
+        lenient().when(workoutProperties.getCoefficient("push_up")).thenReturn(0.43);
+        lenient().when(workoutProperties.getCoefficient("squat")).thenReturn(0.31);
+        lenient().when(workoutProperties.getCoefficient("abs")).thenReturn(0.27);
     }
 
     @Test
     void assignRankIfEligible_Promotion_NoPreviousRank_UsesDashAndSaves() {
-        int total = 15;
+        // Given: user has 100 XP total
+        setupMockExerciseTypes();
+        lenient().when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(eq(user), any(ExerciseType.class)))
+                .thenReturn(100, 0, 0, 0); // 100 pull-ups, rest = 0
 
-        // ranks exist
-        when(rankRepository.existsByExerciseType(exerciseType)).thenReturn(true);
+        // Global ranks exist
+        when(rankRepository.existsByExerciseTypeIsNull()).thenReturn(true);
 
-        // achieved current rank for total reps
+        // Achieved rank for 100 XP
         var achievedRank = mock(com.github.sportbot.model.Rank.class);
-        when(achievedRank.getTitle()).thenReturn("Новичок");
-        when(rankRepository.findTopByExerciseTypeAndThresholdLessThanEqualOrderByThresholdDesc(exerciseType, total))
+        when(achievedRank.getTitle()).thenReturn("Тряпка");
+        when(rankRepository.findTopByExerciseTypeIsNullAndThresholdLessThanEqualOrderByThresholdDesc(100))
                 .thenReturn(Optional.of(achievedRank));
 
-        // user has no previous rank for this type
-        when(userRankRepository.findTopByUserAndRank_ExerciseTypeOrderByRank_ThresholdDesc(user, exerciseType))
+        // User has no previous rank
+        when(userRankRepository.findTopByUserOrderByRank_ThresholdDesc(user))
                 .thenReturn(Optional.empty());
-        // achieved rank not assigned yet
+        // Achieved rank not assigned yet
         when(userRankRepository.existsByUserAndRank(user, achievedRank)).thenReturn(false);
 
-        String msg = rankService.assignRankIfEligible(user, exerciseType, total);
+        // When
+        String msg = rankService.assignRankIfEligible(user);
 
-        // message should contain dash for previous rank and achieved title
+        // Then
         String expected = messageSource.getMessage(
                 "workout.rank_promoted",
-                new Object[]{"—", "Новичок"},
+                new Object[]{"—", "Тряпка"},
                 Locale.forLanguageTag("ru")
         );
         assertEquals(expected, msg);
@@ -94,31 +110,39 @@ class RankServiceTest {
 
     @Test
     void assignRankIfEligible_NoPromotion_ReturnsNextRankHint() {
-        int total = 12;
-        when(rankRepository.existsByExerciseType(exerciseType)).thenReturn(true);
+        // Given: user has 120 XP
+        setupMockExerciseTypes();
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(eq(user), any(ExerciseType.class)))
+                .thenReturn(120, 0, 0, 0);
 
+        when(rankRepository.existsByExerciseTypeIsNull()).thenReturn(true);
+
+        // Achieved rank for 120 XP -> "Тряпка" (threshold 100)
         var achievedRank = mock(com.github.sportbot.model.Rank.class);
-        when(achievedRank.getThreshold()).thenReturn(10);
-        when(rankRepository.findTopByExerciseTypeAndThresholdLessThanEqualOrderByThresholdDesc(exerciseType, total))
+        when(achievedRank.getThreshold()).thenReturn(100);
+        when(rankRepository.findTopByExerciseTypeIsNullAndThresholdLessThanEqualOrderByThresholdDesc(120))
                 .thenReturn(Optional.of(achievedRank));
 
-        // already has same current highest rank -> no promotion
+        // User already has same rank
         var userRank = mock(UserRank.class);
         when(userRank.getRank()).thenReturn(achievedRank);
-        when(userRankRepository.findTopByUserAndRank_ExerciseTypeOrderByRank_ThresholdDesc(user, exerciseType))
+        when(userRankRepository.findTopByUserOrderByRank_ThresholdDesc(user))
                 .thenReturn(Optional.of(userRank));
         when(userRankRepository.existsByUserAndRank(user, achievedRank)).thenReturn(true);
 
-        // next rank at threshold 25 -> need 13 reps remaining
+        // Next rank at threshold 250 -> need 130 XP remaining
         var nextRank = mock(com.github.sportbot.model.Rank.class);
-        when(nextRank.getThreshold()).thenReturn(25);
-        when(rankRepository.findTopByExerciseTypeAndThresholdGreaterThanOrderByThresholdAsc(exerciseType, 10))
+        when(nextRank.getThreshold()).thenReturn(250);
+        when(rankRepository.findTopByExerciseTypeIsNullAndThresholdGreaterThanOrderByThresholdAsc(100))
                 .thenReturn(Optional.of(nextRank));
 
-        String msg = rankService.assignRankIfEligible(user, exerciseType, total);
+        // When
+        String msg = rankService.assignRankIfEligible(user);
+
+        // Then
         String expected = messageSource.getMessage(
                 "workout.rank_next_left",
-                new Object[]{13},
+                new Object[]{130},
                 Locale.forLanguageTag("ru")
         );
         assertEquals(expected, msg);
@@ -127,45 +151,55 @@ class RankServiceTest {
 
     @Test
     void assignRankIfEligible_NoRanksConfigured_ReturnsEmpty() {
-        when(rankRepository.existsByExerciseType(exerciseType)).thenReturn(false);
+        setupMockExerciseTypes();
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(eq(user), any(ExerciseType.class)))
+                .thenReturn(100, 0, 0, 0);
 
-        String msg = rankService.assignRankIfEligible(user, exerciseType, 100);
+        when(rankRepository.existsByExerciseTypeIsNull()).thenReturn(false);
+
+        String msg = rankService.assignRankIfEligible(user);
+
         assertEquals("", msg);
         verifyNoInteractions(userRankRepository);
         verify(rankRepository, never())
-                .findTopByExerciseTypeAndThresholdLessThanEqualOrderByThresholdDesc(any(), anyInt());
+                .findTopByExerciseTypeIsNullAndThresholdLessThanEqualOrderByThresholdDesc(anyInt());
     }
 
     @Test
     void assignRankIfEligible_ExactThreshold_PromotesFromLowerRank() {
-        int total = 100;
+        // Given: user has exactly 100 XP
+        setupMockExerciseTypes();
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(eq(user), any(ExerciseType.class)))
+                .thenReturn(100, 0, 0, 0);
 
-        when(rankRepository.existsByExerciseType(exerciseType)).thenReturn(true);
+        when(rankRepository.existsByExerciseTypeIsNull()).thenReturn(true);
 
-        // achieved rank exactly at threshold 100
+        // Achieved rank exactly at threshold 100
         var achievedRank = mock(com.github.sportbot.model.Rank.class);
         when(achievedRank.getThreshold()).thenReturn(100);
-        when(achievedRank.getTitle()).thenReturn("Новичок");
-        when(rankRepository.findTopByExerciseTypeAndThresholdLessThanEqualOrderByThresholdDesc(exerciseType, total))
+        when(achievedRank.getTitle()).thenReturn("Тряпка");
+        when(rankRepository.findTopByExerciseTypeIsNullAndThresholdLessThanEqualOrderByThresholdDesc(100))
                 .thenReturn(Optional.of(achievedRank));
 
-        // user currently has lower rank (threshold 50, title "Стажер")
+        // User currently has lower rank (threshold 50, title "Червь")
         var lowerRank = mock(com.github.sportbot.model.Rank.class);
         when(lowerRank.getThreshold()).thenReturn(50);
-        when(lowerRank.getTitle()).thenReturn("Стажер");
+        when(lowerRank.getTitle()).thenReturn("Червь");
         var currentUserRank = mock(UserRank.class);
         when(currentUserRank.getRank()).thenReturn(lowerRank);
-        when(userRankRepository.findTopByUserAndRank_ExerciseTypeOrderByRank_ThresholdDesc(user, exerciseType))
+        when(userRankRepository.findTopByUserOrderByRank_ThresholdDesc(user))
                 .thenReturn(Optional.of(currentUserRank));
 
-        // achieved rank not assigned yet -> should promote
+        // Achieved rank not assigned yet -> should promote
         when(userRankRepository.existsByUserAndRank(user, achievedRank)).thenReturn(false);
 
-        String msg = rankService.assignRankIfEligible(user, exerciseType, total);
+        // When
+        String msg = rankService.assignRankIfEligible(user);
 
+        // Then
         String expected = messageSource.getMessage(
                 "workout.rank_promoted",
-                new Object[]{"Стажер", "Новичок"},
+                new Object[]{"Червь", "Тряпка"},
                 Locale.forLanguageTag("ru")
         );
 
@@ -175,42 +209,80 @@ class RankServiceTest {
 
     @Test
     void assignRankIfEligible_Idempotent_SecondCallDoesNotSaveAgain() {
-        int total = 200;
+        // Given: user has 100 XP (both calls)
+        setupMockExerciseTypes();
+        lenient().when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(eq(user), any(ExerciseType.class)))
+                .thenReturn(100, 0, 0, 0, 100, 0, 0, 0); // Two calls to calculateTotalXP
 
-        when(rankRepository.existsByExerciseType(exerciseType)).thenReturn(true);
+        when(rankRepository.existsByExerciseTypeIsNull()).thenReturn(true);
 
-        // achieved rank at 200
+        // Achieved rank at 100
         var achievedRank = mock(com.github.sportbot.model.Rank.class);
-        when(achievedRank.getThreshold()).thenReturn(200);
-        when(achievedRank.getTitle()).thenReturn("Продвинутый");
-        when(rankRepository.findTopByExerciseTypeAndThresholdLessThanEqualOrderByThresholdDesc(exerciseType, total))
+        when(achievedRank.getThreshold()).thenReturn(100);
+        when(achievedRank.getTitle()).thenReturn("Тряпка");
+        when(rankRepository.findTopByExerciseTypeIsNullAndThresholdLessThanEqualOrderByThresholdDesc(100))
                 .thenReturn(Optional.of(achievedRank));
 
-        // user had no previous rank for type
-        when(userRankRepository.findTopByUserAndRank_ExerciseTypeOrderByRank_ThresholdDesc(user, exerciseType))
-                .thenReturn(Optional.empty());
+        // User had no previous rank on first call, then has rank on second call
+        var userRank = mock(UserRank.class);
+        when(userRank.getRank()).thenReturn(achievedRank);
+        when(userRankRepository.findTopByUserOrderByRank_ThresholdDesc(user))
+                .thenReturn(Optional.empty(), Optional.of(userRank));
 
-        // first call: not assigned yet -> false, second call: already assigned -> true
+        // First call: not assigned yet -> false, second call: already assigned -> true
         when(userRankRepository.existsByUserAndRank(user, achievedRank)).thenReturn(false, true);
 
-        // next rank absent (max) -> no hint on second call
-        when(rankRepository.findTopByExerciseTypeAndThresholdGreaterThanOrderByThresholdAsc(exerciseType, 200))
-                .thenReturn(Optional.empty());
+        // Next rank at 250
+        var nextRank = mock(com.github.sportbot.model.Rank.class);
+        when(nextRank.getThreshold()).thenReturn(250);
+        when(rankRepository.findTopByExerciseTypeIsNullAndThresholdGreaterThanOrderByThresholdAsc(100))
+                .thenReturn(Optional.of(nextRank));
 
         // First call -> promotion message
-        String first = rankService.assignRankIfEligible(user, exerciseType, total);
+        String first = rankService.assignRankIfEligible(user);
         String expectedFirst = messageSource.getMessage(
                 "workout.rank_promoted",
-                new Object[]{"—", "Продвинутый"},
+                new Object[]{"—", "Тряпка"},
                 Locale.forLanguageTag("ru")
         );
         assertEquals(expectedFirst, first);
 
-        // Second call -> no promotion, no next rank -> empty message
-        String second = rankService.assignRankIfEligible(user, exerciseType, total);
-        assertEquals("", second);
+        // Second call -> no promotion, has next rank hint
+        String second = rankService.assignRankIfEligible(user);
+        String expectedSecond = messageSource.getMessage(
+                "workout.rank_next_left",
+                new Object[]{150},
+                Locale.forLanguageTag("ru")
+        );
+        assertEquals(expectedSecond, second);
 
         // Save should be performed exactly once
         verify(userRankRepository, times(1)).save(any(UserRank.class));
+    }
+
+    @Test
+    void calculateTotalXP_MixedExercises_ReturnsCorrectSum() {
+        // Given: user has various exercise totals
+        setupMockExerciseTypes();
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(eq(user), any(ExerciseType.class)))
+                .thenReturn(50, 100, 100, 100); // 50 pull-ups, 100 push-ups, 100 squats, 100 abs
+
+        // When
+        double xp = rankService.calculateTotalXP(user);
+
+        // Then: 50*1.0 + 100*0.43 + 100*0.31 + 100*0.27 = 50 + 43 + 31 + 27 = 151
+        assertEquals(151.0, xp, 0.01);
+    }
+
+    private void setupMockExerciseTypes() {
+        ExerciseType pullUp = ExerciseType.builder().id(2L).code("pull_up").build();
+        ExerciseType pushUp = ExerciseType.builder().id(1L).code("push_up").build();
+        ExerciseType squat = ExerciseType.builder().id(3L).code("squat").build();
+        ExerciseType abs = ExerciseType.builder().id(4L).code("abs").build();
+
+        when(exerciseTypeService.getExerciseType("pull_up")).thenReturn(pullUp);
+        when(exerciseTypeService.getExerciseType("push_up")).thenReturn(pushUp);
+        when(exerciseTypeService.getExerciseType("squat")).thenReturn(squat);
+        when(exerciseTypeService.getExerciseType("abs")).thenReturn(abs);
     }
 }

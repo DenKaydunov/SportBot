@@ -130,7 +130,7 @@ class ExerciseServiceTest {
         when(exerciseTypeService.getExerciseType(testRequest)).thenReturn(testExerciseType);
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(any(User.class), any()))
                 .thenReturn(100);
-        when(rankService.assignRankIfEligible(any(User.class), any(ExerciseType.class), anyInt()))
+        when(rankService.assignRankIfEligible(any(User.class)))
                 .thenReturn("");
         doNothing().when(streakService).updateStreak(any(User.class), any(LocalDate.class));
         doNothing().when(achievementService).checkStreakMilestones(anyLong());
@@ -150,7 +150,7 @@ class ExerciseServiceTest {
         verify(notificationService).notifyFollowersAboutWorkout(testUser, testExerciseType, 10);
         verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(testUser, testExerciseType);
         verify(messageSource).getMessage(eq("workout.reps_recorded"), any(Object[].class), any());
-        verify(rankService).assignRankIfEligible(testUser, testExerciseType, 100);
+        verify(rankService).assignRankIfEligible(testUser);
 
         assertEquals(1, testUser.getExerciseRecords().size());
         ExerciseRecord savedExercise = testUser.getExerciseRecords().getFirst();
@@ -177,7 +177,7 @@ class ExerciseServiceTest {
                 .thenReturn("Отжимания: сделано 10 повторений. Общее число: 120.");
 
         String promotion = "\nПоздравляю! Твой ранг повышен: — → Новичок";
-        when(rankService.assignRankIfEligible(any(User.class), any(ExerciseType.class), anyInt()))
+        when(rankService.assignRankIfEligible(any(User.class)))
                 .thenReturn(promotion);
 
         // When
@@ -185,7 +185,7 @@ class ExerciseServiceTest {
 
         // Then
         assertTrue(result.startsWith("Отжимания: сделано 10 повторений. Общее число: 120." + promotion));
-        verify(rankService).assignRankIfEligible(testUser, testExerciseType, 120);
+        verify(rankService).assignRankIfEligible(testUser);
     }
 
     @Test
