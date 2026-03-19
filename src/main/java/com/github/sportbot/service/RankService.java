@@ -50,7 +50,6 @@ public class RankService {
     /**
      * Assigns a global rank to the user based on their total XP across all exercise types.
      * The method is idempotent and will not duplicate assignments.
-     *
      * Note: If there are no global ranks configured, this method is a no-op
      * and returns an empty message.
      *

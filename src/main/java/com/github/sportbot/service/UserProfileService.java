@@ -151,7 +151,7 @@ public class UserProfileService {
 
     private String firstNonBlank(String... values) {
         for (String value : values) {
-            if (value != null && !value.strip().isEmpty()) {
+            if (value != null && !value.isBlank()) {
                 return value;
             }
         }
