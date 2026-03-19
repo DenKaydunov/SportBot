@@ -57,6 +57,7 @@ public class UserProfileService {
         String sexValue = mapSexToText(user.getSex(), locale);
         String localeUser = resolveLanguage(user.getLanguage(), locale);
         String remindTimeValue = user.getRemindTime() != null ? user.getRemindTime().toString() : messageSource.getMessage(PROFILE_UNKNOWN_VALUE, null, locale);
+        Integer balance = user.getBalanceTon();
 
         int countPushUps = exerciseService.getTotalReps(user, "push_up");
         int countPullUps = exerciseService.getTotalReps(user, "pull_up");
@@ -88,7 +89,8 @@ public class UserProfileService {
                         countAbs, maxAbs,
                         xpFormatted,
                         rank,
-                        streakInfo
+                        streakInfo,
+                        balance
                 },
                 locale
         );
@@ -99,7 +101,6 @@ public class UserProfileService {
     @Transactional
     public String updateProfile(UpdateProfileRequest request) {
         User user = userService.getUserByTelegramId(request.telegramId());
-        Locale locale = userService.getUserLocale(user);
         if (request.age() != null) {
             user.setAge(request.age());
         }
@@ -114,6 +115,7 @@ public class UserProfileService {
             user.setFullName(request.name());
         }
         userRepository.save(user);
+        Locale locale = userService.getUserLocale(user);
         return messageSource.getMessage(
                 "profile.updated",
                 new Object[]{user.getFullName()},

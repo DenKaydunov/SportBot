@@ -61,6 +61,7 @@ class UserProfileServiceTest {
         user.setFullName("Denis Kaydunov");
         user.setRemindTime(LocalTime.of(13, 0));
         user.setLanguage("ru");
+        user.setBalanceTon(10);
         user.setAge(30);
         user.setSex(Sex.MAN);
 
@@ -88,6 +89,7 @@ class UserProfileServiceTest {
         assertTrue(profile.contains("📈 Возраст: 30"));
         assertTrue(profile.contains("📭 Пол: мужчина"));
         assertTrue(profile.contains("🌐 Язык: русский"));
+        assertTrue(profile.contains("💵 Баланс: 10"));
         assertTrue(profile.contains("⏰ Время тренировки: 13:00"));
         assertTrue(profile.contains("отжиманий: 13 663/0"));
         assertTrue(profile.contains("подтягиваний: 2 009/15"));
