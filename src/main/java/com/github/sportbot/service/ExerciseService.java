@@ -72,7 +72,7 @@ public class ExerciseService {
                 "workout.reps_recorded",
                 new Object[]{entityLocalizationService.getExerciseTypeTitle(exerciseType, locale), req.count(), total},
                 locale);
-        String rankMessage = rankService.assignRankIfEligible(user, exerciseType, total);
+        String rankMessage = rankService.assignRankIfEligible(user);
 
         // Добавляем информацию о стрике, если он изменился
         String streakMessage = getStreakUpdateMessage(user, exercise.getDate());

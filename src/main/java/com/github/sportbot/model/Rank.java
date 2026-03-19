@@ -25,8 +25,8 @@ public class Rank {
     @Column(nullable = false)
     private String title;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "exercise_type_id", nullable = false)
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "exercise_type_id", nullable = true)
     private ExerciseType exerciseType;
 
     /**

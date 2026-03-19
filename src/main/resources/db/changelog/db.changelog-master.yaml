@@ -23,3 +23,7 @@ databaseChangeLog:
       file: db/changelog/changes/0011-add-user-profile-fields.sql
   - include:
       file: db/changelog/changes/0012-add-achievement_targets.sql
+  - include:
+      file: db/changelog/changes/0015-remove-old-ranks-and-make-global.sql
+  - include:
+      file: db/changelog/changes/0016-add-global-ranks.sql
