@@ -89,7 +89,7 @@ public class LeaderboardController {
      * @param telegramId telegram user ID for localization
      * @return formatted leaderboard
      */
-    @GetMapping("/{exerciseCode}/by-dates")
+    @GetMapping(value = "/{exerciseCode}/by-dates", produces = "text/plain")
     public String getLeaderboardByDates(
             @PathVariable
             @Parameter(example = "squat")
@@ -130,7 +130,7 @@ public class LeaderboardController {
      * @param telegramId telegram user ID for localization
      * @return formatted leaderboard page
      */
-    @GetMapping("/{exerciseCode}/by-dates/paged")
+    @GetMapping(value = "/{exerciseCode}/by-dates/paged", produces = "text/plain")
     public String getLeaderboardByDatesPaged(
             @PathVariable
             @Parameter(example = "squat")
@@ -161,7 +161,7 @@ public class LeaderboardController {
         return leaderboardService.getLeaderboardByDatesPaged(exerciseCode, tagCode, pageable, startDate, endDate, user);
     }
 
-    @GetMapping("/rating")
+    @GetMapping(value = "/rating", produces = "text/plain")
     public String getRating(
             @RequestParam
             @Parameter(example = "1000001")
