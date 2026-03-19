@@ -8,6 +8,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -101,7 +102,8 @@ public class LeaderboardService {
                 .map(this::mapRowToEntry)
                 .toList();
 
-        return formatLeaderboardString(totalCount, entries, exerciseType, displayName, (int) pageable.getOffset(), locale);
+        String rawResult = formatLeaderboardString(totalCount, entries, exerciseType, displayName, (int) pageable.getOffset(), locale);
+        return HtmlUtils.htmlEscape(rawResult);
     }
 
     private String buildAndFormatLeaderboard(ExerciseType exerciseType,
