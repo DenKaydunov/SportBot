@@ -1,6 +1,7 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.model.ExerciseType;
+import com.github.sportbot.model.User;
 import com.github.sportbot.repository.LeaderBoardRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,15 +9,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,10 +36,21 @@ class LeaderboardServiceTest {
     @Mock
     private TagService tagService;
 
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private MessageSource messageSource;
+
+    @Mock
+    private EntityLocalizationService entityLocalizationService;
+
     @InjectMocks
     private LeaderboardService leaderboardService;
 
     private ExerciseType exerciseType;
+    private User testUser;
+    private Locale testLocale;
 
     @BeforeEach
     void setUp() {
@@ -44,6 +59,35 @@ class LeaderboardServiceTest {
                 .code("push_up")
                 .title("Отжимания")
                 .build();
+
+        testUser = User.builder()
+                .id(1)
+                .telegramId(1000001L)
+                .language("ru")
+                .build();
+
+        testLocale = Locale.forLanguageTag("ru");
+
+        // Setup common mocks with lenient
+        lenient().when(userService.getUserLocale(any(User.class))).thenReturn(testLocale);
+        lenient().when(entityLocalizationService.getExerciseTypeTitle(any(ExerciseType.class), any(Locale.class)))
+                .thenAnswer(inv -> ((ExerciseType) inv.getArgument(0)).getTitle().toLowerCase());
+        lenient().when(messageSource.getMessage(eq("leaderboard.header"), any(), any(Locale.class)))
+                .thenReturn("⚡Таблица лидеров⚡");
+        lenient().when(messageSource.getMessage(eq("leaderboard.period.label"), any(), any(Locale.class)))
+                .thenAnswer(invocation -> "Период: " + ((Object[])invocation.getArgument(1))[0]);
+        lenient().when(messageSource.getMessage(eq("leaderboard.total.users.made"), any(), any(Locale.class)))
+                .thenAnswer(invocation -> {
+                    Object[] args = invocation.getArgument(1);
+                    return "Всего пользователи сделали: " + args[0] + " " + args[1] + ".";
+                });
+        lenient().when(messageSource.getMessage(eq("leaderboard.no.records"), any(), any(Locale.class)))
+                .thenReturn("Нет записей за выбранный период.");
+        lenient().when(messageSource.getMessage(eq("leaderboard.period.from.to"), any(), any(Locale.class)))
+                .thenAnswer(invocation -> {
+                    Object[] args = invocation.getArgument(1);
+                    return "c " + args[0] + " по " + args[1];
+                });
     }
 
     @Test
@@ -60,7 +104,7 @@ class LeaderboardServiceTest {
                 ));
 
         // When
-        String result = leaderboardService.getLeaderboardByPeriod("push_up", 10, "all");
+        String result = leaderboardService.getLeaderboardByPeriod("push_up", 10, "all", testUser);
 
         // Then
         assertTrue(result.contains("⚡Таблица лидеров⚡"));
@@ -85,7 +129,7 @@ class LeaderboardServiceTest {
                 ));
 
         // When
-        String result = leaderboardService.getLeaderboardByPeriod("push_up", 10, "week");
+        String result = leaderboardService.getLeaderboardByPeriod("push_up", 10, "week", testUser);
 
         // Then
         assertTrue(result.contains("⚡Таблица лидеров⚡"));
@@ -105,7 +149,7 @@ class LeaderboardServiceTest {
                 .thenReturn(Collections.emptyList());
 
         // When
-        String result = leaderboardService.getLeaderboardByPeriod("push_up", 10, "today");
+        String result = leaderboardService.getLeaderboardByPeriod("push_up", 10, "today", testUser);
 
         // Then
         assertTrue(result.contains("Нет записей за выбранный период"));
@@ -127,7 +171,7 @@ class LeaderboardServiceTest {
                 });
 
         // When
-        String result = leaderboardService.getLeaderboardByPeriodPaged("push_up", pageable, "week");
+        String result = leaderboardService.getLeaderboardByPeriodPaged("push_up", pageable, "week", testUser);
 
         // Then
         assertTrue(result.contains("⚡Таблица лидеров⚡"));
@@ -154,7 +198,7 @@ class LeaderboardServiceTest {
                 ));
 
         // When
-        String result = leaderboardService.getLeaderboardByDates("push_up", "tag1", 20, startDate, endDate);
+        String result = leaderboardService.getLeaderboardByDates("push_up", "tag1", 20, startDate, endDate, testUser);
 
         // Then
         assertTrue(result.contains("⚡Таблица лидеров⚡"));
@@ -183,7 +227,7 @@ class LeaderboardServiceTest {
                 });
 
         // When
-        String result = leaderboardService.getLeaderboardByDatesPaged("push_up", "tag1", pageable, startDate, endDate);
+        String result = leaderboardService.getLeaderboardByDatesPaged("push_up", "tag1", pageable, startDate, endDate, testUser);
 
         // Then
         assertTrue(result.contains("⚡Таблица лидеров⚡"));
@@ -202,7 +246,7 @@ class LeaderboardServiceTest {
                 .thenReturn(Collections.emptyList());
 
         // When
-        String result = leaderboardService.getLeaderboardByPeriod("push_up", 5, "month");
+        String result = leaderboardService.getLeaderboardByPeriod("push_up", 5, "month", testUser);
 
         // Then
         assertTrue(result.contains("За месяц"));

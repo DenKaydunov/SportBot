@@ -24,6 +24,7 @@ public class RankService {
     private final UserRankRepository userRankRepository;
     private final MessageSource messageSource;
     private final UserService userService;
+    private final EntityLocalizationService entityLocalizationService;
 
     /**
      * Assigns a rank to the user for the given exercise type if the total reps meet a threshold
@@ -71,10 +72,12 @@ public class RankService {
     }
 
     private String buildPromotionMessage(Optional<UserRank> currentForType, Rank achievedRank, Locale locale) {
-        Object previousTitle = currentForType.map(ur -> ur.getRank().getTitle()).orElse("—");
+        Object previousTitle = currentForType
+            .map(ur -> entityLocalizationService.getRankTitle(ur.getRank(), locale))
+            .orElse("—");
         return messageSource.getMessage(
                 "workout.rank_promoted",
-                new Object[]{previousTitle, achievedRank.getTitle()},
+                new Object[]{previousTitle, entityLocalizationService.getRankTitle(achievedRank, locale)},
                 locale
         );
     }
@@ -122,9 +125,9 @@ public class RankService {
      * Returns the title of the highest rank of the user or the provided defaultTitle
      * when the user has no ranks yet.
      */
-    public String getRankTitle(User user) {
+    public String getRankTitle(User user, Locale locale) {
         return userRankRepository.findTopByUserOrderByRank_ThresholdDesc(user)
-                .map(ur -> ur.getRank().getTitle())
+                .map(ur -> entityLocalizationService.getRankTitle(ur.getRank(), locale))
                 .orElse("-");
     }
 

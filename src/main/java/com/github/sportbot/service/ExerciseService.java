@@ -34,6 +34,7 @@ public class ExerciseService {
     private final AchievementService achievementService;
     private final NotificationService notificationService;
     private final UserService userService;
+    private final EntityLocalizationService entityLocalizationService;
 
 
     @Transactional
@@ -69,7 +70,7 @@ public class ExerciseService {
 
         String message = messageSource.getMessage(
                 "workout.reps_recorded",
-                new Object[]{exerciseType.getTitle(), req.count(), total},
+                new Object[]{entityLocalizationService.getExerciseTypeTitle(exerciseType, locale), req.count(), total},
                 locale);
         String rankMessage = rankService.assignRankIfEligible(user, exerciseType, total);
 
@@ -114,20 +115,17 @@ public class ExerciseService {
         int currentStreak = user.getCurrentStreak();
         List<StreakMilestone> milestone = milestoneRepository.findAllByOrderByDaysRequiredAsc();
         List<Long> achieve = achievementRepository.findMilestoneIdsByUserId(user.getId());
+        Locale locale = userService.getUserLocale(user);
 
         StringBuilder message = new StringBuilder();
 
         for(StreakMilestone m : milestone) {
             if (!achieve.contains(m.getId()) && currentStreak >= m.getDaysRequired()) {
-                message.append("\n🏆 Поздравляем! Награда за ")
-                        .append(m.getDaysRequired())
-                        .append(" дней подряд: ")
-                        .append(m.getTitle())
-                        .append(" - ")
-                        .append(m.getDescription())
-                        .append(" (Награда: ")
-                        .append(m.getRewardTon())
-                        .append(" Ton)");
+                message.append("\n").append(messageSource.getMessage(
+                    "exercise.achievement.congrats",
+                    new Object[]{m.getDaysRequired(), entityLocalizationService.getStreakMilestoneTitle(m, locale), entityLocalizationService.getStreakMilestoneDescription(m, locale), m.getRewardTon()},
+                    locale
+                ));
             }
         }
         return message.toString();
@@ -137,15 +135,21 @@ public class ExerciseService {
         int currentStreak = user.getCurrentStreak();
         List<StreakMilestone> milestone = milestoneRepository.findAllByOrderByDaysRequiredAsc();
         List<Long> achieve = achievementRepository.findMilestoneIdsByUserId(user.getId());
-        StringBuilder message = new StringBuilder("\n✅ Все награды за стрик получены!");
+        Locale locale = userService.getUserLocale(user);
+
+        StringBuilder message = new StringBuilder(
+            messageSource.getMessage("exercise.all.achievements.earned", null, locale)
+        );
 
         for (StreakMilestone m : milestone) {
             if (!achieve.contains(m.getId()) && m.getDaysRequired() > currentStreak) {
                 int daysToNext = m.getDaysRequired() - currentStreak;
                 message.setLength(0);
-                message.append("\n⏰ Тренируйся ещё ")
-                        .append(daysToNext)
-                        .append(" дней подряд для следующей награды.");
+                message.append("\n").append(messageSource.getMessage(
+                    "exercise.next.achievement.hint",
+                    new Object[]{daysToNext},
+                    locale
+                ));
                 break;
             }
         }
@@ -172,15 +176,16 @@ public class ExerciseService {
             Long telegramId,
             LocalDate startDate,
             LocalDate endDate) {
-        userRepository.findByTelegramId(telegramId).orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findByTelegramId(telegramId).orElseThrow(UserNotFoundException::new);
+        Locale locale = userService.getUserLocale(user);
 
         LocalDate finalEndDate = (endDate == null) ? startDate : endDate;
-        verifyDates(startDate, finalEndDate);
+        verifyDates(startDate, finalEndDate, locale);
 
         List<ExercisePeriodProjection> summary = exerciseRecordRepository.getUserProgressByPeriod(telegramId, startDate, finalEndDate);
 
         StringBuilder report = new StringBuilder();
-        appendHeader(report, startDate, finalEndDate);
+        appendHeader(report, startDate, finalEndDate, locale);
 
         int totalCount = 0;
 
@@ -191,23 +196,34 @@ public class ExerciseService {
         if (totalCount > 0)  {
             summary.forEach(exercise -> report.append(String.format("%s - %d%n", exercise.getExerciseType(), exercise.getTotalCount())));
         } else {
-            report.append("Тренировок за этот период не найдено. 😴");
+            report.append(messageSource.getMessage(
+                "exercise.no.workouts.found", null, locale
+            ));
         }
         return report.toString();
     }
 
-    private void appendHeader(StringBuilder sb, LocalDate start, LocalDate end) {
+    private void appendHeader(StringBuilder sb, LocalDate start, LocalDate end, Locale locale) {
         if (start.equals(end)) {
-            sb.append("Твой прогресс за ").append(start.format(ExerciseService.DATE_FORMATTER)).append(":\n");
+            sb.append(messageSource.getMessage(
+                "exercise.progress.for.date",
+                new Object[]{start.format(ExerciseService.DATE_FORMATTER)},
+                locale
+            )).append("\n");
         } else {
-            sb.append("Твой прогресс с ").append(start.format(ExerciseService.DATE_FORMATTER))
-                    .append(" по ").append(end.format(ExerciseService.DATE_FORMATTER)).append(":\n");
+            sb.append(messageSource.getMessage(
+                "exercise.progress.period",
+                new Object[]{start.format(ExerciseService.DATE_FORMATTER), end.format(ExerciseService.DATE_FORMATTER)},
+                locale
+            )).append("\n");
         }
     }
 
-    private static void verifyDates(LocalDate startDate, LocalDate endDate) {
+    private void verifyDates(LocalDate startDate, LocalDate endDate, Locale locale) {
         if (startDate.isAfter(endDate)) {
-            throw new IllegalArgumentException("Дата начала не может быть позже даты окончания!");
+            throw new IllegalArgumentException(
+                messageSource.getMessage("exercise.error.invalid.dates", null, locale)
+            );
         }
     }
 }

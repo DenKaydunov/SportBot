@@ -4,6 +4,7 @@ import com.github.sportbot.config.WorkoutProperties;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.LeaderBoardRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -24,21 +26,25 @@ public class LeaderboardService {
     private final TagService tagService;
     private final WorkoutProperties workoutProperties;
     private final UserService userService;
+    private final MessageSource messageSource;
+    private final EntityLocalizationService entityLocalizationService;
 
-    public String getLeaderboardByPeriod(String exerciseCode, int limit, String periodCode) {
+    public String getLeaderboardByPeriod(String exerciseCode, int limit, String periodCode, User user) {
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
         Period period = Period.fromCode(periodCode);
         LocalDate startDate = period.getStartDate();
         LocalDate endDate = (startDate == null ? null : LocalDate.now());
+        Locale locale = userService.getUserLocale(user);
 
-        return buildAndFormatLeaderboard(exerciseType, null, limit, startDate, endDate, period.getDisplayName());
+        return buildAndFormatLeaderboard(exerciseType, null, limit, startDate, endDate, period.getDisplayName(), locale);
     }
 
-    public String getLeaderboardByPeriodPaged(String exerciseCode, Pageable pageable, String periodCode) {
+    public String getLeaderboardByPeriodPaged(String exerciseCode, Pageable pageable, String periodCode, User user) {
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
         Period period = Period.fromCode(periodCode);
         LocalDate startDate = period.getStartDate();
         LocalDate endDate = (startDate == null ? null : LocalDate.now());
+        Locale locale = userService.getUserLocale(user);
 
         Pageable unpagedSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 
@@ -50,29 +56,41 @@ public class LeaderboardService {
                 .toList();
 
         String periodDisplay = period.getDisplayName();
-        return formatLeaderboardString(totalCount, entries, exerciseType, periodDisplay, (int) pageable.getOffset());
+        return formatLeaderboardString(totalCount, entries, exerciseType, periodDisplay, (int) pageable.getOffset(), locale);
     }
 
     public String getLeaderboardByDates(String exerciseCode,
                                         String tagCode,
                                         int limit,
                                         LocalDate startDate,
-                                        LocalDate endDate) {
+                                        LocalDate endDate,
+                                        User user) {
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
         Long tag = tagService.getIdByCode(tagCode);
-        String displayName = String.format("c %s по %s", startDate, endDate);
+        Locale locale = userService.getUserLocale(user);
+        String displayName = messageSource.getMessage(
+            "leaderboard.period.from.to",
+            new Object[]{startDate, endDate},
+            locale
+        );
 
-        return buildAndFormatLeaderboard(exerciseType, tag, limit, startDate, endDate, displayName);
+        return buildAndFormatLeaderboard(exerciseType, tag, limit, startDate, endDate, displayName, locale);
     }
 
     public String getLeaderboardByDatesPaged(String exerciseCode,
                                              String tagCode,
                                              Pageable pageable,
                                              LocalDate startDate,
-                                             LocalDate endDate) {
+                                             LocalDate endDate,
+                                             User user) {
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
         Long tagId = tagService.getIdByCode(tagCode);
-        String displayName = String.format("c %s по %s", startDate, endDate);
+        Locale locale = userService.getUserLocale(user);
+        String displayName = messageSource.getMessage(
+            "leaderboard.period.from.to",
+            new Object[]{startDate, endDate},
+            locale
+        );
 
         Pageable unpagedSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 
@@ -83,7 +101,7 @@ public class LeaderboardService {
                 .map(this::mapRowToEntry)
                 .toList();
 
-        return formatLeaderboardString(totalCount, entries, exerciseType, displayName, (int) pageable.getOffset());
+        return formatLeaderboardString(totalCount, entries, exerciseType, displayName, (int) pageable.getOffset(), locale);
     }
 
     private String buildAndFormatLeaderboard(ExerciseType exerciseType,
@@ -91,14 +109,15 @@ public class LeaderboardService {
                                              int limit,
                                              LocalDate startDate,
                                              LocalDate endDate,
-                                             String periodDisplay) {
+                                             String periodDisplay,
+                                             Locale locale) {
         int totalCount = leaderBoardRepository.sumCountByExerciseTypeAndDate(
                 exerciseType.getId(), tagId, startDate, endDate);
         List<LeaderboardEntry> entries = leaderBoardRepository.findTopUsersByExerciseTypeAndDate(
                         exerciseType.getId(), tagId, limit, startDate, endDate).stream()
                 .map(this::mapRowToEntry)
                 .toList();
-        return formatLeaderboardString(totalCount, entries, exerciseType, periodDisplay, 0);
+        return formatLeaderboardString(totalCount, entries, exerciseType, periodDisplay, 0, locale);
     }
 
     private LeaderboardEntry mapRowToEntry(Object[] row) {
@@ -111,19 +130,19 @@ public class LeaderboardService {
                                            List<LeaderboardEntry> entries,
                                            ExerciseType exerciseType,
                                            String periodDisplay,
-                                           int startIndex) {
+                                           int startIndex,
+                                           Locale locale) {
         StringBuilder sb = new StringBuilder();
-        sb.append("⚡Таблица лидеров⚡").append("\n");
+        sb.append(messageSource.getMessage("leaderboard.header", null, locale)).append("\n");
 
         if (periodDisplay != null && !periodDisplay.isBlank()) {
-            sb.append("Период: ").append(periodDisplay).append("\n");
+            sb.append(messageSource.getMessage("leaderboard.period.label",
+                new Object[]{periodDisplay}, locale)).append("\n");
         }
 
-        sb.append("Всего пользователи сделали: ")
-                .append(totalCount)
-                .append(" ")
-                .append(exerciseType.getTitle().toLowerCase())
-                .append(".\n");
+        sb.append(messageSource.getMessage("leaderboard.total.users.made",
+                new Object[]{totalCount, entityLocalizationService.getExerciseTypeTitle(exerciseType, locale).toLowerCase()},
+                locale)).append("\n");
 
         int index = startIndex + 1;
         for (LeaderboardEntry e : entries) {
@@ -132,7 +151,7 @@ public class LeaderboardService {
         }
 
         if (entries.isEmpty()) {
-            sb.append("Нет записей за выбранный период.");
+            sb.append(messageSource.getMessage("leaderboard.no.records", null, locale));
         }
 
         return sb.toString();
@@ -143,8 +162,9 @@ public class LeaderboardService {
         Map<User, Double> userTotals = sumUserScore(totals);
         List<UserScore> scoreList = getTopUser(userTotals);
         User user = userService.getUserByTelegramId(telegramId);
+        Locale locale = userService.getUserLocale(user);
         int userPosition = userPosition(scoreList, user);
-        String allRating = messageBuildRating(scoreList, userPosition);
+        String allRating = messageBuildRating(scoreList, userPosition, locale);
         String userRating = messageBuildUserRating(scoreList, userPosition);
         return allRating + userRating;
     }
@@ -187,8 +207,10 @@ public class LeaderboardService {
      *         ⭐ 4. Анна - 75.38
      *         ⭐ 5. Николай - 73.83
      */
-    private String messageBuildRating(List<UserScore> scoreList, int userPosition) {
-        StringBuilder message = new StringBuilder("🏆    Рейтинг    🏆");
+    private String messageBuildRating(List<UserScore> scoreList, int userPosition, Locale locale) {
+        StringBuilder message = new StringBuilder(
+            messageSource.getMessage("leaderboard.rating.header", null, locale)
+        );
         String[] medals = {"🥇", "🥈", "🥉"};
         int count = 1;
 

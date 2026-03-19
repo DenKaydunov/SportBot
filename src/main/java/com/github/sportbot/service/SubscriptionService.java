@@ -26,6 +26,7 @@ public class SubscriptionService {
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final ExerciseTypeService exerciseTypeService;
     private final org.springframework.context.MessageSource messageSource;
+    private final EntityLocalizationService entityLocalizationService;
 
 
     @Transactional
@@ -115,12 +116,17 @@ public class SubscriptionService {
         User user = userService.getUserByTelegramId(telegramId);
         User target = userService.getUserByTelegramId(targetTelegramId);
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
+        Locale locale = userService.getUserLocale(user);
 
         int userTotal = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
         int targetTotal = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(target, exerciseType);
 
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("Сравнение прогресса по категории: %s:%n", exerciseType.getTitle()));
+        sb.append(messageSource.getMessage(
+            "subscription.comparison.header",
+            new Object[]{entityLocalizationService.getExerciseTypeTitle(exerciseType, locale)},
+            locale
+        )).append("\n");
         sb.append(String.format("Ты: %d%n", userTotal));
         sb.append(String.format("%s: %d%n", target.getFullName(), targetTotal));
 

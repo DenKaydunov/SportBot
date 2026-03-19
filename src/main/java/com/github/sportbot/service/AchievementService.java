@@ -8,11 +8,13 @@ import com.github.sportbot.repository.AchievementRepository;
 import com.github.sportbot.repository.MilestoneRepository;
 import com.github.sportbot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,6 +25,9 @@ public class AchievementService {
     private final AchievementRepository achievementRepository;
     private final UserRepository userRepository;
     private final MilestoneRepository milestoneRepository;
+    private final MessageSource messageSource;
+    private final UserService userService;
+    private final EntityLocalizationService entityLocalizationService;
 
     @Transactional
     public void checkStreakMilestones(Long telegramId){
@@ -62,16 +67,30 @@ public class AchievementService {
     public String getUserAchievement(Long telegramId){
         User user = userRepository.findByTelegramId(telegramId)
                 .orElseThrow(UserNotFoundException::new);
+        Locale locale = userService.getUserLocale(user);
+
         List<Achievement> achieve = achievementRepository.findByUserOrderByAchievedDate(user.getId());
 
         if (achieve == null || achieve.isEmpty()){
-            return "У тебя ещё нет достижений.";
+            return messageSource.getMessage("achievement.none.yet", null, locale);
         }
-        return "🏆 Твои достижения:\n" +
-                achieve.stream()
-                        .map(a -> "• " + a.getMilestone().getTitle() +
-                                " (" + a.getMilestone().getDaysRequired() + " дней)" +
-                                " - получено: " + a.getAchievedDate())
-                        .collect(Collectors.joining("\n"));
+
+        StringBuilder result = new StringBuilder(
+            messageSource.getMessage("achievement.list.header", null, locale)
+        ).append("\n");
+
+        achieve.forEach(a -> result.append(
+            messageSource.getMessage(
+                "achievement.list.item",
+                new Object[]{
+                    entityLocalizationService.getStreakMilestoneTitle(a.getMilestone(), locale),
+                    a.getMilestone().getDaysRequired(),
+                    a.getAchievedDate()
+                },
+                locale
+            )
+        ).append("\n"));
+
+        return result.toString();
     }
 }

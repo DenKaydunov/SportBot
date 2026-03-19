@@ -22,7 +22,6 @@ public class SubscriptionHandler {
 
     private static final String SUB_PREFIX = "sub_";
     private static final String UNSUB_PREFIX = "unsub_";
-    private static final Locale LOCALE = Locale.forLanguageTag("ru-RU");
 
     private final SubscriptionService subscriptionService;
     private final UserService userService;
@@ -48,32 +47,36 @@ public class SubscriptionHandler {
     private void handleCallback(Update update, SportBot bot, String prefix, boolean isSubscribe) {
         try {
             CallbackData data = extractCallbackData(update, prefix);
+            User currentUser = userService.getUserByTelegramId(data.userId);
             User targetUser = userService.getUserByTelegramId(data.targetUserId);
 
             if (isSubscribe) {
                 subscriptionService.subscribe(data.userId, data.userName, data.targetUserId);
-                sendSubscriptionMessages(bot, data, targetUser);
+                sendSubscriptionMessages(bot, data, currentUser, targetUser);
             } else {
                 subscriptionService.unsubscribe(data.userId, data.targetUserId);
-                sendUnsubscriptionMessages(bot, data, targetUser);
+                sendUnsubscriptionMessages(bot, data, currentUser, targetUser);
             }
         } catch (UserNotFoundException e) {
+            Locale locale = getLocaleForCallback(update);
             log.error("User not found during {}: userId={}",
                     isSubscribe ? "subscription" : "unsubscription",
                     update.getCallbackQuery().getFrom().getId(), e);
             bot.answerCallback(update.getCallbackQuery().getId(),
-                    localize("error.user.not.found"));
+                    localize("error.user.not.found", locale));
         } catch (NumberFormatException e) {
+            Locale locale = getLocaleForCallback(update);
             log.error("Invalid callback data format: {}", update.getCallbackQuery().getData(), e);
             bot.answerCallback(update.getCallbackQuery().getId(),
-                    localize("error.invalid.data"));
+                    localize("error.invalid.data", locale));
         } catch (Exception e) {
+            Locale locale = getLocaleForCallback(update);
             log.error("Unexpected error during {}: userId={}",
                     isSubscribe ? "subscription" : "unsubscription",
                     update.getCallbackQuery().getFrom().getId(), e);
             String errorKey = isSubscribe ? "error.subscription.general" : "error.unsubscription.general";
             bot.answerCallback(update.getCallbackQuery().getId(),
-                    localize(errorKey));
+                    localize(errorKey, locale));
         }
     }
 
@@ -101,23 +104,28 @@ public class SubscriptionHandler {
     /**
      * Отправляет сообщения при подписке
      */
-    private void sendSubscriptionMessages(SportBot bot, CallbackData data, User targetUser) {
+    private void sendSubscriptionMessages(SportBot bot, CallbackData data, User currentUser, User targetUser) {
+        Locale currentUserLocale = userService.getUserLocale(currentUser);
+        Locale targetUserLocale = userService.getUserLocale(targetUser);
+
         bot.answerCallback(data.callbackQueryId,
-                localize("subscription.callback.success"));
+                localize("subscription.callback.success", currentUserLocale));
         bot.sendTgMessage(data.userId,
-                localize("subscription.message.success", targetUser.getFullName()));
+                localize("subscription.message.success", currentUserLocale, targetUser.getFullName()));
         bot.sendTgMessage(data.targetUserId,
-                localize("subscription.notification", data.userName));
+                localize("subscription.notification", targetUserLocale, data.userName));
     }
 
     /**
      * Отправляет сообщения при отписке
      */
-    private void sendUnsubscriptionMessages(SportBot bot, CallbackData data, User targetUser) {
+    private void sendUnsubscriptionMessages(SportBot bot, CallbackData data, User currentUser, User targetUser) {
+        Locale currentUserLocale = userService.getUserLocale(currentUser);
+
         bot.answerCallback(data.callbackQueryId,
-                localize("unsubscription.callback.success"));
+                localize("unsubscription.callback.success", currentUserLocale));
         bot.sendTgMessage(data.userId,
-                localize("unsubscription.message.success", targetUser.getFullName()));
+                localize("unsubscription.message.success", currentUserLocale, targetUser.getFullName()));
     }
 
     /**
@@ -128,17 +136,30 @@ public class SubscriptionHandler {
     }
 
     /**
+     * Attempts to resolve locale from update, defaults to Russian if user not found
+     */
+    private Locale getLocaleForCallback(Update update) {
+        try {
+            Long userId = update.getCallbackQuery().getFrom().getId();
+            User user = userService.getUserByTelegramId(userId);
+            return userService.getUserLocale(user);
+        } catch (Exception e) {
+            return Locale.forLanguageTag("ru");
+        }
+    }
+
+    /**
      * Локализует сообщение без параметров
      */
-    private String localize(String messageKey) {
-        return messageSource.getMessage(messageKey, null, LOCALE);
+    private String localize(String messageKey, Locale locale) {
+        return messageSource.getMessage(messageKey, null, locale);
     }
 
     /**
      * Локализует сообщение с одним параметром
      */
-    private String localize(String messageKey, String param) {
-        return messageSource.getMessage(messageKey, new Object[]{param}, LOCALE);
+    private String localize(String messageKey, Locale locale, String param) {
+        return messageSource.getMessage(messageKey, new Object[]{param}, locale);
     }
 
     /**

@@ -46,6 +46,9 @@ class UserMaxServiceTest {
     @Mock
     private MessageSource mSource;
 
+    @Mock
+    private EntityLocalizationService entityLocalizationService;
+
     @InjectMocks
     private UserMaxService userMaxService;
 
@@ -70,6 +73,10 @@ class UserMaxServiceTest {
                 .build();
 
         testRequest = new ExerciseEntryRequest(123456L, "pushup", 10);
+
+        // Setup EntityLocalizationService mock
+        lenient().when(entityLocalizationService.getExerciseTypeTitle(any(ExerciseType.class), any(Locale.class)))
+                .thenAnswer(inv -> ((ExerciseType) inv.getArgument(0)).getTitle());
     }
 
 
