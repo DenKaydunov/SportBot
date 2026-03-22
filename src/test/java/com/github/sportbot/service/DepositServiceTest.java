@@ -19,10 +19,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class DepositTonServiceTest {
+public class DepositServiceTest {
 
     @InjectMocks
-    private DepositTonService depositTonService;
+    private DepositService depositService;
 
     @Mock
     private UserService userService;
@@ -56,7 +56,7 @@ public class DepositTonServiceTest {
                 any(Locale.class))
         ).thenReturn("Ваш баланс 10 ТОН.");
 
-        String result = depositTonService.currentBalanceTon(user);
+        String result = depositService.currentBalanceTon(user);
 
         assertEquals("Ваш баланс 10 ТОН.", result);
     }
@@ -81,7 +81,7 @@ public class DepositTonServiceTest {
                 any(Locale.class))
         ).thenReturn("Ваш баланс 20 ТОН.");
 
-        String result = depositTonService.depositBalanceTon(telegramId, plusTon);
+        String result = depositService.depositBalanceTon(telegramId, plusTon);
 
         assertEquals(20, user.getBalanceTon());
         verify(userRepository).save(user);

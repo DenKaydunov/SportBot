@@ -72,4 +72,9 @@ public class NotificationService implements MessageLocalizer {
                 locale
         );
     }
+
+    @Override
+    public String localize(String messageKey, Object[] context, Locale locale) {
+        return "";
+    }
 }
