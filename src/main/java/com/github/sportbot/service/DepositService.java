@@ -10,7 +10,7 @@ import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
-public class DepositTonService {
+public class DepositService implements MessageLocalizer {
 
     private final UserService userService;
     private final UserRepository userRepository;
@@ -27,7 +27,7 @@ public class DepositTonService {
         user.setBalanceTon(sum);
         userRepository.save(user);
 
-        String messageDeposit = localizeMessage("balance.ton.deposit",
+        String messageDeposit = localize("balance.ton.deposit",
                 new Object[] {plusTon}, locale);
         String currentBalance =currentBalanceTon(user);
 
@@ -38,18 +38,15 @@ public class DepositTonService {
         Integer currentBalance = user.getBalanceTon();
         Locale locale = userService.getUserLocale(user);
 
-        return localizeMessage("balance.ton",
+        return localize("balance.ton",
                 new Object[]{currentBalance}, locale);
     }
 
-    private String localizeMessage(String messageKey,
-                                   Object[] context,
-                                   Locale locale) {
+    @Override
+    public String localize(String messageKey, Object[] context, Locale locale) {
         return  messageSource.getMessage(
                 messageKey,
                 context,
-                locale
-        );
-
+                locale);
     }
 }
