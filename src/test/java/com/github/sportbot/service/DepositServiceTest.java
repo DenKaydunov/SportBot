@@ -62,7 +62,7 @@ public class DepositServiceTest {
     }
 
     @Test
-    void depositBalanceTon() {
+    void depositBalance() {
         Long telegramId = 100L;
         Integer plusTon = 10;
         Locale locale = Locale.forLanguageTag("ru");
@@ -81,7 +81,7 @@ public class DepositServiceTest {
                 any(Locale.class))
         ).thenReturn("Ваш баланс 20 ТОН.");
 
-        String result = depositService.depositBalanceTon(telegramId, plusTon);
+        String result = depositService.depositBalance(telegramId, plusTon);
 
         assertEquals(20, user.getBalanceTon());
         verify(userRepository).save(user);

@@ -16,18 +16,19 @@ public class DepositController {
     private final DepositService depositService;
     private final UserService userService;
 
-    @PostMapping("/deposit")
+    @PostMapping
     public String depositBalance(@RequestParam
                                  @Parameter(example = "1000001")
                                  @NotNull
                                  Long telegramId,
 
                                  @NotNull
+                                 @Parameter(example = "10")
                                  Integer depositTon){
-        return depositService.depositBalanceTon(telegramId, depositTon);
+        return depositService.depositBalance(telegramId, depositTon);
     }
 
-    @GetMapping("/current")
+    @GetMapping
     public  String getBalance(@RequestParam
                               @Parameter(example = "1000001")
                               @NotNull
