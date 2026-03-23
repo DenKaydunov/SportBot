@@ -21,17 +21,18 @@ public class DepositService implements MessageLocalizer {
         User user = userService.getUserByTelegramId(telegramID);
         Locale locale = userService.getUserLocale(user);
 
-        Integer currentTon = user.getBalanceTon();
-        Integer sum = currentTon + plusValue;
+        Integer currentBalance = user.getBalanceTon();
+        Integer sum = currentBalance + plusValue;
 
         user.setBalanceTon(sum);
         userRepository.save(user);
 
         String depositMessage = localize("balance.ton.deposit",
                 new Object[] {plusValue}, locale);
-        String currentBalance =currentBalanceTon(user);
 
-        return depositMessage + currentBalance;
+        String updatedBalance = currentBalanceTon(user);
+
+        return depositMessage + updatedBalance;
     }
 
     public String currentBalanceTon(User user) {

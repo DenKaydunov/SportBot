@@ -24,8 +24,8 @@ public class DepositController {
 
                                  @NotNull
                                  @Parameter(example = "10")
-                                 Integer depositTon){
-        return depositService.depositBalance(telegramId, depositTon);
+                                 Integer depositValue){
+        return depositService.depositBalance(telegramId, depositValue);
     }
 
     @GetMapping
