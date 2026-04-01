@@ -2,9 +2,12 @@ package com.github.sportbot.controller;
 
 import com.github.sportbot.dto.RegistrationRequest;
 import com.github.sportbot.dto.UserResponse;
+import com.github.sportbot.model.User;
 import com.github.sportbot.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -16,6 +19,12 @@ public class UserController {
     @PostMapping
     public UserResponse registerUser(@RequestBody RegistrationRequest request) {
         return userService.registerUser(request);
+    }
+
+    @GetMapping("/locale/{telegramId}")
+    public Locale getUserLocale(@PathVariable Long telegramId) {
+        User user = userService.getUserByTelegramId(telegramId);
+        return userService.getUserLocale(user);
     }
 
     @PostMapping("/unsubscribe/{telegramId}")
