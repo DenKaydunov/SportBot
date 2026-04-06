@@ -102,8 +102,7 @@ public class LeaderboardService {
                 .map(this::mapRowToEntry)
                 .toList();
 
-        String rawResult = formatLeaderboardString(totalCount, entries, exerciseType, displayName, (int) pageable.getOffset(), locale);
-        return HtmlUtils.htmlEscape(rawResult);
+        return formatLeaderboardString(totalCount, entries, exerciseType, displayName, (int) pageable.getOffset(), locale);
     }
 
     private String buildAndFormatLeaderboard(ExerciseType exerciseType,

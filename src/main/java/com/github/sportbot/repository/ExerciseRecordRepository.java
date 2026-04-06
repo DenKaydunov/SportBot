@@ -56,4 +56,18 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
     List<UserExerciseSummary> getTotalForMonth(@Param("startDate") LocalDate startDate,
                                                @Param("endDate") LocalDate endDate);
 
+    /**
+     * Count distinct workout days for a user and specific exercise type.
+     * Used for workout count achievements.
+     */
+    @Query("SELECT COUNT(DISTINCT er.date) FROM ExerciseRecord er WHERE er.user = :user AND er.exerciseType = :exerciseType")
+    Long countDistinctWorkoutDaysByUserAndExerciseType(@Param("user") User user, @Param("exerciseType") ExerciseType exerciseType);
+
+    /**
+     * Count distinct workout days for a user across all exercise types.
+     * Used for overall workout count achievements.
+     */
+    @Query("SELECT COUNT(DISTINCT er.date) FROM ExerciseRecord er WHERE er.user = :user")
+    Long countDistinctWorkoutDaysByUser(@Param("user") User user);
+
 }

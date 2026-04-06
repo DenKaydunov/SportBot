@@ -29,3 +29,9 @@ databaseChangeLog:
       file: db/changelog/changes/0016-add-global-ranks.sql
   - include:
       file: db/changelog/changes/0017-add-referral-milestones.sql
+  - include:
+      file: db/changelog/changes/0018-create-unified-achievements.sql
+  - include:
+      file: db/changelog/changes/0019-migrate-achievement-data.sql
+  - include:
+      file: db/changelog/changes/0020-deprecate-old-achievements.sql

@@ -5,6 +5,11 @@ import lombok.*;
 
 import java.time.LocalDate;
 
+/**
+ * @deprecated Use {@link UserAchievement} instead. This class is kept for backward compatibility
+ * and will be removed in a future version.
+ */
+@Deprecated(since = "2026-04-06", forRemoval = true)
 @Entity
 @Table(name = "achievements")
 @Data

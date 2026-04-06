@@ -47,6 +47,7 @@ public class UserService{
             try {
                 userRepository.findByTelegramId(request.referrerTelegramId())
                     .ifPresent(referrer ->
+                        // Use unified achievement service (method delegates internally)
                         achievementService.checkReferralMilestones(referrer.getId())
                     );
             } catch (Exception e) {

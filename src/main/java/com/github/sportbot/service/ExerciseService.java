@@ -2,10 +2,7 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UserNotFoundException;
-import com.github.sportbot.model.ExerciseRecord;
-import com.github.sportbot.model.ExerciseType;
-import com.github.sportbot.model.StreakMilestone;
-import com.github.sportbot.model.User;
+import com.github.sportbot.model.*;
 import com.github.sportbot.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -14,8 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,12 +28,16 @@ public class ExerciseService {
     private final ExerciseTypeService exerciseTypeService;
     private final RankService rankService;
     private final StreakService streakService;
+    @Deprecated
     private final MilestoneRepository milestoneRepository;
+    @Deprecated
     private final AchievementRepository achievementRepository;
     private final AchievementService achievementService;
     private final NotificationService notificationService;
     private final UserService userService;
     private final EntityLocalizationService entityLocalizationService;
+    private final UnifiedAchievementService unifiedAchievementService;
+    private final AchievementDefinitionRepository achievementDefinitionRepository;
 
 
     @Transactional
@@ -60,6 +63,7 @@ public class ExerciseService {
 
         String achievement = getAchievementUpdateMessage(user);
 
+        // Use unified achievement service
         achievementService.checkStreakMilestones(req.telegramId());
 
         // Перезагружаем пользователя для получения обновленных данных стрика
@@ -113,17 +117,32 @@ public class ExerciseService {
 
     private String getAchievementUpdateMessage(User user){
         int currentStreak = user.getCurrentStreak();
-        List<StreakMilestone> milestone = milestoneRepository.findAllByOrderByDaysRequiredAsc();
-        List<Long> achieve = achievementRepository.findMilestoneIdsByUserId(user.getId());
         Locale locale = userService.getUserLocale(user);
+
+        // Get all streak achievement definitions, sorted by target value
+        List<AchievementDefinition> streakDefinitions = achievementDefinitionRepository
+                .findByCategoryAndIsActiveTrueOrderBySortOrder(AchievementCategory.STREAK);
+
+        // Get user's completed achievements
+        List<UserAchievement> completedAchievements = unifiedAchievementService
+                .getCompletedAchievements(user.getId());
+
+        List<Long> completedDefinitionIds = completedAchievements.stream()
+                .map(ua -> ua.getAchievementDefinition().getId())
+                .toList();
 
         StringBuilder message = new StringBuilder();
 
-        for(StreakMilestone m : milestone) {
-            if (!achieve.contains(m.getId()) && currentStreak >= m.getDaysRequired()) {
+        for(AchievementDefinition def : streakDefinitions) {
+            if (!completedDefinitionIds.contains(def.getId()) && currentStreak >= def.getTargetValue()) {
                 message.append("\n").append(messageSource.getMessage(
                     "exercise.achievement.congrats",
-                    new Object[]{m.getDaysRequired(), entityLocalizationService.getStreakMilestoneTitle(m, locale), entityLocalizationService.getStreakMilestoneDescription(m, locale), m.getRewardTon()},
+                    new Object[]{
+                        def.getTargetValue(),
+                        entityLocalizationService.getAchievementTitle(def, locale),
+                        entityLocalizationService.getAchievementDescription(def, locale),
+                        def.getRewardTon()
+                    },
                     locale
                 ));
             }
@@ -133,17 +152,27 @@ public class ExerciseService {
 
     private String getNextAchievementUpdateMessage(User user) {
         int currentStreak = user.getCurrentStreak();
-        List<StreakMilestone> milestone = milestoneRepository.findAllByOrderByDaysRequiredAsc();
-        List<Long> achieve = achievementRepository.findMilestoneIdsByUserId(user.getId());
         Locale locale = userService.getUserLocale(user);
+
+        // Get all streak achievement definitions, sorted by target value
+        List<AchievementDefinition> streakDefinitions = achievementDefinitionRepository
+                .findByCategoryAndIsActiveTrueOrderBySortOrder(AchievementCategory.STREAK);
+
+        // Get user's completed achievements
+        List<UserAchievement> completedAchievements = unifiedAchievementService
+                .getCompletedAchievements(user.getId());
+
+        List<Long> completedDefinitionIds = completedAchievements.stream()
+                .map(ua -> ua.getAchievementDefinition().getId())
+                .toList();
 
         StringBuilder message = new StringBuilder(
             messageSource.getMessage("exercise.all.achievements.earned", null, locale)
         );
 
-        for (StreakMilestone m : milestone) {
-            if (!achieve.contains(m.getId()) && m.getDaysRequired() > currentStreak) {
-                int daysToNext = m.getDaysRequired() - currentStreak;
+        for (AchievementDefinition def : streakDefinitions) {
+            if (!completedDefinitionIds.contains(def.getId()) && def.getTargetValue() > currentStreak) {
+                int daysToNext = def.getTargetValue() - currentStreak;
                 message.setLength(0);
                 message.append("\n").append(messageSource.getMessage(
                     "exercise.next.achievement.hint",

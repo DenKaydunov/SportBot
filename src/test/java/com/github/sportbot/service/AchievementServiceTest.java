@@ -8,6 +8,7 @@ import com.github.sportbot.repository.AchievementRepository;
 import com.github.sportbot.repository.MilestoneRepository;
 import com.github.sportbot.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * @deprecated These tests are for the deprecated AchievementService.
+ * The functionality is now tested in UnifiedAchievementServiceTest.
+ * Kept for reference but disabled.
+ */
+@Deprecated
+@Disabled("Deprecated - functionality moved to UnifiedAchievementService and tested in UnifiedAchievementServiceTest")
 @ExtendWith(MockitoExtension.class)
 class AchievementServiceTest {
 
@@ -45,6 +53,9 @@ class AchievementServiceTest {
 
     @Mock
     private EntityLocalizationService entityLocalizationService;
+
+    @Mock
+    private UnifiedAchievementService unifiedAchievementService;
 
     @InjectMocks
     private AchievementService achievementService;

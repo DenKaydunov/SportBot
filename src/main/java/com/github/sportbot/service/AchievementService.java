@@ -1,10 +1,9 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.dto.AchievementTrigger;
 import com.github.sportbot.exception.UserNotFoundException;
-import com.github.sportbot.model.Achievement;
-import com.github.sportbot.model.ReferralMilestone;
-import com.github.sportbot.model.StreakMilestone;
 import com.github.sportbot.model.User;
+import com.github.sportbot.model.UserAchievement;
 import com.github.sportbot.repository.AchievementRepository;
 import com.github.sportbot.repository.MilestoneRepository;
 import com.github.sportbot.repository.ReferralMilestoneRepository;
@@ -14,97 +13,80 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
-import java.util.stream.Collectors;
 
+/**
+ * @deprecated This service is being replaced by {@link UnifiedAchievementService}.
+ * Some methods remain for backward compatibility but will be removed in a future version.
+ */
 @Service
 @RequiredArgsConstructor
 public class AchievementService {
 
+    @Deprecated
     private final AchievementRepository achievementRepository;
     private final UserRepository userRepository;
+    @Deprecated
     private final MilestoneRepository milestoneRepository;
+    @Deprecated
     private final ReferralMilestoneRepository referralMilestoneRepository;
     private final MessageSource messageSource;
     private final EntityLocalizationService entityLocalizationService;
 
+    // New unified service
+    private final UnifiedAchievementService unifiedAchievementService;
+
+    /**
+     * @deprecated Use {@link UnifiedAchievementService#checkAchievementsByTelegramId(Long, AchievementTrigger.TriggerType)}
+     * with TriggerType.STREAK_UPDATED instead.
+     */
+    @Deprecated
     @Transactional
     public void checkStreakMilestones(Long telegramId){
+        // Delegate to unified service
         User user = userRepository.findByTelegramId(telegramId)
                 .orElseThrow(UserNotFoundException::new);
 
-        int currentStreak = user.getCurrentStreak();
+        AchievementTrigger trigger = AchievementTrigger.builder()
+                .user(user)
+                .type(AchievementTrigger.TriggerType.STREAK_UPDATED)
+                .build();
 
-        // Получаем все milestone, которые <= текущему streak
-        List<StreakMilestone> streakMilestones = milestoneRepository.findByDaysRequiredLessThanEqual(currentStreak);
-
-        List<Achievement> achievedMilestoneId = achievementRepository.findByUserOrderByAchievedDate(user.getId());
-
-        Set<Long> achievedIds = achievedMilestoneId.stream()
-                .map(a -> a.getMilestone().getId())
-                .collect(Collectors.toSet());
-
-        for (StreakMilestone milestone : streakMilestones){
-
-        //Проверяем было ли уже получено достижение
-        if (!achievedIds.contains(milestone.getId())){
-            Achievement achieve = new Achievement();
-
-            achieve.setUser(user);
-            achieve.setMilestone(milestone);
-            achieve.setAchievedDate(LocalDate.now());
-
-            achievementRepository.save(achieve);
-
-            user.setBalanceTon(user.getBalanceTon() + milestone.getRewardTon());
-
-            userRepository.save(user);
-        }
-        }
+        unifiedAchievementService.checkAchievements(trigger);
     }
 
+    /**
+     * @deprecated Use {@link UnifiedAchievementService#checkAchievements(AchievementTrigger)}
+     * with TriggerType.REFERRAL_REGISTERED instead.
+     */
+    @Deprecated
     @Transactional
     public void checkReferralMilestones(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        Integer referralCount = userRepository.countByReferrerTelegramId(user.getTelegramId());
+        AchievementTrigger trigger = AchievementTrigger.builder()
+                .user(user)
+                .type(AchievementTrigger.TriggerType.REFERRAL_REGISTERED)
+                .build();
 
-        List<ReferralMilestone> milestones =
-            referralMilestoneRepository.findByReferralsRequiredLessThanEqual(referralCount);
-
-        List<Long> achievedIds =
-            achievementRepository.findReferralMilestoneIdsByUserId(user.getId());
-        Set<Long> achievedSet = new HashSet<>(achievedIds);
-
-        for (ReferralMilestone milestone : milestones) {
-            if (!achievedSet.contains(milestone.getId())) {
-                Achievement achievement = new Achievement();
-                achievement.setUser(user);
-                achievement.setReferralMilestone(milestone);
-                achievement.setAchievedDate(LocalDate.now());
-
-                achievementRepository.save(achievement);
-
-                Integer rewardTon = milestone.getRewardTon() != null ? milestone.getRewardTon() : 0;
-                user.setBalanceTon(user.getBalanceTon() + rewardTon);
-                userRepository.save(user);
-            }
-        }
+        unifiedAchievementService.checkAchievements(trigger);
     }
 
+    /**
+     * Get user achievements as formatted string.
+     * Updated to use new unified achievement system.
+     */
     public String getUserAchievement(Long telegramId){
         User user = userRepository.findByTelegramId(telegramId)
                 .orElseThrow(UserNotFoundException::new);
         Locale locale = getUserLocale(user);
 
-        List<Achievement> achieve = achievementRepository.findByUserOrderByAchievedDate(user.getId());
+        // Use new unified service
+        List<UserAchievement> achievements = unifiedAchievementService.getCompletedAchievements(user.getId());
 
-        if (achieve == null || achieve.isEmpty()){
+        if (achievements == null || achievements.isEmpty()){
             return messageSource.getMessage("achievement.none.yet", null, locale);
         }
 
@@ -112,32 +94,19 @@ public class AchievementService {
             messageSource.getMessage("achievement.list.header", null, locale)
         ).append("\n");
 
-        achieve.forEach(a -> {
-            if (a.getMilestone() != null) {
-                result.append(
-                    messageSource.getMessage(
-                        "achievement.list.item.streak",
-                        new Object[]{
-                            entityLocalizationService.getStreakMilestoneTitle(a.getMilestone(), locale),
-                            a.getMilestone().getDaysRequired(),
-                            a.getAchievedDate()
-                        },
-                        locale
-                    )
-                ).append("\n");
-            } else if (a.getReferralMilestone() != null) {
-                result.append(
-                    messageSource.getMessage(
-                        "achievement.list.item.referral",
-                        new Object[]{
-                            entityLocalizationService.getReferralMilestoneTitle(a.getReferralMilestone(), locale),
-                            a.getReferralMilestone().getReferralsRequired(),
-                            a.getAchievedDate()
-                        },
-                        locale
-                    )
-                ).append("\n");
-            }
+        achievements.forEach(ua -> {
+            String title = entityLocalizationService.getAchievementTitle(ua.getAchievementDefinition(), locale);
+            result.append(
+                messageSource.getMessage(
+                    "achievement.list.item.unified",
+                    new Object[]{
+                        ua.getAchievementDefinition().getEmoji(),
+                        title,
+                        ua.getAchievedDate()
+                    },
+                    locale
+                )
+            ).append("\n");
         });
 
         return result.toString();
