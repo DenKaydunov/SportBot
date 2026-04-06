@@ -1,13 +1,18 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.bot.SportBot;
 import com.github.sportbot.dto.AchievementRow;
+import com.github.sportbot.dto.AchievementSendResponse;
 import com.github.sportbot.dto.Congratulation;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.AchievementTarget;
+import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserExerciseSummary;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.TargetsRepository;
+import com.github.sportbot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -18,10 +23,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AchievementAggregationService {
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final TargetsRepository targetsRepository;
     private final UserService userService;
+    private final UserRepository userRepository;
+    private final SportBot sportBot;
 
     public String getAchievementForMonth(){
         LocalDate startDay = LocalDate.now().minusMonths(1).withDayOfMonth(1);
@@ -127,5 +135,45 @@ public class AchievementAggregationService {
             sb.append("\n\n");
         }
         return sb.toString();
+    }
+
+    /**
+     * Отправляет поздравления с достижениями за прошлый месяц всем подписанным пользователям
+     *
+     * @return статистика отправки сообщений
+     */
+    public AchievementSendResponse sendAchievementCongratulation() {
+        log.info("Starting achievement congratulations sending");
+
+        String message = getAchievementForMonth();
+
+        if (message.isEmpty()) {
+            log.info("No achievements to send - message is empty");
+            return AchievementSendResponse.noContent();
+        }
+
+        List<User> subscribedUsers = userRepository.findAllByIsSubscribedTrue();
+        log.info("Sending achievement congratulations to {} subscribed users", subscribedUsers.size());
+
+        int successCount = 0;
+        int failedCount = 0;
+
+        for (User user : subscribedUsers) {
+            try {
+                log.debug("Sending achievement message to user: {} (telegramId: {})",
+                         user.getFullName(), user.getTelegramId());
+                sportBot.sendTgMessage(user.getTelegramId(), message);
+                successCount++;
+                log.debug("Successfully sent to user: {} (telegramId: {})",
+                         user.getFullName(), user.getTelegramId());
+            } catch (Exception e) {
+                log.error("Failed to send achievement congratulations to user {}: {}",
+                         user.getTelegramId(), e.getMessage());
+                failedCount++;
+            }
+        }
+
+        log.info("Achievement sending completed: {} successful, {} failed", successCount, failedCount);
+        return AchievementSendResponse.success(successCount, failedCount);
     }
 }
