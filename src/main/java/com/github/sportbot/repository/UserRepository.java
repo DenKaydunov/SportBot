@@ -23,6 +23,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
         FROM User u
         WHERE u.referrerTelegramId = :referrerTelegramId
     """)
-    Integer countByReferrerTelegramId(@Param("referrerTelegramId") Integer referrerTelegramId);
+    Integer countByReferrerTelegramId(@Param("referrerTelegramId") Long referrerTelegramId);
 }
 

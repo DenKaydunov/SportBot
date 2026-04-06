@@ -44,10 +44,15 @@ public class UserService{
         user = userRepository.save(user);
 
         if (request.referrerTelegramId() != null) {
-            userRepository.findByTelegramId(request.referrerTelegramId().longValue())
-                .ifPresent(referrer ->
-                    achievementService.checkReferralMilestones(referrer.getId())
-                );
+            try {
+                userRepository.findByTelegramId(request.referrerTelegramId())
+                    .ifPresent(referrer ->
+                        achievementService.checkReferralMilestones(referrer.getId())
+                    );
+            } catch (Exception e) {
+                log.error("Failed to check referral milestones for referrer telegram ID: {}, but user registration will proceed",
+                        request.referrerTelegramId(), e);
+            }
         }
 
         String message = getMessage(USER_REGISTERED, locale);
