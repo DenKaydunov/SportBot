@@ -41,50 +41,82 @@ public class AchievementAggregationService {
                                                  .sorted()
                                                  .toList();
 
-        List<UserExerciseSummary> totals = exerciseRecordRepository.getTotalForMonth(startDay, endDay);
-        List<Congratulation> achievementsList = buildAchievementsList(totals, targets);
+        // Получаем итоги до начала месяца и после окончания месяца
+        List<UserExerciseSummary> totalsBeforeMonth = exerciseRecordRepository.getTotalBeforeDate(startDay);
+        List<UserExerciseSummary> totalsAfterMonth = exerciseRecordRepository.getTotalBeforeDate(endDay.plusDays(1));
+
+        List<Congratulation> achievementsList = buildAchievementsListWithMilestones(
+                totalsBeforeMonth, totalsAfterMonth, targets);
         return messageBuild(achievementsList);
     }
 
-    private List<Congratulation> buildAchievementsList(List<UserExerciseSummary> totals,
-                                                       List<Integer> targets)
-    {
-        Map<String, Map<Integer, List<String>>> map = totals.stream()
-                .filter(projection -> userService.isSubscribedUser(projection.user().getTelegramId()))
-                .map(projection -> toAchievementRow(projection, targets))
+    /**
+     * Строит список поздравлений для пользователей, которые достигли новых отметок в течение месяца.
+     * Сравнивает итоги до начала месяца с итогами после окончания месяца.
+     */
+    private List<Congratulation> buildAchievementsListWithMilestones(
+            List<UserExerciseSummary> totalsBeforeMonth,
+            List<UserExerciseSummary> totalsAfterMonth,
+            List<Integer> targets) {
+
+        // Создаем Map для быстрого поиска "до" значений по ключу user+exerciseType
+        Map<String, Long> beforeMap = totalsBeforeMonth.stream()
+                .collect(Collectors.toMap(
+                        summary -> getKey(summary.user(), summary.exerciseType()),
+                        UserExerciseSummary::total,
+                        (a, b) -> a
+                ));
+
+        // Фильтруем только подписанных пользователей и находим тех, кто пересек новую отметку
+        Map<String, Map<Integer, List<String>>> achievementsMap = totalsAfterMonth.stream()
+                .filter(summary -> userService.isSubscribedUser(summary.user().getTelegramId()))
+                .map(afterSummary -> {
+                    String key = getKey(afterSummary.user(), afterSummary.exerciseType());
+                    long totalBefore = beforeMap.getOrDefault(key, 0L);
+                    long totalAfter = afterSummary.total();
+
+                    // Определяем, какую новую отметку пользователь достиг
+                    int achievedTarget = findNewlyAchievedTarget(totalBefore, totalAfter, targets);
+
+                    if (achievedTarget > 0) {
+                        return Optional.of(new AchievementRow(
+                                afterSummary.exerciseType().getTitle(),
+                                achievedTarget,
+                                afterSummary.user().getFullName()
+                        ));
+                    }
+                    return Optional.<AchievementRow>empty();
+                })
                 .flatMap(Optional::stream)
-                .filter(row -> row.target() > 0)
                 .collect(Collectors.groupingBy(
                         AchievementRow::type,
-                        Collectors.groupingBy
-                                (AchievementRow::target,
+                        Collectors.groupingBy(
+                                AchievementRow::target,
                                 Collectors.mapping(AchievementRow::fullName, Collectors.toList())
                         )
                 ));
 
-        return map.entrySet().stream()
-                .map(k ->new Congratulation(k.getKey(), k.getValue()))
+        return achievementsMap.entrySet().stream()
+                .map(entry -> new Congratulation(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
-    private Optional<AchievementRow> toAchievementRow(UserExerciseSummary projection, List<Integer> targets) {
-        return resolveExerciseType(projection)
-                .map(type -> new AchievementRow(
-                        type,
-                        resolveTarget(projection.total(), targets),
-                        projection.user().getFullName()
-                ));
+    /**
+     * Создает уникальный ключ для комбинации пользователь + тип упражнения
+     */
+    private String getKey(User user, ExerciseType exerciseType) {
+        return user.getTelegramId() + "_" + exerciseType.getId();
     }
 
-    private Optional<String> resolveExerciseType(UserExerciseSummary total){
-        return Optional.ofNullable(total.exerciseType())
-                .map(ExerciseType::getTitle)
-                .filter(title -> !title.isBlank());
-    }
-
-    private int resolveTarget(Long total, List<Integer> targets){
+    /**
+     * Находит максимальную отметку, которую пользователь достиг в течение периода.
+     * Возвращает 0, если пользователь не пересек ни одной новой отметки.
+     * Пример: если было 600, стало 1500, а отметки [500, 1000, 2000],
+     * то вернет 1000 (т.к. 500 уже была достигнута, 1000 - новая, 2000 еще не достигнута)
+     */
+    private int findNewlyAchievedTarget(long totalBefore, long totalAfter, List<Integer> targets) {
         return targets.stream()
-                .filter(t -> t.longValue() <= total)
+                .filter(target -> totalBefore < target && totalAfter >= target)
                 .max(Integer::compareTo)
                 .orElse(0);
     }
