@@ -57,6 +57,18 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
                                                @Param("endDate") LocalDate endDate);
 
     /**
+     * Получает общий итог упражнений для каждого пользователя и типа упражнения до указанной даты (не включая её).
+     * Используется для определения достижений, которые были получены в определенный период.
+     */
+    @Query("""
+    SELECT new com.github.sportbot.model.UserExerciseSummary(er.user, er.exerciseType, SUM(er.count))
+    FROM ExerciseRecord er
+    WHERE er.date < :beforeDate
+    GROUP BY er.user, er.exerciseType
+""")
+    List<UserExerciseSummary> getTotalBeforeDate(@Param("beforeDate") LocalDate beforeDate);
+
+    /**
      * Count distinct workout days for a user and specific exercise type.
      * Used for workout count achievements.
      */
