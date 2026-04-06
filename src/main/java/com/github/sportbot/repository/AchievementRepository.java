@@ -7,6 +7,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
+/**
+ * @deprecated Use {@link UserAchievementRepository} instead.
+ * This repository is kept for backward compatibility and will be removed in a future version.
+ */
+@Deprecated(since = "2026-04-06", forRemoval = true)
 public interface AchievementRepository extends JpaRepository<Achievement, Long> {
 
     @Query("""

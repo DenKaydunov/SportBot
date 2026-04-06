@@ -8,6 +8,11 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * @deprecated Use {@link AchievementDefinitionRepository} instead.
+ * This repository is kept for backward compatibility and will be removed in a future version.
+ */
+@Deprecated(since = "2026-04-06", forRemoval = true)
 @Repository
 public interface ReferralMilestoneRepository extends JpaRepository<ReferralMilestone, Long> {
 
