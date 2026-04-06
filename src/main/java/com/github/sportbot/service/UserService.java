@@ -1,5 +1,6 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.config.SupportedLanguagesProvider;
 import com.github.sportbot.dto.RegistrationRequest;
 import com.github.sportbot.dto.UserResponse;
 import com.github.sportbot.exception.UserAlreadyExistsException;
@@ -29,6 +30,7 @@ public class UserService{
     private final MessageSource messageSource;
     private final UserMapper userMapper;
     private final AchievementService achievementService;
+    private final SupportedLanguagesProvider languagesProvider;
 
     @Transactional
     public UserResponse registerUser(RegistrationRequest request) {
@@ -37,6 +39,8 @@ public class UserService{
                     throw new UserAlreadyExistsException();
                 });
         User user = userMapper.toEntity(request);
+        Locale locale = languagesProvider.getLocale(user.getLanguage());
+        user.setLanguage(locale.getLanguage());
         user = userRepository.save(user);
 
         if (request.referrerTelegramId() != null) {
@@ -46,7 +50,6 @@ public class UserService{
                 );
         }
 
-        Locale locale = Locale.forLanguageTag(user.getLanguage());
         String message = getMessage(USER_REGISTERED, locale);
         return new UserResponse(message, user.getTelegramId(), user.getFullName());
     }
@@ -104,10 +107,6 @@ public class UserService{
     }
 
     public Locale getUserLocale(User user){
-        String lang = user.getLanguage();
-        if (!"ru".equals(lang) && !"en".equals(lang) && !"uk".equals(lang)){
-            lang = "ru";
-        }
-        return Locale.forLanguageTag(lang);
+        return languagesProvider.getLocale(user.getLanguage());
     }
 }
