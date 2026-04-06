@@ -63,7 +63,7 @@ class UserServiceTest {
                 "ru",
                 Sex.MAN,
                 25,
-                23456789,
+                23456789L,
                 LocalTime.now()
         );
 
@@ -320,5 +320,171 @@ class UserServiceTest {
             Arguments.of("invalid", "en"), // Invalid language returns default
             Arguments.of(null, "en")       // Null language returns default
         );
+    }
+
+    @Test
+    void registerUser_WithValidReferrer_Success() {
+        // Given
+        Long referrerTelegramId = 999888777L;
+        RegistrationRequest requestWithReferrer = new RegistrationRequest(
+                123456L,
+                "sendPulse123",
+                true,
+                "John Doe",
+                "ru",
+                Sex.MAN,
+                25,
+                referrerTelegramId,
+                LocalTime.now()
+        );
+
+        User referrerUser = User.builder()
+                .id(10)
+                .telegramId(referrerTelegramId)
+                .fullName("Referrer User")
+                .build();
+
+        User userWithReferrer = User.builder()
+                .id(2)
+                .telegramId(requestWithReferrer.telegramId())
+                .fullName(requestWithReferrer.fullName())
+                .language(requestWithReferrer.language())
+                .referrerTelegramId(referrerTelegramId)
+                .build();
+
+        Locale locale = Locale.forLanguageTag("ru");
+        when(userRepository.findByTelegramId(requestWithReferrer.telegramId())).thenReturn(Optional.empty());
+        when(userMapper.toEntity(requestWithReferrer)).thenReturn(userWithReferrer);
+        when(languagesProvider.getLocale("ru")).thenReturn(locale);
+        when(userRepository.save(userWithReferrer)).thenReturn(userWithReferrer);
+        when(userRepository.findByTelegramId(referrerTelegramId)).thenReturn(Optional.of(referrerUser));
+        when(messageSource.getMessage("user.registered", null, locale))
+                .thenReturn("Пользователь успешно зарегистрирован");
+
+        // When
+        UserResponse response = userService.registerUser(requestWithReferrer);
+
+        // Then
+        assertNotNull(response);
+        assertEquals(userWithReferrer.getTelegramId(), response.telegramId());
+        assertEquals(userWithReferrer.getFullName(), response.fullName());
+        assertEquals("Пользователь успешно зарегистрирован", response.responseMessage());
+
+        verify(userRepository).findByTelegramId(requestWithReferrer.telegramId());
+        verify(userMapper).toEntity(requestWithReferrer);
+        verify(languagesProvider).getLocale("ru");
+        verify(userRepository).save(userWithReferrer);
+        verify(userRepository).findByTelegramId(referrerTelegramId);
+        verify(achievementService).checkReferralMilestones(referrerUser.getId());
+        verify(messageSource).getMessage("user.registered", null, locale);
+    }
+
+    @Test
+    void registerUser_WithInvalidReferrer_StillSucceeds() {
+        // Given
+        Long referrerTelegramId = 999888777L;
+        RegistrationRequest requestWithInvalidReferrer = new RegistrationRequest(
+                123456L,
+                "sendPulse123",
+                true,
+                "John Doe",
+                "ru",
+                Sex.MAN,
+                25,
+                referrerTelegramId,
+                LocalTime.now()
+        );
+
+        User userWithReferrer = User.builder()
+                .id(2)
+                .telegramId(requestWithInvalidReferrer.telegramId())
+                .fullName(requestWithInvalidReferrer.fullName())
+                .language(requestWithInvalidReferrer.language())
+                .referrerTelegramId(referrerTelegramId)
+                .build();
+
+        Locale locale = Locale.forLanguageTag("ru");
+        when(userRepository.findByTelegramId(requestWithInvalidReferrer.telegramId())).thenReturn(Optional.empty());
+        when(userMapper.toEntity(requestWithInvalidReferrer)).thenReturn(userWithReferrer);
+        when(languagesProvider.getLocale("ru")).thenReturn(locale);
+        when(userRepository.save(userWithReferrer)).thenReturn(userWithReferrer);
+        when(userRepository.findByTelegramId(referrerTelegramId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage("user.registered", null, locale))
+                .thenReturn("Пользователь успешно зарегистрирован");
+
+        // When
+        UserResponse response = userService.registerUser(requestWithInvalidReferrer);
+
+        // Then
+        assertNotNull(response);
+        assertEquals(userWithReferrer.getTelegramId(), response.telegramId());
+        assertEquals(userWithReferrer.getFullName(), response.fullName());
+        assertEquals("Пользователь успешно зарегистрирован", response.responseMessage());
+
+        verify(userRepository).findByTelegramId(requestWithInvalidReferrer.telegramId());
+        verify(userMapper).toEntity(requestWithInvalidReferrer);
+        verify(languagesProvider).getLocale("ru");
+        verify(userRepository).save(userWithReferrer);
+        verify(userRepository).findByTelegramId(referrerTelegramId);
+        verify(achievementService, never()).checkReferralMilestones(anyInt());
+        verify(messageSource).getMessage("user.registered", null, locale);
+    }
+
+    @Test
+    void registerUser_ReferralMilestoneCheckFails_RegistrationSucceeds() {
+        // Given
+        Long referrerTelegramId = 999888777L;
+        RegistrationRequest requestWithReferrer = new RegistrationRequest(
+                123456L,
+                "sendPulse123",
+                true,
+                "John Doe",
+                "ru",
+                Sex.MAN,
+                25,
+                referrerTelegramId,
+                LocalTime.now()
+        );
+
+        User referrerUser = User.builder()
+                .id(10)
+                .telegramId(referrerTelegramId)
+                .fullName("Referrer User")
+                .build();
+
+        User userWithReferrer = User.builder()
+                .id(2)
+                .telegramId(requestWithReferrer.telegramId())
+                .fullName(requestWithReferrer.fullName())
+                .language(requestWithReferrer.language())
+                .referrerTelegramId(referrerTelegramId)
+                .build();
+
+        Locale locale = Locale.forLanguageTag("ru");
+        when(userRepository.findByTelegramId(requestWithReferrer.telegramId())).thenReturn(Optional.empty());
+        when(userMapper.toEntity(requestWithReferrer)).thenReturn(userWithReferrer);
+        when(languagesProvider.getLocale("ru")).thenReturn(locale);
+        when(userRepository.save(userWithReferrer)).thenReturn(userWithReferrer);
+        when(userRepository.findByTelegramId(referrerTelegramId)).thenReturn(Optional.of(referrerUser));
+        doThrow(new RuntimeException("Achievement service error")).when(achievementService).checkReferralMilestones(referrerUser.getId());
+        when(messageSource.getMessage("user.registered", null, locale))
+                .thenReturn("Пользователь успешно зарегистрирован");
+
+        // When
+        UserResponse response = userService.registerUser(requestWithReferrer);
+
+        // Then
+        assertNotNull(response);
+        assertEquals(userWithReferrer.getTelegramId(), response.telegramId());
+        assertEquals(userWithReferrer.getFullName(), response.fullName());
+        assertEquals("Пользователь успешно зарегистрирован", response.responseMessage());
+
+        verify(userRepository).findByTelegramId(requestWithReferrer.telegramId());
+        verify(userMapper).toEntity(requestWithReferrer);
+        verify(languagesProvider).getLocale("ru");
+        verify(userRepository).save(userWithReferrer);
+        verify(userRepository).findByTelegramId(referrerTelegramId);
+        verify(achievementService).checkReferralMilestones(referrerUser.getId());
+        verify(messageSource).getMessage("user.registered", null, locale);
     }
 }

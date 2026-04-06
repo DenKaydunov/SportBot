@@ -14,6 +14,6 @@ public record RegistrationRequest(
         String language,
         Sex sex,
         Integer age,
-        Integer referrerTelegramId,
+        Long referrerTelegramId,
         LocalTime remindTime
 ) {}

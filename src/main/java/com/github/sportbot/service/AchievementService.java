@@ -72,7 +72,7 @@ public class AchievementService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        Integer referralCount = userRepository.countByReferrerTelegramId(user.getTelegramId().intValue());
+        Integer referralCount = userRepository.countByReferrerTelegramId(user.getTelegramId());
 
         List<ReferralMilestone> milestones =
             referralMilestoneRepository.findByReferralsRequiredLessThanEqual(referralCount);
@@ -90,7 +90,8 @@ public class AchievementService {
 
                 achievementRepository.save(achievement);
 
-                user.setBalanceTon(user.getBalanceTon() + milestone.getRewardTon());
+                Integer rewardTon = milestone.getRewardTon() != null ? milestone.getRewardTon() : 0;
+                user.setBalanceTon(user.getBalanceTon() + rewardTon);
                 userRepository.save(user);
             }
         }

@@ -31,7 +31,7 @@ public class User {
     @Column(name = "telegram_id", nullable = false, unique = true)
     private Long telegramId;
     @Column(name = "referrer_telegram_id")
-    private Integer referrerTelegramId;
+    private Long referrerTelegramId;
     @Column(name = "send_pulse_id")
     private String sendPulseId;
     @Column(name = "is_subscribed", nullable = false)
