@@ -71,6 +71,7 @@ public class SportBot extends TelegramLongPollingBot {
             execute(message);
         } catch (TelegramApiException e) {
             log.error("Failed to send message to {}: {}", telegramId, e.getMessage());
+            throw new RuntimeException("Failed to send Telegram message to " + telegramId, e);
         }
     }
 
