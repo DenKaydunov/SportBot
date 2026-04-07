@@ -8,7 +8,7 @@ spring:
         instance-connection-name: sportbot-485510:europe-west1:sportbotdb
   datasource:
     username: postgres
-    password: ${DB_PASSWORD}
+    password: sportbotDb1_
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -27,4 +27,4 @@ spring:
     change-log: db/changelog/db.changelog-master.yaml
 
 bot:
-  token: ${TG_BOT_TOKEN}
+  token: 7954708922:AAGW19xIDEgA0dvWCeXqNhNa0zGIbysS7qI

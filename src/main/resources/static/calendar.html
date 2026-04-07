@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>SportBot Calendar</title>
@@ -17,11 +17,12 @@
 <div id="response"></div>
 
 <script>
-    const BACKEND_URL = "URL!!!";
-    const tg = window.Telegram.WebApp;
+    const BACKEND_URL = "https://sportbot-485510.ew.r.appspot.com";
+    const tg = globalThis.Telegram.WebApp;
     tg.expand();
 
     let calendar;
+    let currentLocale;
     let selectedDateEl = null;
     let monthData = {};
     const calendarEl = document.getElementById('calendar');
@@ -107,17 +108,34 @@
 
     // -------------------- Получаем данные месяца --------------------
     function fetchMonthData(startDate, endDate) {
-        const telegramId = tg.initDataUnsafe.user.id;
+        const telegramId = tg.initDataUnsafe.user?.id;
         const year = startDate.getFullYear();
         const month = startDate.getMonth() + 1;
 
-        fetch(`${BACKEND_URL}/api/v1/exercises/calendar/${telegramId}?year=${year}&month=${month}`)
-            .then(res => res.json())
+        console.log('Fetching month data:', { telegramId, year, month });
+        console.log('tg.initDataUnsafe:', tg.initDataUnsafe);
+
+        if (!telegramId) {
+            console.error('Telegram ID not found!');
+            return;
+        }
+
+        const url = `${BACKEND_URL}/api/v1/exercises/calendar/${telegramId}?year=${year}&month=${month}`;
+        console.log('Request URL:', url);
+
+        fetch(url)
+            .then(res => {
+                console.log('Response status:', res.status);
+                return res.json();
+            })
             .then(data => {
+                console.log('Received data:', data);
                 monthData = data; // обновляем глобальный объект
                 highlightTrainingDays(); // <-- именно здесь вызываем подсветку
             })
-            .catch(err => console.error(err));
+            .catch(err => {
+                console.error('Fetch error:', err);
+            });
     }
 
     // -------------------- Подсветка дней с тренировками --------------------
@@ -174,19 +192,36 @@
 
 
     // -------------------- Получаем локаль с бекенда --------------------
-    const telegramId = tg.initDataUnsafe.user.id;
-    fetch(`${BACKEND_URL}/api/v1/users/locale/${telegramId}`)
-        .then(res => res.json())
+    const telegramId = tg.initDataUnsafe.user?.id;
+
+    console.log('Initializing calendar...');
+    console.log('Telegram WebApp initDataUnsafe:', tg.initDataUnsafe);
+    console.log('Telegram ID:', telegramId);
+
+    if (!telegramId) {
+        console.error('ERROR: Telegram ID is undefined!');
+        document.getElementById('response').innerHTML = '<p style="color: red;">Error: Unable to load user data. Please open this page from Telegram.</p>';
+    }
+
+    fetch(`${BACKEND_URL}/api/v1/users/${telegramId}/locale`)
+        .then(res => {
+            console.log('Locale response status:', res.status);
+            return res.json();
+        })
         .then(locale => {
+            console.log('User locale:', locale);
             currentLocale = locale || 'ru'; // сохраняем локаль
+            document.documentElement.lang = currentLocale; // обновляем lang атрибут для accessibility
             initCalendar(currentLocale);
         })
-        .catch(() => {
+        .catch((err) => {
+            console.error('Locale fetch error:', err);
             currentLocale = 'ru';
+            document.documentElement.lang = currentLocale;
             initCalendar(currentLocale);
         });
 
-    window.addEventListener('resize', resizeCalendar);
+    globalThis.addEventListener('resize', resizeCalendar);
 
 </script>
 

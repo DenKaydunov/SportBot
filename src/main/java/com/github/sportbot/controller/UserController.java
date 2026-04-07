@@ -1,9 +1,11 @@
 package com.github.sportbot.controller;
 
 import com.github.sportbot.dto.RegistrationRequest;
+import com.github.sportbot.dto.UpdateLanguageRequest;
 import com.github.sportbot.dto.UserResponse;
 import com.github.sportbot.model.User;
 import com.github.sportbot.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,10 +23,18 @@ public class UserController {
         return userService.registerUser(request);
     }
 
-    @GetMapping("/locale/{telegramId}")
-    public Locale getUserLocale(@PathVariable Long telegramId) {
+    @GetMapping("/{telegramId}/locale")
+    public String getUserLocale(@PathVariable Long telegramId) {
         User user = userService.getUserByTelegramId(telegramId);
-        return userService.getUserLocale(user);
+        Locale locale = userService.getUserLocale(user);
+        return locale.getLanguage();
+    }
+
+    @PatchMapping("/{telegramId}/locale")
+    public String updateUserLanguage(
+            @PathVariable Long telegramId,
+            @RequestBody @Valid UpdateLanguageRequest request) {
+        return userService.updateUserLanguage(telegramId, request);
     }
 
     @PostMapping("/unsubscribe/{telegramId}")
