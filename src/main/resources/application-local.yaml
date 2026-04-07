@@ -14,4 +14,4 @@ spring:
     contexts: local
 
 bot:
-  token: test-token-for-local-dev
+  token: 7899328302:AAHRupkdEKniFdFVKrsM7zdy1HoXgmb5uEY

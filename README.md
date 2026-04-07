@@ -145,6 +145,28 @@ gcloud app deploy
 ```
 8. **Go to bot in Telegram and verify that bot is still working!**
 
+⚠️ **IMPORTANT: Telegram Mini App Cache Issue**
+
+After deploying updates to Telegram Mini Apps (e.g., calendar.html), you MUST completely restart the mini app session in Telegram to see the changes. Simply refreshing the page is not enough.
+
+**Why this happens:**
+- Telegram aggressively caches Mini App content
+- The Telegram app maintains a persistent WebView session
+- Old JavaScript/HTML/CSS files remain in memory even after redeployment
+
+**How to fix:**
+1. **Close the Mini App completely** (swipe down/press back until you exit the Mini App)
+2. **Close the entire chat** with the bot (go back to chat list)
+3. **Reopen the chat** and launch the Mini App again
+4. Alternatively, use **hard refresh** in browser: `Ctrl + F5` (Windows/Linux) or `Cmd + Shift + R` (Mac)
+5. If still not working, **clear Telegram cache**: Settings → Data and Storage → Storage Usage → Clear Cache
+
+**For developers:**
+- Always test Mini App changes in a fresh session
+- Use browser DevTools Console to verify which version is loaded
+- Check for CORS errors if using external API calls
+- Verify that `BACKEND_URL` is correctly configured (use empty string `""` for same-origin requests)
+
 You can stream logs from the command line by running:
 
 ```shell

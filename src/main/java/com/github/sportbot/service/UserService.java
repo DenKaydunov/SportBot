@@ -2,6 +2,7 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.config.SupportedLanguagesProvider;
 import com.github.sportbot.dto.RegistrationRequest;
+import com.github.sportbot.dto.UpdateLanguageRequest;
 import com.github.sportbot.dto.UserResponse;
 import com.github.sportbot.exception.UserAlreadyExistsException;
 import com.github.sportbot.exception.UserNotFoundException;
@@ -114,5 +115,21 @@ public class UserService{
 
     public Locale getUserLocale(User user){
         return languagesProvider.getLocale(user.getLanguage());
+    }
+
+    @Transactional
+    public String updateUserLanguage(Long telegramId, UpdateLanguageRequest request) {
+        User user = getUserByTelegramId(telegramId);
+
+        // Validate and get locale
+        Locale newLocale = languagesProvider.getLocale(request.language());
+
+        user.setLanguage(newLocale.getLanguage());
+        userRepository.save(user);
+
+        log.info("Updated language for user {} to {}", telegramId, newLocale.getLanguage());
+
+        // Return localized message in the NEW language
+        return getMessage("language.changed", newLocale);
     }
 }

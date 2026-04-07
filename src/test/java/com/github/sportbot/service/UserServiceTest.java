@@ -2,6 +2,7 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.config.SupportedLanguagesProvider;
 import com.github.sportbot.dto.RegistrationRequest;
+import com.github.sportbot.dto.UpdateLanguageRequest;
 import com.github.sportbot.dto.UserResponse;
 import com.github.sportbot.exception.UserAlreadyExistsException;
 import com.github.sportbot.exception.UserNotFoundException;
@@ -486,5 +487,93 @@ class UserServiceTest {
         verify(userRepository).findByTelegramId(referrerTelegramId);
         verify(achievementService).checkReferralMilestones(referrerUser.getId());
         verify(messageSource).getMessage("user.registered", null, locale);
+    }
+
+    @Test
+    void updateUserLanguage_Success() {
+        // Given
+        Long telegramId = 123456L;
+        UpdateLanguageRequest request = new UpdateLanguageRequest("en");
+        User user = User.builder()
+                .id(1)
+                .telegramId(telegramId)
+                .fullName("Test User")
+                .language("ru")
+                .build();
+
+        Locale newLocale = Locale.forLanguageTag("en");
+        when(userRepository.findByTelegramId(telegramId)).thenReturn(Optional.of(user));
+        when(languagesProvider.getLocale("en")).thenReturn(newLocale);
+        when(userRepository.save(user)).thenReturn(user);
+        when(messageSource.getMessage("language.changed", null, newLocale))
+                .thenReturn("Language successfully changed");
+
+        // When
+        String result = userService.updateUserLanguage(telegramId, request);
+
+        // Then
+        assertEquals("Language successfully changed", result);
+        assertEquals("en", user.getLanguage());
+        verify(userRepository).findByTelegramId(telegramId);
+        verify(languagesProvider).getLocale("en");
+        verify(userRepository).save(user);
+        verify(messageSource).getMessage("language.changed", null, newLocale);
+    }
+
+    @Test
+    void updateUserLanguage_UserNotFound_ThrowsException() {
+        // Given
+        Long telegramId = 999999L;
+        UpdateLanguageRequest request = new UpdateLanguageRequest("en");
+        when(userRepository.findByTelegramId(telegramId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(UserNotFoundException.class,
+                () -> userService.updateUserLanguage(telegramId, request));
+
+        verify(userRepository).findByTelegramId(telegramId);
+        verify(languagesProvider, never()).getLocale(anyString());
+        verify(userRepository, never()).save(any());
+        verifyNoInteractions(messageSource);
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideLanguageUpdateTestCases")
+    void updateUserLanguage_VariousLanguages_Success(String newLanguage, String expectedLanguage, String expectedMessage) {
+        // Given
+        Long telegramId = 123456L;
+        UpdateLanguageRequest request = new UpdateLanguageRequest(newLanguage);
+        User user = User.builder()
+                .id(1)
+                .telegramId(telegramId)
+                .fullName("Test User")
+                .language("ru")
+                .build();
+
+        Locale newLocale = Locale.forLanguageTag(expectedLanguage);
+        when(userRepository.findByTelegramId(telegramId)).thenReturn(Optional.of(user));
+        when(languagesProvider.getLocale(newLanguage)).thenReturn(newLocale);
+        when(userRepository.save(user)).thenReturn(user);
+        when(messageSource.getMessage("language.changed", null, newLocale))
+                .thenReturn(expectedMessage);
+
+        // When
+        String result = userService.updateUserLanguage(telegramId, request);
+
+        // Then
+        assertEquals(expectedMessage, result);
+        assertEquals(expectedLanguage, user.getLanguage());
+        verify(userRepository).findByTelegramId(telegramId);
+        verify(languagesProvider).getLocale(newLanguage);
+        verify(userRepository).save(user);
+        verify(messageSource).getMessage("language.changed", null, newLocale);
+    }
+
+    private static Stream<Arguments> provideLanguageUpdateTestCases() {
+        return Stream.of(
+                Arguments.of("ru", "ru", "Язык успешно изменен"),
+                Arguments.of("en", "en", "Language successfully changed"),
+                Arguments.of("uk", "uk", "Мова успішно змінена")
+        );
     }
 }

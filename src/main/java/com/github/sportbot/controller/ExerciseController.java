@@ -1,6 +1,8 @@
 package com.github.sportbot.controller;
 
 import com.github.sportbot.dto.ExerciseEntryRequest;
+import com.github.sportbot.dto.ExerciseSummary;
+import com.github.sportbot.service.CalendarService;
 import com.github.sportbot.service.ExerciseService;
 import com.github.sportbot.service.UserMaxService;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -10,6 +12,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/exercises")
@@ -18,6 +22,7 @@ public class ExerciseController {
 
     private final ExerciseService exerciseService;
     private final UserMaxService userMaxService;
+    private final CalendarService calendarService;
 
 
     @PostMapping
@@ -53,5 +58,22 @@ public class ExerciseController {
     public String progressToday(@RequestParam Long telegramId){
         LocalDate date = LocalDate.now();
         return exerciseService.progressForPeriod(telegramId, date, null);
+    }
+
+    @GetMapping("/calendar/{telegramId}")
+    public Map<String, List<ExerciseSummary>> getMonthData(
+            @PathVariable
+            @Parameter(example = "1000001")
+            Long telegramId,
+
+            @RequestParam
+            @Parameter(example = "2026")
+            Integer year,
+
+            @RequestParam
+            @Parameter(example = "6")
+            Integer month
+    ) {
+        return calendarService.getMonthData(telegramId, year, month);
     }
 }

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>SportBot Calendar</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+
+    <link rel="stylesheet" href="calendar.css"> <!-- отдельный CSS -->
+</head>
+<body>
+
+<h2 class="calendar-title">SportBot Calendar</h2>
+<div id="calendar"></div>
+<div id="response"></div>
+
+<script>
+    const BACKEND_URL = "https://sportbot-485510.ew.r.appspot.com";
+    const tg = globalThis.Telegram.WebApp;
+    tg.expand();
+
+    let calendar;
+    let currentLocale;
+    let selectedDateEl = null;
+    let monthData = {};
+    const calendarEl = document.getElementById('calendar');
+
+    // -------------------- Resize --------------------
+    function resizeCalendar() {
+        const width = calendarEl.offsetWidth;
+        const cellWidth = width / 7;
+        const height = cellWidth * 6;
+        calendarEl.style.height = height + 'px';
+        if (calendar) calendar.updateSize();
+    }
+
+    // -------------------- Инициализация календаря --------------------
+    function initCalendar(locale) {
+
+        const todayStr = new Date().toLocaleDateString('sv-SE');
+
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: locale,
+            firstDay: 1,
+            showNonCurrentDates: false,
+            dayMaxEvents: true,
+            contentHeight: 'auto',
+
+            headerToolbar: {
+                left: '',
+                center: 'prev title next',
+                right: ''
+            },
+
+            windowResize: resizeCalendar,
+
+            dayCellDidMount: function(info) {
+
+                const dateStr = info.date.toLocaleDateString('sv-SE');
+                const dayNumber = info.el.querySelector('.fc-daygrid-day-number');
+
+                if (!dayNumber) return;
+
+                // подсветка сегодняшнего дня
+                if (dateStr === todayStr) {
+                    dayNumber.classList.add('today-date');
+                }
+
+                // подсветка дней с тренировками
+                if (monthData?.[dateStr]) {
+                    dayNumber.classList.add('training-day');
+                }
+            },
+
+            dateClick: function(info) {
+                highlightSelectedDate(info.dayEl);
+                displayExercises(info.dateStr);
+            },
+
+            datesSet: function(info) {
+                resizeCalendar();
+                fetchMonthData(info.start, info.end);
+            }
+
+        });
+
+        calendar.render();
+        resizeCalendar();
+
+        highlightToday();
+    }
+
+
+    function highlightToday() {
+
+        const todayEl = calendarEl.querySelector('.fc-day-today');
+
+        if (!todayEl) return;
+
+        highlightSelectedDate(todayEl);
+
+        const todayStr = new Date().toLocaleDateString('sv-SE');
+        displayExercises(todayStr);
+    }
+
+    // -------------------- Получаем данные месяца --------------------
+    function fetchMonthData(startDate, endDate) {
+        const telegramId = tg.initDataUnsafe.user?.id;
+        const year = startDate.getFullYear();
+        const month = startDate.getMonth() + 1;
+
+        console.log('Fetching month data:', { telegramId, year, month });
+        console.log('tg.initDataUnsafe:', tg.initDataUnsafe);
+
+        if (!telegramId) {
+            console.error('Telegram ID not found!');
+            return;
+        }
+
+        const url = `${BACKEND_URL}/api/v1/exercises/calendar/${telegramId}?year=${year}&month=${month}`;
+        console.log('Request URL:', url);
+
+        fetch(url)
+            .then(res => {
+                console.log('Response status:', res.status);
+                return res.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+                monthData = data; // обновляем глобальный объект
+                highlightTrainingDays(); // <-- именно здесь вызываем подсветку
+            })
+            .catch(err => {
+                console.error('Fetch error:', err);
+            });
+    }
+
+    // -------------------- Подсветка дней с тренировками --------------------
+    function highlightTrainingDays() {
+        calendarEl.querySelectorAll('.fc-daygrid-day').forEach(dayCell => {
+            const dateStr = dayCell.dataset.date;
+            if (!dateStr) return;
+
+            const numberEl = dayCell.querySelector('.fc-daygrid-day-number');
+            if (!numberEl) return;
+
+            if (monthData[dateStr]) {
+                numberEl.classList.add('training-day'); // добавляем круг к числу
+            }
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (dateStr === todayStr) {
+                numberEl.classList.add('today-date');
+            }
+        });
+    }
+
+    // -------------------- Выделение выбранной даты --------------------
+    function highlightSelectedDate(dayEl) {
+        if (selectedDateEl) selectedDateEl.classList.remove('selected-date');
+        const numberEl = dayEl.querySelector('.fc-daygrid-day-number'); // на круг навешиваем
+        numberEl.classList.add('selected-date');
+        selectedDateEl = numberEl;
+    }
+
+    // -------------------- Формат даты --------------------
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('ru-RU');
+    }
+
+    // -------------------- Показ упражнений --------------------
+    function displayExercises(dateStr) {
+        const exercises = monthData[dateStr];
+        const responseEl = document.getElementById("response");
+
+        if (!exercises) {
+            // Получаем локализованное сообщение с сервера
+                    // fallback на английский
+                    responseEl.innerHTML = `<p><b>${formatDate(dateStr)}</b></p>` +
+                        `<div class="line"></div>`;
+            return;
+        }
+
+        const html = exercises.map(e => `<p>${e.exerciseType}: ${e.totalCount}</p>`).join('');
+        responseEl.innerHTML = `<p><b>${formatDate(dateStr)}</b></p>` + html;
+    }
+
+
+
+    // -------------------- Получаем локаль с бекенда --------------------
+    const telegramId = tg.initDataUnsafe.user?.id;
+
+    console.log('Initializing calendar...');
+    console.log('Telegram WebApp initDataUnsafe:', tg.initDataUnsafe);
+    console.log('Telegram ID:', telegramId);
+
+    if (!telegramId) {
+        console.error('ERROR: Telegram ID is undefined!');
+        document.getElementById('response').innerHTML = '<p style="color: red;">Error: Unable to load user data. Please open this page from Telegram.</p>';
+    }
+
+    fetch(`${BACKEND_URL}/api/v1/users/${telegramId}/locale`)
+        .then(res => {
+            console.log('Locale response status:', res.status);
+            return res.json();
+        })
+        .then(locale => {
+            console.log('User locale:', locale);
+            currentLocale = locale || 'ru'; // сохраняем локаль
+            document.documentElement.lang = currentLocale; // обновляем lang атрибут для accessibility
+            initCalendar(currentLocale);
+        })
+        .catch((err) => {
+            console.error('Locale fetch error:', err);
+            currentLocale = 'ru';
+            document.documentElement.lang = currentLocale;
+            initCalendar(currentLocale);
+        });
+
+    globalThis.addEventListener('resize', resizeCalendar);
+
+</script>
+
+
+</body>
+</html>

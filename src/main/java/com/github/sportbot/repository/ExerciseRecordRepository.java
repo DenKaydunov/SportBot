@@ -82,4 +82,19 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
     @Query("SELECT COUNT(DISTINCT er.date) FROM ExerciseRecord er WHERE er.user = :user")
     Long countDistinctWorkoutDaysByUser(@Param("user") User user);
 
+    @Query("""
+       SELECT er.date AS date,
+              et.title AS exerciseType,
+              SUM(er.count) AS totalCount
+       FROM ExerciseRecord er
+       JOIN er.exerciseType et
+       WHERE er.user.telegramId = :telegramId
+         AND er.date BETWEEN :startDate AND :endDate
+       GROUP BY er.date, et.title
+""")
+    List<ExerciseDailyProjection> getDailyUserProgress(
+            @Param("telegramId") Long telegramId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
 }
