@@ -9,8 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
+import org.springframework.context.support.ResourceBundleMessageSource;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,8 +33,8 @@ class ExercisePeriodServiceTest {
     private UserRepository userRepository;
     @Mock
     private UserService userService;
-    @Mock
-    private MessageSource messageSource;
+    @Spy
+    private MessageLocalizer messageLocalizer = createRealMessageLocalizer();
 
     @InjectMocks
     private ExerciseService exerciseService;
@@ -44,6 +45,14 @@ class ExercisePeriodServiceTest {
 
     private User user;
 
+    private static MessageLocalizer createRealMessageLocalizer() {
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("messages/messages");
+        messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setFallbackToSystemLocale(false);
+        messageSource.setDefaultLocale(Locale.forLanguageTag("en"));
+        return new MessageLocalizerImpl(messageSource);
+    }
 
     @BeforeEach
     void setUp(){
@@ -61,18 +70,6 @@ class ExercisePeriodServiceTest {
         // Setup message source mocks
         Locale ruLocale = Locale.forLanguageTag("ru");
         lenient().when(userService.getUserLocale(any(User.class))).thenReturn(ruLocale);
-        lenient().when(messageSource.getMessage(eq("exercise.progress.period"), any(Object[].class), any(Locale.class)))
-                .thenAnswer(invocation -> {
-                    Object[] args = invocation.getArgument(1);
-                    return "Твой прогресс с " + args[0] + " по " + args[1] + ":";
-                });
-        lenient().when(messageSource.getMessage(eq("exercise.progress.for.date"), any(Object[].class), any(Locale.class)))
-                .thenAnswer(invocation -> {
-                    Object[] args = invocation.getArgument(1);
-                    return "Твой прогресс за " + args[0] + ":";
-                });
-        lenient().when(messageSource.getMessage(eq("exercise.no.workouts.found"), isNull(), any(Locale.class)))
-                .thenReturn("Тренировок за этот период не найдено. 😴");
     }
 
     @Test
@@ -86,7 +83,7 @@ class ExercisePeriodServiceTest {
                         new ExercisePeriodProjection() {
                             @Override
                             public String getExerciseType() {
-                                return "Отжимания";
+                                return "push_up";
                             }
                             @Override
                             public Integer getTotalCount() {
@@ -96,7 +93,7 @@ class ExercisePeriodServiceTest {
                         new ExercisePeriodProjection() {
                             @Override
                             public String getExerciseType() {
-                                return "Подтягивания";
+                                return "pull_up";
                             }
 
                             @Override

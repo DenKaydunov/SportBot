@@ -55,7 +55,10 @@ public class ExerciseController {
     }
 
     @GetMapping("/today")
-    public String progressToday(@RequestParam Long telegramId){
+    public String progressToday(
+            @RequestParam
+            @Parameter(example = "1000001")
+            Long telegramId){
         LocalDate date = LocalDate.now();
         return exerciseService.progressForPeriod(telegramId, date, null);
     }

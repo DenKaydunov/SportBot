@@ -35,3 +35,5 @@ databaseChangeLog:
       file: db/changelog/changes/0019-migrate-achievement-data.sql
   - include:
       file: db/changelog/changes/0020-deprecate-old-achievements.sql
+  - include:
+      file: db/changelog/changes/0021-add-abs-exercise-type.sql

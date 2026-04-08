@@ -24,7 +24,7 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
     int sumTotalRepsByUserAndExerciseType(@Param("user") User user, @Param("exerciseType") ExerciseType exerciseType);
 
     @Query("""
-           SELECT et.title AS exerciseType,
+           SELECT et.code AS exerciseType,
            COALESCE(SUM(er.count), 0)
            AS totalCount
            FROM ExerciseType et
@@ -32,7 +32,7 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
            ON er.exerciseType = et
            AND er.user.telegramId = :telegramId
            AND er.date BETWEEN :startDate AND :endDate
-           GROUP BY et.title
+           GROUP BY et.code
     """)
     List<ExercisePeriodProjection> getUserProgressByPeriod(@Param("telegramId") Long telegramId,
                                                            @Param("startDate") LocalDate startDate,

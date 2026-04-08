@@ -52,8 +52,10 @@ class RankServiceTest {
     void setUp() {
         // use real messages bundle
         ResourceBundleMessageSource realMessageSource = new ResourceBundleMessageSource();
-        realMessageSource.setBasename("messages");
+        realMessageSource.setBasename("messages/messages");
         realMessageSource.setDefaultEncoding("UTF-8");
+        realMessageSource.setFallbackToSystemLocale(false);
+        realMessageSource.setDefaultLocale(Locale.forLanguageTag("en"));
         this.messageSource = realMessageSource;
 
         // re-inject service with real message source

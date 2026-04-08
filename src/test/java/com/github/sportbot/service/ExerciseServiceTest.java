@@ -14,8 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
@@ -42,8 +44,7 @@ class ExerciseServiceTest {
     @Mock
     private ExerciseRecordRepository exerciseRecordRepository;
 
-    @Mock
-    private MessageSource messageSource;
+    private MessageLocalizer messageLocalizer;
 
     @Mock
     private ExerciseTypeService exerciseTypeService;
@@ -78,13 +79,21 @@ class ExerciseServiceTest {
     @Mock
     private AchievementDefinitionRepository achievementDefinitionRepository;
 
-    @InjectMocks
     private ExerciseService exerciseService;
 
     private User testUser;
     private ExerciseType testExerciseType;
     private ExerciseEntryRequest testRequest;
     private static final long TELEGRAM_ID = 123456L;
+
+    private static MessageLocalizer createRealMessageLocalizer() {
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("messages/messages");
+        messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setFallbackToSystemLocale(false);
+        messageSource.setDefaultLocale(Locale.forLanguageTag("en"));
+        return new MessageLocalizerImpl(messageSource);
+    }
 
     @BeforeEach
     void setUp() {
@@ -104,6 +113,27 @@ class ExerciseServiceTest {
 
         testRequest = new ExerciseEntryRequest(TELEGRAM_ID, "push_up", 10);
 
+        // Initialize real MessageLocalizer
+        messageLocalizer = createRealMessageLocalizer();
+
+        // Manually create ExerciseService with all dependencies
+        exerciseService = new ExerciseService(
+            userRepository,
+            exerciseRecordRepository,
+            messageLocalizer,
+            exerciseTypeService,
+            rankService,
+            streakService,
+            milestoneRepository,
+            achievementRepository,
+            achievementService,
+            notificationService,
+            userService,
+            entityLocalizationService,
+            unifiedAchievementService,
+            achievementDefinitionRepository
+        );
+
         // Setup common message source mocks
         Locale ruLocale = Locale.forLanguageTag("ru");
         lenient().when(userService.getUserLocale(any(User.class))).thenReturn(ruLocale);
@@ -119,19 +149,6 @@ class ExerciseServiceTest {
         // Mock new unified achievement system
         lenient().when(unifiedAchievementService.getCompletedAchievements(anyInt())).thenReturn(new ArrayList<>());
         lenient().when(achievementDefinitionRepository.findByCategoryAndIsActiveTrueOrderBySortOrder(any())).thenReturn(new ArrayList<>());
-
-        lenient().when(messageSource.getMessage(eq("exercise.achievement.congrats"), any(Object[].class), any(Locale.class)))
-                .thenAnswer(invocation -> {
-                    Object[] args = invocation.getArgument(1);
-                    return "\n🏆 Поздравляем! Награда за " + args[0] + " дней подряд: " + args[1] + " - " + args[2] + " (Награда: " + args[3] + " Ton)";
-                });
-        lenient().when(messageSource.getMessage(eq("exercise.all.achievements.earned"), isNull(), any(Locale.class)))
-                .thenReturn("\n✅ Все награды за стрик получены!");
-        lenient().when(messageSource.getMessage(eq("exercise.next.achievement.hint"), any(Object[].class), any(Locale.class)))
-                .thenAnswer(invocation -> {
-                    Object[] args = invocation.getArgument(1);
-                    return "\n⏰ Тренируйся ещё " + args[0] + " дней подряд для следующей награды.";
-                });
     }
 
     @Test
@@ -145,9 +162,7 @@ class ExerciseServiceTest {
                 .thenReturn("");
         doNothing().when(streakService).updateStreak(any(User.class), any(LocalDate.class));
         doNothing().when(achievementService).checkStreakMilestones(anyLong());
-
-        when(messageSource.getMessage(eq("workout.reps_recorded"), any(Object[].class), any()))
-                .thenReturn("Отжимания: сделано 10 повторений. Общее число: 100.");
+        when(unifiedAchievementService.getCompletedAchievements(any())).thenReturn(new ArrayList<>());
 
         // When
         String result = exerciseService.saveExerciseResult(testRequest);
@@ -157,7 +172,6 @@ class ExerciseServiceTest {
         verify(exerciseTypeService).getExerciseType(testRequest);
         verify(notificationService).notifyFollowersAboutWorkout(testUser, testExerciseType, 10);
         verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(testUser, testExerciseType);
-        verify(messageSource).getMessage(eq("workout.reps_recorded"), any(Object[].class), any());
         verify(rankService).assignRankIfEligible(testUser);
 
         assertEquals(1, testUser.getExerciseRecords().size());
@@ -166,7 +180,10 @@ class ExerciseServiceTest {
         assertEquals(testExerciseType, savedExercise.getExerciseType());
         assertEquals(10, savedExercise.getCount());
         assertEquals(LocalDate.now(), savedExercise.getDate());
-        assertTrue(result.contains("Отжимания: сделано 10 повторений. Общее число: 100."));
+
+        // Verify that localized message is present (Russian locale is used in test)
+        assertTrue(result.contains("Отжимания"));
+        assertTrue(result.contains("100"));
     }
 
     @Test
@@ -178,9 +195,7 @@ class ExerciseServiceTest {
                 .thenReturn(120);
         doNothing().when(streakService).updateStreak(any(User.class), any(LocalDate.class));
         doNothing().when(achievementService).checkStreakMilestones(anyLong());
-
-        when(messageSource.getMessage(eq("workout.reps_recorded"), any(Object[].class), any()))
-                .thenReturn("Отжимания: сделано 10 повторений. Общее число: 120.");
+        when(unifiedAchievementService.getCompletedAchievements(any())).thenReturn(new ArrayList<>());
 
         String promotion = "\nПоздравляю! Твой ранг повышен: — → Новичок";
         when(rankService.assignRankIfEligible(any(User.class)))
@@ -190,7 +205,9 @@ class ExerciseServiceTest {
         String result = exerciseService.saveExerciseResult(testRequest);
 
         // Then
-        assertTrue(result.startsWith("Отжимания: сделано 10 повторений. Общее число: 120." + promotion));
+        assertTrue(result.contains("Отжимания"));
+        assertTrue(result.contains("120"));
+        assertTrue(result.contains(promotion));
         verify(rankService).assignRankIfEligible(testUser);
     }
 
@@ -206,7 +223,6 @@ class ExerciseServiceTest {
         verify(userRepository).findByTelegramId(TELEGRAM_ID);
         verifyNoInteractions(exerciseTypeRepository);
         verify(userRepository, never()).save(any());
-        verifyNoInteractions(messageSource);
         verifyNoInteractions(rankService);
     }
 
@@ -227,7 +243,6 @@ class ExerciseServiceTest {
         verify(userRepository).findByTelegramId(TELEGRAM_ID);
         verify(exerciseTypeService).getExerciseType(invalidRequest);
         verify(userRepository, never()).save(any());
-        verifyNoInteractions(messageSource);
         verifyNoInteractions(rankService);
     }
 

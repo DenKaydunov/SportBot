@@ -5,16 +5,13 @@ import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +21,7 @@ public class ExerciseService {
 
     private final UserRepository userRepository;
     private final ExerciseRecordRepository exerciseRecordRepository;
-    private final MessageSource messageSource;
+    private final MessageLocalizer messageLocalizer;
     private final ExerciseTypeService exerciseTypeService;
     private final RankService rankService;
     private final StreakService streakService;
@@ -72,7 +69,7 @@ public class ExerciseService {
 
         int total = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
 
-        String message = messageSource.getMessage(
+        String message = messageLocalizer.localize(
                 "workout.reps_recorded",
                 new Object[]{entityLocalizationService.getExerciseTypeTitle(exerciseType, locale), req.count(), total},
                 locale);
@@ -105,7 +102,7 @@ public class ExerciseService {
 
             int currentStreak = user.getCurrentStreak();
             if (currentStreak > 1) {
-                return messageSource.getMessage(
+                return messageLocalizer.localize(
                         "workout.streak_updated",
                         new Object[] { currentStreak },
                         locale);
@@ -135,7 +132,7 @@ public class ExerciseService {
 
         for(AchievementDefinition def : streakDefinitions) {
             if (!completedDefinitionIds.contains(def.getId()) && currentStreak >= def.getTargetValue()) {
-                message.append("\n").append(messageSource.getMessage(
+                message.append("\n").append(messageLocalizer.localize(
                     "exercise.achievement.congrats",
                     new Object[]{
                         def.getTargetValue(),
@@ -167,14 +164,14 @@ public class ExerciseService {
                 .toList();
 
         StringBuilder message = new StringBuilder(
-            messageSource.getMessage("exercise.all.achievements.earned", null, locale)
+            messageLocalizer.localize("exercise.all.achievements.earned", null, locale)
         );
 
         for (AchievementDefinition def : streakDefinitions) {
             if (!completedDefinitionIds.contains(def.getId()) && def.getTargetValue() > currentStreak) {
                 int daysToNext = def.getTargetValue() - currentStreak;
                 message.setLength(0);
-                message.append("\n").append(messageSource.getMessage(
+                message.append("\n").append(messageLocalizer.localize(
                     "exercise.next.achievement.hint",
                     new Object[]{daysToNext},
                     locale
@@ -223,9 +220,16 @@ public class ExerciseService {
         }
 
         if (totalCount > 0)  {
-            summary.forEach(exercise -> report.append(String.format("%s - %d%n", exercise.getExerciseType(), exercise.getTotalCount())));
+            summary.forEach(exercise -> {
+                String localizedExerciseType = messageLocalizer.localize(
+                    "exercise.type." + exercise.getExerciseType(),
+                    null,
+                    locale
+                );
+                report.append(String.format("%s - %d%n", localizedExerciseType, exercise.getTotalCount()));
+            });
         } else {
-            report.append(messageSource.getMessage(
+            report.append(messageLocalizer.localize(
                 "exercise.no.workouts.found", null, locale
             ));
         }
@@ -234,13 +238,13 @@ public class ExerciseService {
 
     private void appendHeader(StringBuilder sb, LocalDate start, LocalDate end, Locale locale) {
         if (start.equals(end)) {
-            sb.append(messageSource.getMessage(
+            sb.append(messageLocalizer.localize(
                 "exercise.progress.for.date",
                 new Object[]{start.format(ExerciseService.DATE_FORMATTER)},
                 locale
             )).append("\n");
         } else {
-            sb.append(messageSource.getMessage(
+            sb.append(messageLocalizer.localize(
                 "exercise.progress.period",
                 new Object[]{start.format(ExerciseService.DATE_FORMATTER), end.format(ExerciseService.DATE_FORMATTER)},
                 locale
@@ -251,7 +255,7 @@ public class ExerciseService {
     private void verifyDates(LocalDate startDate, LocalDate endDate, Locale locale) {
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException(
-                messageSource.getMessage("exercise.error.invalid.dates", null, locale)
+                messageLocalizer.localize("exercise.error.invalid.dates", null, locale)
             );
         }
     }
