@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# GCP deployment config with secrets
+app.yaml
