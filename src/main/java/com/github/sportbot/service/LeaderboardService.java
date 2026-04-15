@@ -1,14 +1,15 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.config.ReferralProperties;
 import com.github.sportbot.config.WorkoutProperties;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.LeaderBoardRepository;
+import com.github.sportbot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.util.HtmlUtils;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -29,6 +30,8 @@ public class LeaderboardService {
     private final UserService userService;
     private final MessageSource messageSource;
     private final EntityLocalizationService entityLocalizationService;
+    private final UserRepository userRepository;
+    private final ReferralProperties referralProperties;
 
     public String getLeaderboardByPeriod(String exerciseCode, int limit, String periodCode, User user) {
         ExerciseType exerciseType = exerciseTypeService.getExerciseType(exerciseCode);
@@ -171,6 +174,16 @@ public class LeaderboardService {
     }
 
     private Map<User, Double> sumUserScore(List<UserExerciseSummary> totals) {
+        Map<User, Double> exerciseScores = calculateExerciseScores(totals);
+        addReferralBonusToScores(exerciseScores);
+        return exerciseScores;
+    }
+
+    /**
+     * Calculates exercise-based XP for each user.
+     * XP = Σ(total_reps × exercise_coefficient)
+     */
+    private Map<User, Double> calculateExerciseScores(List<UserExerciseSummary> totals) {
         return totals.stream()
                 .collect(Collectors.groupingBy(
                         UserExerciseSummary::user,
@@ -179,10 +192,22 @@ public class LeaderboardService {
                         )));
     }
 
+    /**
+     * Adds referral bonus XP to each user's score.
+     * Referral XP = number_of_referrals × referral.xp-per-referral
+     */
+    private void addReferralBonusToScores(Map<User, Double> scores) {
+        scores.forEach((user, score) -> {
+            Integer referralCount = userRepository.countByReferrerTelegramId(user.getTelegramId());
+            double referralXP = referralCount * (double) referralProperties.getXpPerReferral();
+            scores.put(user, score + referralXP);
+        });
+    }
+
     private List<UserScore> getTopUser(Map<User, Double> totals) {
         return totals.entrySet().stream()
                 .filter(u -> u.getKey().getIsSubscribed())
-                .sorted(Map.Entry.<User, Double>comparingByValue(Comparator.reverseOrder()))
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .map(entry -> new UserScore(entry.getKey(), entry.getValue()))
                 .toList();
     }

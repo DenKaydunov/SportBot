@@ -1,5 +1,6 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.config.ReferralProperties;
 import com.github.sportbot.config.WorkoutProperties;
 import com.github.sportbot.exception.RankNotFoundException;
 import com.github.sportbot.model.ExerciseType;
@@ -9,6 +10,7 @@ import com.github.sportbot.model.UserRank;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.RankRepository;
 import com.github.sportbot.repository.UserRankRepository;
+import com.github.sportbot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
@@ -31,20 +33,35 @@ public class RankService {
     private final WorkoutProperties workoutProperties;
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final ExerciseTypeService exerciseTypeService;
+    private final UserRepository userRepository;
+    private final ReferralProperties referralProperties;
 
     /**
      * Calculates total XP for the user based on all exercise types.
-     * XP = Σ(total_reps_per_exercise × coefficient)
+     * XP = Σ(total_reps_per_exercise × coefficient) + (referral_count × referral_xp)
      * Uses the same logic as LeaderboardService.getRating()
      */
     public double calculateTotalXP(User user) {
-        return Stream.of("pull_up", "push_up", "squat", "abs")
+        double exerciseXP = Stream.of("pull_up", "push_up", "squat", "abs")
                 .mapToDouble(code -> {
                     ExerciseType type = exerciseTypeService.getExerciseType(code);
                     int totalReps = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, type);
                     return totalReps * workoutProperties.getCoefficient(code);
                 })
                 .sum();
+
+        double referralXP = calculateReferralXP(user);
+
+        return exerciseXP + referralXP;
+    }
+
+    /**
+     * Calculates referral bonus XP for the user.
+     * XP = number_of_referrals × referral.xp-per-referral
+     */
+    private double calculateReferralXP(User user) {
+        Integer referralCount = userRepository.countByReferrerTelegramId(user.getTelegramId());
+        return referralCount * (double) referralProperties.getXpPerReferral();
     }
 
     /**
