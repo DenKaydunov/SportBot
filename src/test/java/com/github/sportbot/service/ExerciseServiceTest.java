@@ -9,16 +9,11 @@ import com.github.sportbot.model.User;
 import com.github.sportbot.model.ExerciseRecord;
 import com.github.sportbot.repository.*;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -263,79 +258,4 @@ class ExerciseServiceTest {
         verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(user, testExerciseType);
     }
 
-    @Test
-    @Disabled("Deprecated - uses old milestone/achievement repository system. Achievement logic now tested in UnifiedAchievementServiceTest")
-    void getAchievementUpdateMessage_Milestone(){
-        //Given
-        User user1 = User.builder().id(10).currentStreak(10).lastWorkoutDate(LocalDate.now().minusDays(1)).build();
-        User user2 = User.builder().id(11).currentStreak(20).lastWorkoutDate(LocalDate.now().minusDays(1)).build();
-        User user3 = User.builder().id(12).currentStreak(50).lastWorkoutDate(LocalDate.now().minusDays(1)).build();
-        User user4 = User.builder().id(13).currentStreak(51).lastWorkoutDate(LocalDate.now().minusDays(1)).build();
-        User user5 = User.builder().id(14).currentStreak(22).lastWorkoutDate(LocalDate.now().minusDays(1)).build();
-
-        StreakMilestone milestone1 = new StreakMilestone();
-        milestone1.setId(1L);
-        milestone1.setDaysRequired(10);
-        milestone1.setTitle("Bronze streak");
-        milestone1.setDescription("10 дней подряд без перерыва");
-        milestone1.setRewardTon(5);
-
-        StreakMilestone milestone2 = new StreakMilestone();
-        milestone2.setId(2L);
-        milestone2.setDaysRequired(20);
-        milestone2.setTitle("Silver streak");
-        milestone2.setDescription("20 дней стабильных тренировок");
-        milestone2.setRewardTon(10);
-
-        StreakMilestone milestone3 = new StreakMilestone();
-        milestone3.setId(3L);
-        milestone3.setDaysRequired(50);
-        milestone3.setTitle("Gold streak");
-        milestone3.setDescription("50 дней настоящей силы");
-        milestone3.setRewardTon(25);
-
-        when(milestoneRepository.findAllByOrderByDaysRequiredAsc())
-                .thenReturn(List.of(milestone1, milestone2, milestone3));
-
-        lenient().when(achievementRepository.findMilestoneIdsByUserId(11)).thenReturn(List.of());
-        lenient().when(achievementRepository.findMilestoneIdsByUserId(11)).thenReturn(List.of(1L));
-        lenient().when(achievementRepository.findMilestoneIdsByUserId(12)).thenReturn(List.of(1L, 2L));
-        lenient().when(achievementRepository.findMilestoneIdsByUserId(13)).thenReturn(List.of(1L, 2L, 3L));
-        lenient().when(achievementRepository.findMilestoneIdsByUserId(14)).thenReturn(List.of(1L, 2L));
-
-        //When
-        String result1 = ReflectionTestUtils.invokeMethod(exerciseService, "getAchievementUpdateMessage",user1);
-        String result2 = ReflectionTestUtils.invokeMethod(exerciseService, "getNextAchievementUpdateMessage",user1);
-        String result3 = ReflectionTestUtils.invokeMethod(exerciseService, "getAchievementUpdateMessage",user2);
-        String result4 = ReflectionTestUtils.invokeMethod(exerciseService, "getNextAchievementUpdateMessage",user2);
-        String result5 = ReflectionTestUtils.invokeMethod(exerciseService, "getAchievementUpdateMessage",user3);
-        String result6 = ReflectionTestUtils.invokeMethod(exerciseService, "getNextAchievementUpdateMessage",user3);
-        String result7 = ReflectionTestUtils.invokeMethod(exerciseService, "getAchievementUpdateMessage",user4);
-        String result8 = ReflectionTestUtils.invokeMethod(exerciseService, "getNextAchievementUpdateMessage",user4);
-        String result9 = ReflectionTestUtils.invokeMethod(exerciseService, "getAchievementUpdateMessage",user5);
-        String result10 = ReflectionTestUtils.invokeMethod(exerciseService, "getNextAchievementUpdateMessage",user5);
-
-        //Then
-        String expected1 = "\n\n🏆 Поздравляем! Награда за 10 дней подряд: Bronze streak - 10 дней подряд без перерыва (Награда: 5 Ton)";
-        String expected2 = "\n\n⏰ Тренируйся ещё 10 дней подряд для следующей награды.";
-        String expected3 = "\n\n🏆 Поздравляем! Награда за 20 дней подряд: Silver streak - 20 дней стабильных тренировок (Награда: 10 Ton)";
-        String expected4 = "\n\n⏰ Тренируйся ещё 30 дней подряд для следующей награды.";
-        String expected5 = "\n\n🏆 Поздравляем! Награда за 50 дней подряд: Gold streak - 50 дней настоящей силы (Награда: 25 Ton)";
-        String expected6 = "\n✅ Все награды за стрик получены!";
-        String expected7 = "";
-        String expected8 = "\n✅ Все награды за стрик получены!";
-        String expected9 = "";
-        String expected10 = "\n\n⏰ Тренируйся ещё 28 дней подряд для следующей награды.";
-
-        assertEquals(expected1, result1);
-        assertEquals(expected2, result2);
-        assertEquals(expected3, result3);
-        assertEquals(expected4, result4);
-        assertEquals(expected5, result5);
-        assertEquals(expected6, result6);
-        assertEquals(expected7, result7);
-        assertEquals(expected8, result8);
-        assertEquals(expected9, result9);
-        assertEquals(expected10, result10);
-    }
 }
