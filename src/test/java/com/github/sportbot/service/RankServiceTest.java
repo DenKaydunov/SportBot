@@ -1,5 +1,6 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.config.ReferralProperties;
 import com.github.sportbot.config.WorkoutProperties;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
@@ -7,6 +8,7 @@ import com.github.sportbot.model.UserRank;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.RankRepository;
 import com.github.sportbot.repository.UserRankRepository;
+import com.github.sportbot.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +44,10 @@ class RankServiceTest {
     private ExerciseRecordRepository exerciseRecordRepository;
     @Mock
     private ExerciseTypeService exerciseTypeService;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private ReferralProperties referralProperties;
 
     @InjectMocks
     private RankService rankService;
@@ -59,7 +65,7 @@ class RankServiceTest {
         this.messageSource = realMessageSource;
 
         // re-inject service with real message source
-        this.rankService = new RankService(rankRepository, userRankRepository, messageSource, userService, entityLocalizationService, workoutProperties, exerciseRecordRepository, exerciseTypeService);
+        this.rankService = new RankService(rankRepository, userRankRepository, messageSource, userService, entityLocalizationService, workoutProperties, exerciseRecordRepository, exerciseTypeService, userRepository, referralProperties);
 
         user = User.builder().id(10).telegramId(1000L).language("ru").build();
 
@@ -73,6 +79,10 @@ class RankServiceTest {
         lenient().when(workoutProperties.getCoefficient("push_up")).thenReturn(0.43);
         lenient().when(workoutProperties.getCoefficient("squat")).thenReturn(0.31);
         lenient().when(workoutProperties.getCoefficient("abs")).thenReturn(0.27);
+
+        // Mock referral properties
+        lenient().when(referralProperties.getXpPerReferral()).thenReturn(100);
+        lenient().when(userRepository.countByReferrerTelegramId(anyLong())).thenReturn(0);
     }
 
     @Test
@@ -229,10 +239,13 @@ class RankServiceTest {
         var userRank = mock(UserRank.class);
         when(userRank.getRank()).thenReturn(achievedRank);
         when(userRankRepository.findTopByUserOrderByRank_ThresholdDesc(user))
-                .thenReturn(Optional.empty(), Optional.of(userRank));
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(userRank));
 
         // First call: not assigned yet -> false, second call: already assigned -> true
-        when(userRankRepository.existsByUserAndRank(user, achievedRank)).thenReturn(false, true);
+        when(userRankRepository.existsByUserAndRank(user, achievedRank))
+                .thenReturn(false)
+                .thenReturn(true);
 
         // Next rank at 250
         var nextRank = mock(com.github.sportbot.model.Rank.class);
@@ -274,6 +287,45 @@ class RankServiceTest {
 
         // Then: 50*1.0 + 100*0.43 + 100*0.31 + 100*0.27 = 50 + 43 + 31 + 27 = 151
         assertEquals(151.0, xp, 0.01);
+    }
+
+    @Test
+    void calculateTotalXP_IncludesReferralBonus() {
+        // Given: user has 3 referrals → 300 XP bonus
+        setupMockExerciseTypes();
+        when(userRepository.countByReferrerTelegramId(user.getTelegramId())).thenReturn(3);
+        when(referralProperties.getXpPerReferral()).thenReturn(100);
+
+        // Mock exercise data: 50 pull-ups = 50 XP
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(eq(user), any(ExerciseType.class)))
+                .thenReturn(50, 0, 0, 0);
+
+        // When
+        double totalXP = rankService.calculateTotalXP(user);
+
+        // Then: 50 (exercise XP) + 300 (3 referrals × 100) = 350
+        assertEquals(350.0, totalXP, 0.01);
+        verify(userRepository).countByReferrerTelegramId(user.getTelegramId());
+        verify(referralProperties).getXpPerReferral();
+    }
+
+    @Test
+    void calculateTotalXP_NoReferrals_ReturnsOnlyExerciseXP() {
+        // Given: user has 0 referrals
+        setupMockExerciseTypes();
+        when(userRepository.countByReferrerTelegramId(user.getTelegramId())).thenReturn(0);
+        when(referralProperties.getXpPerReferral()).thenReturn(100);
+
+        // Mock exercise data: 100 pull-ups = 100 XP
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(eq(user), any(ExerciseType.class)))
+                .thenReturn(100, 0, 0, 0);
+
+        // When
+        double totalXP = rankService.calculateTotalXP(user);
+
+        // Then: 100 (exercise XP) + 0 (no referrals) = 100
+        assertEquals(100.0, totalXP, 0.01);
+        verify(userRepository).countByReferrerTelegramId(user.getTelegramId());
     }
 
     private void setupMockExerciseTypes() {
