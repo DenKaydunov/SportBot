@@ -41,3 +41,5 @@ databaseChangeLog:
       file: db/changelog/changes/0022-add-locale-to-motivation.sql
   - include:
       file: db/changelog/changes/0023-assign-locales-to-existing-motivations.sql
+  - include:
+      file: db/changelog/changes/0024-add-translated-motivations.sql
