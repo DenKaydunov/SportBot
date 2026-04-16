@@ -1,0 +1,20 @@
+meta {
+  name: Get Competitors
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/api/v1/competitors/push_up?telegramId={{testTelegramId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  telegramId: {{testTelegramId}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

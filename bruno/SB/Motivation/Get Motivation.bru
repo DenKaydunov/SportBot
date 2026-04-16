@@ -1,0 +1,20 @@
+meta {
+  name: Get Motivation
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/api/v1/motivation?exerciseType=push_up
+  body: none
+  auth: inherit
+}
+
+params:query {
+  exerciseType: push_up
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

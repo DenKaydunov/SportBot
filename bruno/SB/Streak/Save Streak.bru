@@ -1,0 +1,20 @@
+meta {
+  name: Save Streak
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{url}}/api/v1/streaks/save?telegramId={{testTelegramId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  telegramId: {{testTelegramId}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

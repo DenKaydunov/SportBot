@@ -1,0 +1,23 @@
+meta {
+  name: Get Leaderboard by Period Paged
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/api/v1/leaderboards/push_up/by-period/paged?period=WEEK&telegramId={{testTelegramId}}&page=0&size=10
+  body: none
+  auth: inherit
+}
+
+params:query {
+  period: WEEK
+  telegramId: {{testTelegramId}}
+  page: 0
+  size: 10
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Create Deposit
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/api/v1/deposits?telegramId={{testTelegramId}}&depositValue=100
+  body: none
+  auth: inherit
+}
+
+params:query {
+  telegramId: {{testTelegramId}}
+  depositValue: 100
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

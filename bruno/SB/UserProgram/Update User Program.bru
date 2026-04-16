@@ -1,0 +1,23 @@
+meta {
+  name: Update User Program
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{url}}/api/v1/programs
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "telegramId": {{testTelegramId}},
+    "exerciseType": "push_up"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -12,11 +12,13 @@ import com.github.sportbot.repository.UserRepository;
 import com.github.sportbot.service.achievement.AchievementChecker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,6 +36,8 @@ public class UnifiedAchievementService {
     private final UserAchievementRepository userAchievementRepository;
     private final UserRepository userRepository;
     private final List<AchievementChecker> checkers;
+    private final MessageSource messageSource;
+    private final EntityLocalizationService entityLocalizationService;
 
     /**
      * Check and update achievements for a user based on a trigger event.
@@ -119,8 +123,13 @@ public class UnifiedAchievementService {
 
     /**
      * Check achievements for a user by telegram ID
+     *
+     * @param telegramId Telegram ID of the user
+     * @param triggerType Type of event that triggered the check
+     * @return List of newly unlocked achievements
      */
     @Transactional
+    @SuppressWarnings("java:S6809") // Both methods are @Transactional, so this is safe
     public List<UserAchievement> checkAchievementsByTelegramId(Long telegramId, AchievementTrigger.TriggerType triggerType) {
         User user = userRepository.findByTelegramId(telegramId)
                 .orElseThrow(UserNotFoundException::new);
@@ -195,5 +204,52 @@ public class UnifiedAchievementService {
             a.setNotified(true);
             userAchievementRepository.save(a);
         });
+    }
+
+    /**
+     * Get user achievements as formatted string by telegram ID.
+     *
+     * @param telegramId Telegram ID пользователя
+     * @return форматированная строка с достижениями
+     */
+    public String getUserAchievementFormatted(Long telegramId) {
+        User user = userRepository.findByTelegramId(telegramId)
+                .orElseThrow(UserNotFoundException::new);
+        Locale locale = getUserLocale(user);
+
+        List<UserAchievement> achievements = getCompletedAchievements(user.getId());
+
+        if (achievements == null || achievements.isEmpty()) {
+            return messageSource.getMessage("achievement.none.yet", null, locale);
+        }
+
+        StringBuilder result = new StringBuilder(
+            messageSource.getMessage("achievement.list.header", null, locale)
+        ).append("\n");
+
+        achievements.forEach(ua -> {
+            String title = entityLocalizationService.getAchievementTitle(ua.getAchievementDefinition(), locale);
+            result.append(
+                messageSource.getMessage(
+                    "achievement.list.item.unified",
+                    new Object[]{
+                        ua.getAchievementDefinition().getEmoji(),
+                        title,
+                        ua.getAchievedDate()
+                    },
+                    locale
+                )
+            ).append("\n");
+        });
+
+        return result.toString();
+    }
+
+    private Locale getUserLocale(User user) {
+        String lang = user.getLanguage();
+        if (!"ru".equals(lang) && !"en".equals(lang) && !"uk".equals(lang)) {
+            lang = "ru";
+        }
+        return Locale.forLanguageTag(lang);
     }
 }

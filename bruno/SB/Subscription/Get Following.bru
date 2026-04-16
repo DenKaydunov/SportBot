@@ -1,0 +1,16 @@
+meta {
+  name: Get Following
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{url}}/api/v1/subscriptions/{{testTelegramId}}/following
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Log Exercise
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/api/v1/exercises
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "telegramId": {{testTelegramId}},
+    "exerciseType": "push_up",
+    "count": 50,
+    "date": "2026-04-16"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

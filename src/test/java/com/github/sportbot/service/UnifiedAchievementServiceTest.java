@@ -41,6 +41,12 @@ class UnifiedAchievementServiceTest {
     @Mock
     private ReferralAchievementChecker referralChecker;
 
+    @Mock
+    private org.springframework.context.MessageSource messageSource;
+
+    @Mock
+    private EntityLocalizationService entityLocalizationService;
+
     @InjectMocks
     private UnifiedAchievementService unifiedAchievementService;
 
@@ -103,7 +109,9 @@ class UnifiedAchievementServiceTest {
                 achievementDefinitionRepository,
                 userAchievementRepository,
                 userRepository,
-                checkers
+                checkers,
+                messageSource,
+                entityLocalizationService
         );
 
         // Setup checker behavior using lenient() to avoid UnnecessaryStubbingException

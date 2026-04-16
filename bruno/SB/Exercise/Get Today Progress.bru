@@ -1,0 +1,20 @@
+meta {
+  name: Get Today Progress
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{url}}/api/v1/exercises/today?telegramId={{testTelegramId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  telegramId: {{testTelegramId}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

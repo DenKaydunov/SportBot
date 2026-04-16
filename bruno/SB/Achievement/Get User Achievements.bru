@@ -1,0 +1,20 @@
+meta {
+  name: Get User Achievements
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/api/v1/achievements?telegramId={{testTelegramId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  telegramId: {{testTelegramId}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

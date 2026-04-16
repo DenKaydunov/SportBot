@@ -1,0 +1,21 @@
+meta {
+  name: Get Exercise Progress
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{url}}/api/v1/exercises/progress/{{testTelegramId}}?startDate=2026-04-01&endDate=2026-04-16
+  body: none
+  auth: inherit
+}
+
+params:query {
+  startDate: 2026-04-01
+  endDate: 2026-04-16
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

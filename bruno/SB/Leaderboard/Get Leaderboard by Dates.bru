@@ -1,0 +1,22 @@
+meta {
+  name: Get Leaderboard by Dates
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{url}}/api/v1/leaderboards/push_up/by-dates?startDate=2026-04-01&endDate=2026-04-16&telegramId={{testTelegramId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  startDate: 2026-04-01
+  endDate: 2026-04-16
+  telegramId: {{testTelegramId}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

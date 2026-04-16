@@ -1,0 +1,20 @@
+meta {
+  name: Get All Streaks
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/api/v1/streaks?telegramId={{testTelegramId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  telegramId: {{testTelegramId}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

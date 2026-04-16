@@ -1,0 +1,22 @@
+meta {
+  name: Get All Users Paged
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{url}}/api/v1/subscriptions/users/paged?telegramId={{testTelegramId}}&page=0&size=20
+  body: none
+  auth: inherit
+}
+
+params:query {
+  telegramId: {{testTelegramId}}
+  page: 0
+  size: 20
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
