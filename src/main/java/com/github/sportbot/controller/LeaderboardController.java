@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/v1/leaderboard")
+@RequestMapping("/api/v1/leaderboards")
 @RequiredArgsConstructor
 public class LeaderboardController {
 

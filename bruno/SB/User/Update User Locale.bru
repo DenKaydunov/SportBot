@@ -1,0 +1,22 @@
+meta {
+  name: Update User Locale
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{url}}/api/v1/users/{{testTelegramId}}/locale
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "language": "en"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,16 @@
+meta {
+  name: Subscribe
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/api/v1/subscriptions/{{testTelegramId}}/subscribe/{{testTelegramId2}}
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

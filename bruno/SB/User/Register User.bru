@@ -1,0 +1,28 @@
+meta {
+  name: Register User
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/api/v1/users
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "telegramId": 10000030,
+    "sendPulseId": "test_sendpulse_30",
+    "isSubscribed": true,
+    "fullName": "Test User 30",
+    "sex": "MAN",
+    "age": 25,
+    "referrerTelegramId": null
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

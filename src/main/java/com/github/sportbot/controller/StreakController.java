@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
  * Контроллер для работы со стриками (сериями дней подряд с тренировками).
  */
 @RestController
-@RequestMapping("/api/v1/streak")
+@RequestMapping("/api/v1/streaks")
 @RequiredArgsConstructor
 public class StreakController {
 

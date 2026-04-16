@@ -1,0 +1,20 @@
+meta {
+  name: Get Rating
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{url}}/api/v1/leaderboards/rating?telegramId={{testTelegramId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  telegramId: {{testTelegramId}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

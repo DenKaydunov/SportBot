@@ -1,0 +1,16 @@
+meta {
+  name: Unsubscribe
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{url}}/api/v1/subscriptions/{{testTelegramId}}/unsubscribe/{{testTelegramId2}}
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

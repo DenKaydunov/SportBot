@@ -1,0 +1,25 @@
+meta {
+  name: Log Max Exercise
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{url}}/api/v1/exercises/max
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "telegramId": {{testTelegramId}},
+    "exerciseType": "push_up",
+    "count": 100,
+    "date": "2026-04-16"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

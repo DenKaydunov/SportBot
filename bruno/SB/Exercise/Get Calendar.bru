@@ -1,0 +1,21 @@
+meta {
+  name: Get Calendar
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{url}}/api/v1/exercises/calendar/{{testTelegramId}}?year=2026&month=4
+  body: none
+  auth: inherit
+}
+
+params:query {
+  year: 2026
+  month: 4
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

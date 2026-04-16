@@ -41,6 +41,12 @@ class UnifiedAchievementServiceTest {
     @Mock
     private ReferralAchievementChecker referralChecker;
 
+    @Mock
+    private org.springframework.context.MessageSource messageSource;
+
+    @Mock
+    private EntityLocalizationService entityLocalizationService;
+
     @InjectMocks
     private UnifiedAchievementService unifiedAchievementService;
 
@@ -103,7 +109,9 @@ class UnifiedAchievementServiceTest {
                 achievementDefinitionRepository,
                 userAchievementRepository,
                 userRepository,
-                checkers
+                checkers,
+                messageSource,
+                entityLocalizationService
         );
 
         // Setup checker behavior using lenient() to avoid UnnecessaryStubbingException
@@ -131,7 +139,7 @@ class UnifiedAchievementServiceTest {
 
         // Then
         assertEquals(1, newlyUnlocked.size());
-        UserAchievement unlocked = newlyUnlocked.get(0);
+        UserAchievement unlocked = newlyUnlocked.getFirst();
         assertEquals(10, unlocked.getCurrentProgress());
         assertNotNull(unlocked.getAchievedDate());
         assertEquals(LocalDate.now(), unlocked.getAchievedDate());
@@ -253,7 +261,7 @@ class UnifiedAchievementServiceTest {
 
         // Then
         assertEquals(1, newlyUnlocked.size());
-        UserAchievement unlocked = newlyUnlocked.get(0);
+        UserAchievement unlocked = newlyUnlocked.getFirst();
         assertEquals(referralDefinition3, unlocked.getAchievementDefinition());
         assertEquals(3, unlocked.getCurrentProgress());
     }
