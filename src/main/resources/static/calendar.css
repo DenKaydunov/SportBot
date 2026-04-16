@@ -79,7 +79,7 @@ element.style {
     transition: background 0.3s, color 0.3s;
     line-height: 1 !important;  /* важно для центрирования текста */
 
-    font-size: clamp(12px, 4vw, 18px);   /* ограничение сверху */
+    font-size: clamp(12px, 4vw, 18px);
 }
 
 .fc .fc-daygrid-day-frame {
@@ -109,7 +109,7 @@ element.style {
 
 
 .fc .fc-toolbar-title {
-    font-size: clamp(15px, 3vw, 18px); /* минимум 18px, максимум 36px, адаптивно */
+    font-size: clamp(15px, 3vw, 18px);
 }
 
 .fc-col-header-cell {
@@ -123,7 +123,7 @@ element.style {
 
 /* Отступ между заголовком дней недели и датами */
 .fc-col-header {
-    padding-bottom: 0px; /* уменьшено с 100px до разумного значения */
+    padding-bottom: 0px;
 }
 
 
@@ -134,7 +134,7 @@ element.style {
     color: #F2F4F8 !important;
 }
 
-/* Маленький кружок с количеством упражнений */
+/* Кружок с количеством упражнений */
 .exercise-count {
     display: block;
     margin-top: 0px;
@@ -233,7 +233,7 @@ element.style {
 }
 
 .exercise-row {
-    display: contents; /* ключевой трюк */
+    display: contents;
 }
 
 .exercise-type {

@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/locales-all.global.min.js"></script>
 
 
-    <link rel="stylesheet" href="calendar.css"> <!-- отдельный CSS -->
+    <link rel="stylesheet" href="calendar.css">
 </head>
 <body>
 
@@ -132,8 +132,8 @@
             })
             .then(data => {
                 console.log('Received data:', data);
-                monthData = data; // обновляем глобальный объект
-                highlightTrainingDays(); // <-- именно здесь вызываем подсветку
+                monthData = data;
+                highlightTrainingDays();
                 highlightToday();
             })
             .catch(err => {
@@ -151,7 +151,7 @@
             if (!numberEl) return;
 
             if (monthData[dateStr]) {
-                numberEl.classList.add('training-day'); // добавляем круг к числу
+                numberEl.classList.add('training-day');
             }
 
             const todayStr = new Date().toISOString().split('T')[0];
@@ -164,7 +164,7 @@
     // -------------------- Выделение выбранной даты --------------------
     function highlightSelectedDate(dayEl) {
         if (selectedDateEl) selectedDateEl.classList.remove('selected-date');
-        const numberEl = dayEl.querySelector('.fc-daygrid-day-number'); // на круг навешиваем
+        const numberEl = dayEl.querySelector('.fc-daygrid-day-number');
         numberEl.classList.add('selected-date');
         selectedDateEl = numberEl;
     }
@@ -217,12 +217,12 @@
     fetch(`${BACKEND_URL}/api/v1/users/${telegramId}/locale`)
         .then(res => {
             console.log('Locale response status:', res.status);
-            if (!res.ok) { // Check for HTTP errors (4xx, 5xx)
+            if (!res.ok) {
                 throw new Error(`HTTP error! Status: ${res.status}`);
             }
-            return res.text(); // Изменено на res.text()
+            return res.text();
         })
-        .then(localeString => { // Имя переменной изменено для ясности
+        .then(localeString => {
             console.log('User locale:', localeString);
             currentLocale = localeString || 'ru';
             document.documentElement.lang = currentLocale;
