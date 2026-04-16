@@ -139,7 +139,7 @@ class UnifiedAchievementServiceTest {
 
         // Then
         assertEquals(1, newlyUnlocked.size());
-        UserAchievement unlocked = newlyUnlocked.get(0);
+        UserAchievement unlocked = newlyUnlocked.getFirst();
         assertEquals(10, unlocked.getCurrentProgress());
         assertNotNull(unlocked.getAchievedDate());
         assertEquals(LocalDate.now(), unlocked.getAchievedDate());
@@ -261,7 +261,7 @@ class UnifiedAchievementServiceTest {
 
         // Then
         assertEquals(1, newlyUnlocked.size());
-        UserAchievement unlocked = newlyUnlocked.get(0);
+        UserAchievement unlocked = newlyUnlocked.getFirst();
         assertEquals(referralDefinition3, unlocked.getAchievementDefinition());
         assertEquals(3, unlocked.getCurrentProgress());
     }
