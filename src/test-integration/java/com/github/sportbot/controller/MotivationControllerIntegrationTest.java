@@ -10,8 +10,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("test")
@@ -30,12 +32,51 @@ public class MotivationControllerIntegrationTest {
 
     @Test
     void shouldSaveExerciseEntry() throws Exception {
-
-
         mockMvc.perform(get("/api/v1/motivation")
                         .param("exerciseType", exerciseType)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void getMotivation_WithEnglishLocale_ReturnsEnglishMessage() throws Exception {
+        // given
+        when(motivationService.getMotivation("squat", "en"))
+                .thenReturn("No pain, no gain!");
+
+        // when & then
+        mockMvc.perform(get("/api/v1/motivation")
+                        .param("exerciseType", "squat")
+                        .param("locale", "en"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("No pain, no gain!"));
+    }
+
+    @Test
+    void getMotivation_WithRussianLocale_ReturnsRussianMessage() throws Exception {
+        // given
+        when(motivationService.getMotivation("squat", "ru"))
+                .thenReturn("Давай, ещё немного!");
+
+        // when & then
+        mockMvc.perform(get("/api/v1/motivation")
+                        .param("exerciseType", "squat")
+                        .param("locale", "ru"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Давай, ещё немного!"));
+    }
+
+    @Test
+    void getMotivation_WithoutLocale_DefaultsToRussian() throws Exception {
+        // given
+        when(motivationService.getMotivation("squat", "ru"))
+                .thenReturn("Давай, ещё немного!");
+
+        // when & then
+        mockMvc.perform(get("/api/v1/motivation")
+                        .param("exerciseType", "squat"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Давай, ещё немного!"));
     }
 }

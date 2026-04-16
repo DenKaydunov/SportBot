@@ -12,8 +12,26 @@ import java.util.Optional;
 public interface MotivationRepository extends JpaRepository<Motivation, Integer> {
 
     /**
-     * Найти все мотивации для указанного типа упражнения.
+     * Find random motivation for specified exercise type and locale.
      */
+    @Query(value = """
+        SELECT m FROM Motivation m
+        JOIN m.exerciseType et
+        WHERE et.code = :code
+        AND m.locale = :locale
+        ORDER BY function('RANDOM')
+        LIMIT 1
+        """)
+    Optional<Motivation> findRandomByExerciseTypeCodeAndLocale(
+            @Param("code") String code,
+            @Param("locale") String locale
+    );
+
+    /**
+     * Найти все мотивации для указанного типа упражнения.
+     * @deprecated Use {@link #findRandomByExerciseTypeCodeAndLocale(String, String)} instead
+     */
+    @Deprecated(since = "0022", forRemoval = true)
     @Query(value = """
         SELECT m FROM Motivation m
         JOIN m.exerciseType et
