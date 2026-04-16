@@ -215,6 +215,29 @@ INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (1, 'Постійність перемагає інтенсивність — тренуйся регулярно!', 'uk');
 
 --changeset deniskaydunov:27
+-- Add additional Russian pull-up motivations to reach 30 per language
+INSERT INTO motivation (exercise_type_id, message, locale) VALUES
+(2, 'Сила хвата строится повторение за повторением.', 'ru'),
+(2, 'Каждое подтягивание приближает тебя к мастерству.', 'ru'),
+(2, 'Турнику всё равно, насколько ты устал — он ждёт тебя.', 'ru'),
+(2, 'Подтягивания — это предельный тест силы верхней части тела.', 'ru'),
+(2, 'Твоя спина скажет тебе спасибо за каждое подтягивание.', 'ru'),
+(2, 'Вис сегодня, выход силой завтра.', 'ru'),
+(2, 'Подтягивания учат терпению и упорству.', 'ru'),
+(2, 'Чем сильнее твоё подтягивание, тем сильнее твой характер.', 'ru'),
+(2, 'Каждое повторение — это победа над гравитацией.', 'ru'),
+(2, 'Широкий хват, узкий хват — тренируй все!', 'ru'),
+(2, 'Подтягивания строят не только мышцы, но и психическую устойчивость.', 'ru'),
+(2, 'Фокусируйся на технике, количество придёт следом.', 'ru'),
+(2, 'Твои широчайшие — это твои крылья — дай им расти!', 'ru'),
+(2, 'Контролируй спуск, взрывайся на подъёме.', 'ru'),
+(2, 'Подтягивания отделяют сильных от желающих.', 'ru'),
+(2, 'Держи кор напряжённым, убери раскачку.', 'ru'),
+(2, 'От одного повторения до десяти — это всё прогресс.', 'ru'),
+(2, 'Турник — твой учитель, слушай, что он тебе говорит.', 'ru'),
+(2, 'Подтягивания зарабатываются, а не даются.', 'ru');
+
+--changeset deniskaydunov:28
 -- Add English translations for Russian pull-up motivations
 INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (2, 'Every pull-up is a step up not only in body but also in spirit.', 'en'),
@@ -227,9 +250,28 @@ INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (2, 'Your body grows not when it''s easy, but when it''s hard.', 'en'),
 (2, 'Pull up until those who laughed start to envy.', 'en'),
 (2, 'It doesn''t matter how many times you slipped - what matters is how many times you grabbed the bar again.', 'en'),
-(2, 'Pull-ups are a conversation with yourself: "You can do it!" - "Prove it!".', 'en');
+(2, 'Pull-ups are a conversation with yourself: "You can do it!" - "Prove it!".', 'en'),
+(2, 'Grip strength is built rep by rep.', 'en'),
+(2, 'Every pull-up brings you closer to mastery.', 'en'),
+(2, 'The bar doesn''t care how tired you are - it''s waiting for you.', 'en'),
+(2, 'Pull-ups are the ultimate test of upper body strength.', 'en'),
+(2, 'Your back will thank you for every pull-up.', 'en'),
+(2, 'Dead hang today, muscle-up tomorrow.', 'en'),
+(2, 'Pull-ups teach patience and perseverance.', 'en'),
+(2, 'The stronger your pull, the stronger your character.', 'en'),
+(2, 'Every rep is a victory over gravity.', 'en'),
+(2, 'Wide grip, narrow grip - train them all!', 'en'),
+(2, 'Pull-ups build not just muscles, but mental toughness.', 'en'),
+(2, 'Focus on form, count will follow.', 'en'),
+(2, 'Your lats are your wings - let them grow!', 'en'),
+(2, 'Control the descent, explode on the way up.', 'en'),
+(2, 'Pull-ups separate the strong from the wishing.', 'en'),
+(2, 'Keep your core tight, eliminate the swing.', 'en'),
+(2, 'From one rep to ten - it''s all progress.', 'en'),
+(2, 'The bar is your teacher, listen to what it tells you.', 'en'),
+(2, 'Pull-ups are earned, not given.', 'en');
 
---changeset deniskaydunov:28
+--changeset deniskaydunov:29
 -- Add Ukrainian translations for Russian pull-up motivations
 INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (2, 'Кожне підтягування — це крок вгору не тільки тілом, а й духом.', 'uk'),
@@ -242,9 +284,28 @@ INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (2, 'Твоє тіло росте не тоді, коли легко, а коли складно.', 'uk'),
 (2, 'Підтягуйся, поки ті, хто сміявся, не почнуть заздрити.', 'uk'),
 (2, 'Не важливо, скільки разів ти зірвався — важливо, скільки разів знову схопився за перекладину.', 'uk'),
-(2, 'Підтягування — це розмова з собою: «Ти можеш!» — «Доведи!».', 'uk');
+(2, 'Підтягування — це розмова з собою: «Ти можеш!» — «Доведи!».', 'uk'),
+(2, 'Сила хвату будується повторення за повторенням.', 'uk'),
+(2, 'Кожне підтягування наближає тебе до майстерності.', 'uk'),
+(2, 'Перекладині байдуже, наскільки ти втомився — вона чекає на тебе.', 'uk'),
+(2, 'Підтягування — це граничний тест сили верхньої частини тіла.', 'uk'),
+(2, 'Твоя спина подякує тобі за кожне підтягування.', 'uk'),
+(2, 'Вис сьогодні, маслап завтра.', 'uk'),
+(2, 'Підтягування навчають терпінню і наполегливості.', 'uk'),
+(2, 'Чим сильніше твоє підтягування, тим сильніший твій характер.', 'uk'),
+(2, 'Кожне повторення — це перемога над гравітацією.', 'uk'),
+(2, 'Широкий хват, вузький хват — тренуй всі!', 'uk'),
+(2, 'Підтягування будують не тільки м''язи, а й психічну стійкість.', 'uk'),
+(2, 'Фокусуйся на техніці, кількість прийде слідом.', 'uk'),
+(2, 'Твої широчайші — це твої крила — дай їм рости!', 'uk'),
+(2, 'Контролюй спуск, вибухай на підйомі.', 'uk'),
+(2, 'Підтягування відділяють сильних від тих, хто тільки бажає.', 'uk'),
+(2, 'Тримай кор напруженим, усунь розгойдування.', 'uk'),
+(2, 'Від одного повторення до десяти — це все прогрес.', 'uk'),
+(2, 'Перекладина — твій учитель, слухай, що вона тобі каже.', 'uk'),
+(2, 'Підтягування заробляються, а не даються.', 'uk');
 
---changeset deniskaydunov:29
+--changeset deniskaydunov:30
 -- Add English translations for Russian squat motivations
 INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (3, 'Every squat brings you closer to perfect form!', 'en'),
@@ -294,7 +355,7 @@ INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (3, 'Squats = Bali', 'en'),
 (3, 'Squat like your exes saw you - let your booty speak louder than words!', 'en');
 
---changeset deniskaydunov:30
+--changeset deniskaydunov:31
 -- Add Ukrainian translations for Russian squat motivations
 INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (3, 'Кожне присідання наближає тебе до ідеальної форми!', 'uk'),
@@ -344,7 +405,7 @@ INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (3, 'Присідання = Балі', 'uk'),
 (3, 'Присідай, наче тебе побачили твої колишні — нехай дупа говорить гучніше за слова!', 'uk');
 
---changeset deniskaydunov:31
+--changeset deniskaydunov:32
 -- Add abs motivations in Russian
 INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (4, 'Крепкий пресс — основа сильного тела!', 'ru'),
@@ -378,7 +439,7 @@ INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (4, 'Делай планку — это основа сильного кора.', 'ru'),
 (4, 'Разнообразие упражнений — ключ к прогрессу.', 'ru');
 
---changeset deniskaydunov:32
+--changeset deniskaydunov:33
 -- Add abs motivations in English
 INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (4, 'Strong abs - the foundation of a strong body!', 'en'),
@@ -412,7 +473,7 @@ INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (4, 'Do planks - it''s the foundation of a strong core.', 'en'),
 (4, 'Variety of exercises - the key to progress.', 'en');
 
---changeset deniskaydunov:33
+--changeset deniskaydunov:34
 -- Add abs motivations in Ukrainian
 INSERT INTO motivation (exercise_type_id, message, locale) VALUES
 (4, 'Міцний прес — основа сильного тіла!', 'uk'),
