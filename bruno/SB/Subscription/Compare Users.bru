@@ -5,9 +5,13 @@ meta {
 }
 
 get {
-  url: {{url}}/api/v1/subscriptions/{{testTelegramId}}/compare/{{testTelegramId2}}
+  url: {{url}}/api/v1/subscriptions/{{testTelegramId}}/compare/{{testTelegramId2}}?exerciseCode=push_up
   body: none
   auth: inherit
+}
+
+params:query {
+  exerciseCode: push_up
 }
 
 settings {
