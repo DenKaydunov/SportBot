@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset edikrusinov:1
+--changeset edikrusinov:1 validCheckSum:9:46e7cb5e4fb19a80ad784073b4aaf797
 CREATE TABLE achievement_targets
 (
     id          SERIAL PRIMARY KEY,

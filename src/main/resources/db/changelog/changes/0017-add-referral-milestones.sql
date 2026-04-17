@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset deniskaydunov:17
+--changeset deniskaydunov:17 validCheckSum:9:47aad41889c5f36e8494cbd16825f17b
 CREATE TABLE referral_milestone
 (
     id                  BIGSERIAL PRIMARY KEY,

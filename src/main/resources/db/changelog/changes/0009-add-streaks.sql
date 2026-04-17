@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset deniskaydunov:8
+--changeset deniskaydunov:8 validCheckSum:9:ba8e8d744ba4ac525b843e76dfddcd9d
 ALTER TABLE users ADD COLUMN IF NOT EXISTS current_streak INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS best_streak INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_workout_date DATE;
