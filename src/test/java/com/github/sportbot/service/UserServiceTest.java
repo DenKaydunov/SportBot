@@ -1,6 +1,7 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.config.SupportedLanguagesProvider;
+import com.github.sportbot.dto.AchievementTrigger;
 import com.github.sportbot.dto.RegistrationRequest;
 import com.github.sportbot.dto.UpdateLanguageRequest;
 import com.github.sportbot.dto.UserResponse;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -42,7 +44,7 @@ class UserServiceTest {
     private UserMapper userMapper;
 
     @Mock
-    private AchievementService achievementService;
+    private UnifiedAchievementService unifiedAchievementService;
 
     @Mock
     private SupportedLanguagesProvider languagesProvider;
@@ -376,7 +378,14 @@ class UserServiceTest {
         verify(languagesProvider).getLocale("ru");
         verify(userRepository).save(userWithReferrer);
         verify(userRepository).findByTelegramId(referrerTelegramId);
-        verify(achievementService).checkReferralMilestones(referrerUser.getId());
+
+        // Verify that unified achievement service was called with correct trigger
+        ArgumentCaptor<AchievementTrigger> triggerCaptor = ArgumentCaptor.forClass(AchievementTrigger.class);
+        verify(unifiedAchievementService).checkAchievements(triggerCaptor.capture());
+        AchievementTrigger capturedTrigger = triggerCaptor.getValue();
+        assertEquals(referrerUser, capturedTrigger.getUser());
+        assertEquals(AchievementTrigger.TriggerType.REFERRAL_REGISTERED, capturedTrigger.getType());
+
         verify(messageSource).getMessage("user.registered", null, locale);
     }
 
@@ -427,7 +436,7 @@ class UserServiceTest {
         verify(languagesProvider).getLocale("ru");
         verify(userRepository).save(userWithReferrer);
         verify(userRepository).findByTelegramId(referrerTelegramId);
-        verify(achievementService, never()).checkReferralMilestones(anyInt());
+        verify(unifiedAchievementService, never()).checkAchievements(any(AchievementTrigger.class));
         verify(messageSource).getMessage("user.registered", null, locale);
     }
 
@@ -467,7 +476,7 @@ class UserServiceTest {
         when(languagesProvider.getLocale("ru")).thenReturn(locale);
         when(userRepository.save(userWithReferrer)).thenReturn(userWithReferrer);
         when(userRepository.findByTelegramId(referrerTelegramId)).thenReturn(Optional.of(referrerUser));
-        doThrow(new RuntimeException("Achievement service error")).when(achievementService).checkReferralMilestones(referrerUser.getId());
+        doThrow(new RuntimeException("Achievement service error")).when(unifiedAchievementService).checkAchievements(any(AchievementTrigger.class));
         when(messageSource.getMessage("user.registered", null, locale))
                 .thenReturn("Пользователь успешно зарегистрирован");
 
@@ -485,7 +494,14 @@ class UserServiceTest {
         verify(languagesProvider).getLocale("ru");
         verify(userRepository).save(userWithReferrer);
         verify(userRepository).findByTelegramId(referrerTelegramId);
-        verify(achievementService).checkReferralMilestones(referrerUser.getId());
+
+        // Verify that unified achievement service was called even though it failed
+        ArgumentCaptor<AchievementTrigger> triggerCaptor = ArgumentCaptor.forClass(AchievementTrigger.class);
+        verify(unifiedAchievementService).checkAchievements(triggerCaptor.capture());
+        AchievementTrigger capturedTrigger = triggerCaptor.getValue();
+        assertEquals(referrerUser, capturedTrigger.getUser());
+        assertEquals(AchievementTrigger.TriggerType.REFERRAL_REGISTERED, capturedTrigger.getType());
+
         verify(messageSource).getMessage("user.registered", null, locale);
     }
 

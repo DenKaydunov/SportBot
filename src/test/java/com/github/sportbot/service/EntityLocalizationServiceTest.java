@@ -2,7 +2,6 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.Rank;
-import com.github.sportbot.model.StreakMilestone;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -114,63 +113,6 @@ class EntityLocalizationServiceTest {
 
         // Then
         assertEquals("Неизвестный ранг", result);
-    }
-
-    @Test
-    void getStreakMilestoneTitle_ReturnsLocalizedTitle() {
-        // Given
-        StreakMilestone milestone = new StreakMilestone();
-        milestone.setId(1L);
-        milestone.setTitle("Bronze streak");
-
-        when(messageSource.getMessage(eq("streak.milestone.1.title"), isNull(), eq("Bronze streak"), eq(ruLocale)))
-                .thenReturn("Бронзовый стрик");
-        when(messageSource.getMessage(eq("streak.milestone.1.title"), isNull(), eq("Bronze streak"), eq(enLocale)))
-                .thenReturn("Bronze Streak");
-        when(messageSource.getMessage(eq("streak.milestone.1.title"), isNull(), eq("Bronze streak"), eq(ukLocale)))
-                .thenReturn("Бронзовий стрік");
-
-        // When & Then
-        assertEquals("Бронзовый стрик", entityLocalizationService.getStreakMilestoneTitle(milestone, ruLocale));
-        assertEquals("Bronze Streak", entityLocalizationService.getStreakMilestoneTitle(milestone, enLocale));
-        assertEquals("Бронзовий стрік", entityLocalizationService.getStreakMilestoneTitle(milestone, ukLocale));
-    }
-
-    @Test
-    void getStreakMilestoneDescription_ReturnsLocalizedDescription() {
-        // Given
-        StreakMilestone milestone = new StreakMilestone();
-        milestone.setId(2L);
-        milestone.setDescription("20 дней стабильных тренировок");
-
-        when(messageSource.getMessage(eq("streak.milestone.2.description"), isNull(), eq("20 дней стабильных тренировок"), eq(ruLocale)))
-                .thenReturn("20 дней стабильных тренировок");
-        when(messageSource.getMessage(eq("streak.milestone.2.description"), isNull(), eq("20 дней стабильных тренировок"), eq(enLocale)))
-                .thenReturn("20 days of consistent training");
-        when(messageSource.getMessage(eq("streak.milestone.2.description"), isNull(), eq("20 дней стабильных тренировок"), eq(ukLocale)))
-                .thenReturn("20 днів стабільних тренувань");
-
-        // When & Then
-        assertEquals("20 дней стабильных тренировок", entityLocalizationService.getStreakMilestoneDescription(milestone, ruLocale));
-        assertEquals("20 days of consistent training", entityLocalizationService.getStreakMilestoneDescription(milestone, enLocale));
-        assertEquals("20 днів стабільних тренувань", entityLocalizationService.getStreakMilestoneDescription(milestone, ukLocale));
-    }
-
-    @Test
-    void getStreakMilestoneDescription_MissingKey_ReturnsFallback() {
-        // Given
-        StreakMilestone milestone = new StreakMilestone();
-        milestone.setId(999L);
-        milestone.setDescription("Unknown milestone description");
-
-        when(messageSource.getMessage(anyString(), isNull(), eq("Unknown milestone description"), any(Locale.class)))
-                .thenReturn("Unknown milestone description");
-
-        // When
-        String result = entityLocalizationService.getStreakMilestoneDescription(milestone, ruLocale);
-
-        // Then
-        assertEquals("Unknown milestone description", result);
     }
 
     @Test

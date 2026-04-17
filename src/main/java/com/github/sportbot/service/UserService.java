@@ -1,6 +1,7 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.config.SupportedLanguagesProvider;
+import com.github.sportbot.dto.AchievementTrigger;
 import com.github.sportbot.dto.RegistrationRequest;
 import com.github.sportbot.dto.UpdateLanguageRequest;
 import com.github.sportbot.dto.UserResponse;
@@ -30,7 +31,7 @@ public class UserService{
     private final UserRepository userRepository;
     private final MessageSource messageSource;
     private final UserMapper userMapper;
-    private final AchievementService achievementService;
+    private final UnifiedAchievementService unifiedAchievementService;
     private final SupportedLanguagesProvider languagesProvider;
 
     @Transactional
@@ -47,10 +48,13 @@ public class UserService{
         if (request.referrerTelegramId() != null) {
             try {
                 userRepository.findByTelegramId(request.referrerTelegramId())
-                    .ifPresent(referrer ->
-                        // Use unified achievement service (method delegates internally)
-                        achievementService.checkReferralMilestones(referrer.getId())
-                    );
+                    .ifPresent(referrer -> {
+                        AchievementTrigger trigger = AchievementTrigger.builder()
+                                .user(referrer)
+                                .type(AchievementTrigger.TriggerType.REFERRAL_REGISTERED)
+                                .build();
+                        unifiedAchievementService.checkAchievements(trigger);
+                    });
             } catch (Exception e) {
                 log.error("Failed to check referral milestones for referrer telegram ID: {}, but user registration will proceed",
                         request.referrerTelegramId(), e);

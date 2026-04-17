@@ -32,12 +32,5 @@ public class MotivationService {
         return motivation.getMessage();
     }
 
-    /**
-     * @deprecated Use {@link #getMotivation(String, String)} instead
-     */
-    @Deprecated(since = "0022", forRemoval = true)
-    public String getMotivation(String exerciseCode) {
-        return getMotivation(exerciseCode, "ru");
-    }
 }
 

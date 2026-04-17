@@ -4,7 +4,6 @@ import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
-import com.github.sportbot.model.StreakMilestone;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.ExerciseRecord;
 import com.github.sportbot.repository.*;
@@ -55,12 +54,6 @@ class ExerciseServiceTest {
 
     @Mock
     private AchievementService achievementService;
-
-    @Mock
-    private MilestoneRepository milestoneRepository;
-
-    @Mock
-    private AchievementRepository achievementRepository;
 
     @Mock
     private UserService userService;
@@ -119,8 +112,6 @@ class ExerciseServiceTest {
             exerciseTypeService,
             rankService,
             streakService,
-            milestoneRepository,
-            achievementRepository,
             achievementService,
             notificationService,
             userService,
@@ -136,10 +127,6 @@ class ExerciseServiceTest {
         // Setup EntityLocalizationService mocks
         lenient().when(entityLocalizationService.getExerciseTypeTitle(any(ExerciseType.class), any(Locale.class)))
                 .thenAnswer(inv -> ((ExerciseType) inv.getArgument(0)).getTitle());
-        lenient().when(entityLocalizationService.getStreakMilestoneTitle(any(StreakMilestone.class), any(Locale.class)))
-                .thenAnswer(inv -> ((StreakMilestone) inv.getArgument(0)).getTitle());
-        lenient().when(entityLocalizationService.getStreakMilestoneDescription(any(StreakMilestone.class), any(Locale.class)))
-                .thenAnswer(inv -> ((StreakMilestone) inv.getArgument(0)).getDescription());
 
         // Mock new unified achievement system
         lenient().when(unifiedAchievementService.getCompletedAchievements(anyInt())).thenReturn(new ArrayList<>());
@@ -156,7 +143,6 @@ class ExerciseServiceTest {
         when(rankService.assignRankIfEligible(any(User.class)))
                 .thenReturn("");
         doNothing().when(streakService).updateStreak(any(User.class), any(LocalDate.class));
-        doNothing().when(achievementService).checkStreakMilestones(anyLong());
         when(unifiedAchievementService.getCompletedAchievements(any())).thenReturn(new ArrayList<>());
 
         // When
@@ -189,7 +175,6 @@ class ExerciseServiceTest {
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(any(User.class), any()))
                 .thenReturn(120);
         doNothing().when(streakService).updateStreak(any(User.class), any(LocalDate.class));
-        doNothing().when(achievementService).checkStreakMilestones(anyLong());
         when(unifiedAchievementService.getCompletedAchievements(any())).thenReturn(new ArrayList<>());
 
         String promotion = "\nПоздравляю! Твой ранг повышен: — → Новичок";

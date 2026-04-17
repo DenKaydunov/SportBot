@@ -1,5 +1,6 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.dto.AchievementTrigger;
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.*;
@@ -25,10 +26,6 @@ public class ExerciseService {
     private final ExerciseTypeService exerciseTypeService;
     private final RankService rankService;
     private final StreakService streakService;
-    @Deprecated
-    private final MilestoneRepository milestoneRepository;
-    @Deprecated
-    private final AchievementRepository achievementRepository;
     private final AchievementService achievementService;
     private final NotificationService notificationService;
     private final UserService userService;
@@ -60,8 +57,12 @@ public class ExerciseService {
 
         String achievement = getAchievementUpdateMessage(user);
 
-        // Use unified achievement service
-        achievementService.checkStreakMilestones(req.telegramId());
+        // Check achievements using unified service
+        AchievementTrigger trigger = AchievementTrigger.builder()
+                .user(user)
+                .type(AchievementTrigger.TriggerType.STREAK_UPDATED)
+                .build();
+        unifiedAchievementService.checkAchievements(trigger);
 
         // Перезагружаем пользователя для получения обновленных данных стрика
         user = userRepository.findByTelegramId(req.telegramId())

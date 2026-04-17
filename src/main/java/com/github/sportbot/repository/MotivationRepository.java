@@ -27,18 +27,5 @@ public interface MotivationRepository extends JpaRepository<Motivation, Integer>
             @Param("locale") String locale
     );
 
-    /**
-     * Найти все мотивации для указанного типа упражнения.
-     * @deprecated Use {@link #findRandomByExerciseTypeCodeAndLocale(String, String)} instead
-     */
-    @Deprecated(since = "0022", forRemoval = true)
-    @Query(value = """
-        SELECT m FROM Motivation m
-        JOIN m.exerciseType et
-        WHERE et.code = :code
-        ORDER BY function('RANDOM')
-        LIMIT 1
-        """)
-    Optional<Motivation> findRandomByExerciseTypeCode(@Param("code") String code);
 
 }

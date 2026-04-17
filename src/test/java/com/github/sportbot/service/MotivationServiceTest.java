@@ -95,18 +95,4 @@ class MotivationServiceTest {
         assertThrows(UnknownExerciseCodeException.class,
                 () -> motivationService.getMotivation("invalid", "en"));
     }
-
-    @Test
-    @Deprecated
-    void getMotivation_LegacyMethod_DefaultsToRu() {
-        // given
-        when(motivationRepository.findRandomByExerciseTypeCodeAndLocale("pushup", "ru"))
-                .thenReturn(Optional.of(testMotivationRu));
-
-        // when
-        String result = motivationService.getMotivation("pushup");
-
-        // then
-        assertEquals("Давай, ещё немного!", result);
-    }
 }
