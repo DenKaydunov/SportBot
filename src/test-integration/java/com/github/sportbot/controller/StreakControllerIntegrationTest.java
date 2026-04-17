@@ -49,7 +49,7 @@ class StreakControllerIntegrationTest {
         when(streakService.getStreakInfo(testUser)).thenReturn(expectedInfo);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/streak")
+        mockMvc.perform(get("/api/v1/streaks")
                         .param("telegramId", telegramId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedInfo));
@@ -63,7 +63,7 @@ class StreakControllerIntegrationTest {
         when(streakService.getCurrentStreak(testUser)).thenReturn(5);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/streak/current")
+        mockMvc.perform(get("/api/v1/streaks/current")
                         .param("telegramId", telegramId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("5"));
@@ -77,7 +77,7 @@ class StreakControllerIntegrationTest {
         when(streakService.getBestStreak(testUser)).thenReturn(10);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/streak/best")
+        mockMvc.perform(get("/api/v1/streaks/best")
                         .param("telegramId", telegramId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("10"));
@@ -91,7 +91,7 @@ class StreakControllerIntegrationTest {
         when(streakService.saveStreak(telegramId)).thenReturn(expectedMessage);
 
         // When & Then
-        mockMvc.perform(post("/api/v1/streak/save")
+        mockMvc.perform(post("/api/v1/streaks/save")
                         .param("telegramId", telegramId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedMessage));
@@ -100,7 +100,7 @@ class StreakControllerIntegrationTest {
     @Test
     void getStreak_whenNoTelegramId_shouldReturnBadRequest() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/v1/streak"))
+        mockMvc.perform(get("/api/v1/streaks"))
                 .andExpect(status().isBadRequest());
     }
 }

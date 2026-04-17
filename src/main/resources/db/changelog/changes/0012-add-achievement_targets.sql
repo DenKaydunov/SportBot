@@ -4,11 +4,11 @@
 CREATE TABLE achievement_targets
 (
     id          SERIAL PRIMARY KEY,
-    value       INTEGER NOT NULL UNIQUE,
+    "value"     INTEGER NOT NULL UNIQUE,
     description VARCHAR(255)
 );
 
-INSERT INTO achievement_targets(value)
+INSERT INTO achievement_targets("value")
 VALUES (500),
        (1000),
        (5000),

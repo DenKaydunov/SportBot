@@ -34,7 +34,7 @@ class AchievementAggregationControllerIntegrationTest {
         when(aggregationService.getAchievementForMonth()).thenReturn(expectedResponse);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/achievement/congratulation"))
+        mockMvc.perform(get("/api/v1/achievements/congratulation"))
                 .andExpect(status().isOk());
     }
 
@@ -50,7 +50,7 @@ class AchievementAggregationControllerIntegrationTest {
         when(aggregationService.sendAchievementCongratulation()).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(post("/api/v1/achievement/congratulation"))
+        mockMvc.perform(post("/api/v1/achievements/congratulation"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Achievement congratulations sent successfully"))
                 .andExpect(jsonPath("$.totalUsersMessaged").value(50))
@@ -64,7 +64,7 @@ class AchievementAggregationControllerIntegrationTest {
         when(aggregationService.sendAchievementCongratulation()).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(post("/api/v1/achievement/congratulation"))
+        mockMvc.perform(post("/api/v1/achievements/congratulation"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("No achievements to send - message was empty"))
                 .andExpect(jsonPath("$.totalUsersMessaged").value(0))

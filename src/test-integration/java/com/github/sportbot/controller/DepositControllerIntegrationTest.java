@@ -48,7 +48,7 @@ class DepositControllerIntegrationTest {
         when(depositService.depositBalance(telegramId, depositValue)).thenReturn(successMessage);
 
         // When & Then
-        mockMvc.perform(post("/api/v1/balance")
+        mockMvc.perform(post("/api/v1/deposits")
                         .param("telegramId", telegramId.toString())
                         .param("depositValue", depositValue.toString()))
                 .andExpect(status().isOk())
@@ -58,7 +58,7 @@ class DepositControllerIntegrationTest {
     @Test
     void depositBalance_whenMissingTelegramId_shouldReturnBadRequest() throws Exception {
         // When & Then
-        mockMvc.perform(post("/api/v1/balance")
+        mockMvc.perform(post("/api/v1/deposits")
                         .param("depositValue", "10"))
                 .andExpect(status().isBadRequest());
     }
@@ -66,7 +66,7 @@ class DepositControllerIntegrationTest {
     @Test
     void depositBalance_whenMissingDepositValue_shouldReturnBadRequest() throws Exception {
         // When & Then
-        mockMvc.perform(post("/api/v1/balance")
+        mockMvc.perform(post("/api/v1/deposits")
                         .param("telegramId", "123456"))
                 .andExpect(status().isBadRequest());
     }
@@ -80,7 +80,7 @@ class DepositControllerIntegrationTest {
         when(depositService.currentBalanceTon(testUser)).thenReturn(balanceMessage);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/balance")
+        mockMvc.perform(get("/api/v1/deposits")
                         .param("telegramId", telegramId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(balanceMessage));
@@ -89,7 +89,7 @@ class DepositControllerIntegrationTest {
     @Test
     void getBalance_whenMissingTelegramId_shouldReturnBadRequest() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/v1/balance"))
+        mockMvc.perform(get("/api/v1/deposits"))
                 .andExpect(status().isBadRequest());
     }
 }

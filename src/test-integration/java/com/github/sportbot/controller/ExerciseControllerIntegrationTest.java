@@ -27,8 +27,12 @@ class ExerciseControllerIntegrationTest {
 
     @MockBean
     private ExerciseService exerciseService;
+
     @MockBean
     private UserMaxService userMaxService;
+
+    @MockBean
+    private com.github.sportbot.service.CalendarService calendarService;
 
     private final Long telegramId = 123456789L;
     private final String exerciseCode = "squat";

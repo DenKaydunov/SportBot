@@ -1,6 +1,6 @@
 package com.github.sportbot.controller;
 
-import com.github.sportbot.service.AchievementService;
+import com.github.sportbot.service.UnifiedAchievementService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -21,17 +21,17 @@ class AchievementControllerIntegrationTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private AchievementService achievementService;
+    private UnifiedAchievementService unifiedAchievementService;
 
     @Test
     void achievementUser_shouldReturnAchievements() throws Exception {
         // Given
         Long telegramId = 123456L;
         String expectedResponse = "🏆 Достижения:\n1. Первое достижение\n2. Второе достижение";
-        when(achievementService.getUserAchievement(telegramId)).thenReturn(expectedResponse);
+        when(unifiedAchievementService.getUserAchievementFormatted(telegramId)).thenReturn(expectedResponse);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/achievement")
+        mockMvc.perform(get("/api/v1/achievements")
                         .param("telegramId", telegramId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse));
@@ -40,7 +40,7 @@ class AchievementControllerIntegrationTest {
     @Test
     void achievementUser_whenNoTelegramId_shouldReturnBadRequest() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/v1/achievement"))
+        mockMvc.perform(get("/api/v1/achievements"))
                 .andExpect(status().isBadRequest());
     }
 }

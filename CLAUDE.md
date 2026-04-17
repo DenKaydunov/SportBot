@@ -29,14 +29,18 @@ docker compose -f docker/docker-compose.yaml down
 ### Testing
 
 ```bash
-# Run all tests
+# Run all unit tests
 mvn test
 
-# Run specific test
+# Run specific unit test
 mvn test -Dtest=ExerciseServiceTest
 
 # Run tests for a specific class pattern
 mvn test -Dtest=*ServiceTest
+
+# Integration tests are located in src/test-integration/
+# They are NOT configured in pom.xml and must be run via IDE
+# Integration test naming: *IntegrationTest.java
 ```
 
 ### Deployment (Google Cloud Platform)
@@ -216,6 +220,58 @@ Users have a `balanceTon` field that gets incremented when they achieve mileston
 
 ## Testing
 
-- Tests use H2 in-memory database (see `pom.xml`)
-- Test location: `src/test/java/com/github/sportbot/`
-- Test naming: `*Test.java` (e.g., `ExerciseServiceTest.java`)
+### Unit Tests
+
+- **Location:** `src/test/java/com/github/sportbot/`
+- **Database:** H2 in-memory database
+- **Naming:** `*Test.java` (e.g., `ExerciseServiceTest.java`)
+- **Execution:** Run via `mvn test` command
+
+**Test Coverage:**
+- Service layer tests (business logic)
+- Controller tests (REST endpoints with `@WebMvcTest`)
+- Repository tests (database queries)
+- Bot component tests (Telegram bot handlers)
+- Achievement checker tests (streak and referral achievements)
+
+### Integration Tests
+
+- **Location:** `src/test-integration/java/com/github/sportbot/`
+- **Naming:** `*IntegrationTest.java` (e.g., `LeaderboardControllerIntegrationTest.java`)
+- **Configuration:** Configured via `build-helper-maven-plugin` in `pom.xml`
+- **Execution:** Must be run via IDE (IntelliJ IDEA), not Maven command line
+- **Purpose:** End-to-end testing of REST controllers with mocked services
+
+**IMPORTANT:** Integration tests use `@WebMvcTest` and mock service layers. They test controller behavior, request mapping, and response formatting without hitting the real database.
+
+**Test Files:**
+- `LeaderboardControllerIntegrationTest.java`: Leaderboard API endpoints
+- `ExerciseControllerIntegrationTest.java`: Exercise logging endpoints
+- `UserControllerIntegrationTest.java`: User management endpoints
+- `AchievementControllerIntegrationTest.java`: Achievement retrieval
+- `SubscriptionControllerIntegrationTest.java`: User subscriptions
+- Other controller integration tests in same directory
+
+**Troubleshooting:**
+
+If IntelliJ IDEA shows "Class not found" errors for integration tests:
+1. Verify `build-helper-maven-plugin` is configured in `pom.xml` (should already be present)
+2. Reload Maven project: **Maven → Reload Project** (Cmd+Shift+I on Mac / Ctrl+Shift+O on Windows)
+3. IntelliJ will automatically mark `src/test-integration/java` as Test Sources Root
+4. If still not working, manually mark directory: Right-click `src/test-integration/java` → Mark Directory as → Test Sources Root
+
+### Running Tests
+
+```bash
+# Run all unit tests
+mvn test
+
+# Run specific unit test
+mvn test -Dtest=ExerciseServiceTest
+
+# Run unit tests by pattern
+mvn test -Dtest=*ServiceTest
+
+# Integration tests: Run via IDE (right-click on test class/directory)
+# They are NOT executed by Maven surefire plugin during `mvn test`
+```

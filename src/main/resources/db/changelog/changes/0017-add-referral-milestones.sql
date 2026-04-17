@@ -10,12 +10,11 @@ CREATE TABLE referral_milestone
     description         TEXT
 );
 
-ALTER TABLE achievements
-    ADD COLUMN IF NOT EXISTS referral_milestone_id BIGINT,
-    ADD CONSTRAINT fk_achievements_referral_milestone
-        FOREIGN KEY (referral_milestone_id)
-            REFERENCES referral_milestone (id)
-            ON DELETE CASCADE;
+ALTER TABLE achievements ADD COLUMN IF NOT EXISTS referral_milestone_id BIGINT;
+ALTER TABLE achievements ADD CONSTRAINT fk_achievements_referral_milestone
+    FOREIGN KEY (referral_milestone_id)
+        REFERENCES referral_milestone (id)
+        ON DELETE CASCADE;
 
 INSERT INTO referral_milestone (referrals_required, reward_ton, title, description)
 VALUES
