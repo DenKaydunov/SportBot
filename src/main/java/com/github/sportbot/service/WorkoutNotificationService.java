@@ -5,8 +5,8 @@ import com.github.sportbot.dto.WorkoutEvent;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.integration.store.MessageGroup;
 import org.springframework.stereotype.Service;
 
@@ -16,8 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-public class WorkoutNotificationService {
+public class WorkoutNotificationService implements MessageLocalizer {
 
     private final UserRepository userRepository;
     private final UserService userService;
@@ -25,27 +24,48 @@ public class WorkoutNotificationService {
     private final MessageSource messageSource;
     private final EntityLocalizationService entityLocalizationService;
 
+    public WorkoutNotificationService(UserRepository userRepository,
+                                      UserService userService,
+                                      @Lazy SportBot sportBot,
+                                      MessageSource messageSource,
+                                      EntityLocalizationService entityLocalizationService) {
+        this.userRepository = userRepository;
+        this.userService = userService;
+        this.sportBot = sportBot;
+        this.messageSource = messageSource;
+        this.entityLocalizationService = entityLocalizationService;
+    }
+
     public void processBatch(MessageGroup group) {
 
-        List<WorkoutEvent> events = group.getMessages()
-                .stream()
-                .map(m -> (WorkoutEvent) m.getPayload())
-                .toList();
+        List<WorkoutEvent> events = extractEvents(group);
 
         if (events.isEmpty()) return;
 
-        WorkoutEvent first = events.getFirst();
+        WorkoutEvent context = events.getFirst();
 
-        Integer ownerId = first.ownerUserId();
-        Integer followerId = first.followerId();
+        Map<ExerciseType, Integer> grouped = groupEvents(events);
 
-        Map<ExerciseType, Integer> grouped = events.stream()
+        sendWorkoutSummary(
+                context.ownerUserId(),
+                context.followerId(),
+                grouped
+        );
+    }
+
+    private List<WorkoutEvent> extractEvents(MessageGroup group) {
+        return group.getMessages()
+                .stream()
+                .map(m -> (WorkoutEvent) m.getPayload())
+                .toList();
+    }
+
+    private Map<ExerciseType, Integer> groupEvents(List<WorkoutEvent> events) {
+        return events.stream()
                 .collect(Collectors.groupingBy(
                         WorkoutEvent::exerciseType,
                         Collectors.summingInt(WorkoutEvent::count)
                 ));
-
-        sendWorkoutSummary(ownerId, followerId, grouped);
     }
 
     private void sendWorkoutSummary(Integer ownerId,
@@ -66,14 +86,14 @@ public class WorkoutNotificationService {
                                 Map<ExerciseType, Integer> exercises,
                                 Locale locale) {
 
-        String header = messageSource.getMessage(
+        String header = localize(
                 "notification.friend.workout",
                 new Object[]{user.getFullName()},
                 locale
         );
 
         String body = exercises.entrySet().stream()
-                .map(e -> messageSource.getMessage(
+                .map(e -> localize(
                         "notification.friend.workout.exercise",
                         new Object[]{
                                 entityLocalizationService.getExerciseTypeTitle(e.getKey(), locale),
@@ -84,5 +104,10 @@ public class WorkoutNotificationService {
                 .collect(Collectors.joining("\n"));
 
         return header + "\n" + body;
+    }
+
+    @Override
+    public String localize(String messageKey, Object[] context, Locale locale) {
+        return messageSource.getMessage(messageKey, context, locale);
     }
 }
