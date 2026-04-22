@@ -4,6 +4,8 @@ import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.event.AchievementUnlockedEvent;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
+import com.github.sportbot.model.AchievementCategory;
+import com.github.sportbot.model.AchievementDefinition;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserAchievement;
@@ -58,6 +60,9 @@ class UserMaxServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private MessageLocalizer messageLocalizer;
 
     @InjectMocks
     private UserMaxService userMaxService;
@@ -241,8 +246,28 @@ class UserMaxServiceTest {
         when(userService.getUserLocale(testUser)).thenReturn(Locale.forLanguageTag("ru"));
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(testUser, testExerciseType)).thenReturn(100);
 
-        UserAchievement mockAchievement = UserAchievement.builder().build();
+        // Create a proper mock achievement with definition
+        AchievementDefinition mockDefinition = AchievementDefinition.builder()
+                .id(1L)
+                .code("PUSHUP_MAX_50")
+                .category(AchievementCategory.MAX_REPS)
+                .emoji("💪")
+                .targetValue(50)
+                .rewardTon(5)
+                .sortOrder(1)
+                .isActive(true)
+                .exerciseType(testExerciseType)
+                .build();
+
+        UserAchievement mockAchievement = UserAchievement.builder()
+                .achievementDefinition(mockDefinition)
+                .currentProgress(50)
+                .build();
+
         when(unifiedAchievementService.checkAchievements(any())).thenReturn(List.of(mockAchievement));
+        when(entityLocalizationService.getAchievementTitle(any(), any())).thenReturn("Мастер отжиманий");
+        when(entityLocalizationService.getAchievementDescription(any(), any())).thenReturn("Сделано 50 отжиманий за раз");
+        when(messageLocalizer.localize(anyString(), any(), any())).thenReturn("Achievement message");
 
         ExerciseEntryRequest request = new ExerciseEntryRequest(123456L, "pushup", 50);
 
@@ -255,5 +280,50 @@ class UserMaxServiceTest {
                         && achievementEvent.getUser().equals(testUser)
                         && achievementEvent.getUnlockedAchievements().size() == 1
         ));
+    }
+
+    @Test
+    void saveExerciseMaxResult_IncludesAchievementMessageInResponse() {
+        // Given
+        when(userService.getUserByTelegramId(123456L)).thenReturn(testUser);
+        when(exerciseTypeService.getExerciseType(any(ExerciseEntryRequest.class))).thenReturn(testExerciseType);
+        when(userService.getUserLocale(testUser)).thenReturn(Locale.forLanguageTag("ru"));
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(testUser, testExerciseType)).thenReturn(100);
+        when(mSource.getMessage(eq("workout.max_reps"), any(), any())).thenReturn("Base max reps message");
+
+        // Create achievement
+        AchievementDefinition mockDefinition = AchievementDefinition.builder()
+                .id(1L)
+                .code("PUSHUP_MAX_50")
+                .category(AchievementCategory.MAX_REPS)
+                .emoji("💪")
+                .targetValue(50)
+                .rewardTon(5)
+                .sortOrder(1)
+                .isActive(true)
+                .exerciseType(testExerciseType)
+                .build();
+
+        UserAchievement mockAchievement = UserAchievement.builder()
+                .achievementDefinition(mockDefinition)
+                .currentProgress(50)
+                .build();
+
+        when(unifiedAchievementService.checkAchievements(any())).thenReturn(List.of(mockAchievement));
+        when(entityLocalizationService.getAchievementTitle(any(), any())).thenReturn("Мастер отжиманий");
+        when(entityLocalizationService.getAchievementDescription(any(), any())).thenReturn("Сделано 50 отжиманий за раз");
+        when(messageLocalizer.localize(eq("exercise.achievement.congrats"), any(), any()))
+                .thenReturn("\nПоздравляем! Получено достижение: Мастер отжиманий (5 TON)");
+
+        ExerciseEntryRequest request = new ExerciseEntryRequest(123456L, "pushup", 50);
+
+        // When
+        String result = userMaxService.saveExerciseMaxResult(request);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.contains("Base max reps message"), "Should contain base message");
+        assertTrue(result.contains("Поздравляем! Получено достижение"), "Should contain achievement message");
+        verify(messageLocalizer).localize(eq("exercise.achievement.congrats"), any(), any());
     }
 }

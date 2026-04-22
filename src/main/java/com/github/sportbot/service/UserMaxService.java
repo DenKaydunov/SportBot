@@ -3,6 +3,7 @@ package com.github.sportbot.service;
 import com.github.sportbot.dto.AchievementTrigger;
 import com.github.sportbot.dto.ExerciseEntryRequest;
 import com.github.sportbot.event.AchievementUnlockedEvent;
+import com.github.sportbot.model.AchievementDefinition;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import com.github.sportbot.model.UserAchievement;
@@ -36,6 +37,7 @@ public class UserMaxService {
     private final EntityLocalizationService entityLocalizationService;
     private final UnifiedAchievementService unifiedAchievementService;
     private final ApplicationEventPublisher eventPublisher;
+    private final MessageLocalizer messageLocalizer;
 
 
     @Transactional
@@ -76,12 +78,42 @@ public class UserMaxService {
             eventPublisher.publishEvent(new AchievementUnlockedEvent(user, newAchievements));
         }
 
+        // Format achievement notifications
+        String achievementMessage = formatAchievementNotifications(newAchievements, locale);
+
         int totalReps = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
-        return messageSource.getMessage(
+        String baseMessage = messageSource.getMessage(
                 "workout.max_reps",
                 new Object[]{entityLocalizationService.getExerciseTypeTitle(exerciseType, locale), user.getFullName(), maxValue, totalReps},
                 locale
         );
+
+        return baseMessage + achievementMessage;
+    }
+
+    /**
+     * Format achievement notifications for newly unlocked achievements
+     */
+    private String formatAchievementNotifications(List<UserAchievement> achievements, Locale locale) {
+        if (achievements == null || achievements.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder message = new StringBuilder();
+        for (UserAchievement ua : achievements) {
+            AchievementDefinition def = ua.getAchievementDefinition();
+            message.append("\n").append(messageLocalizer.localize(
+                "exercise.achievement.congrats",
+                new Object[]{
+                    def.getTargetValue(),
+                    entityLocalizationService.getAchievementTitle(def, locale),
+                    entityLocalizationService.getAchievementDescription(def, locale),
+                    def.getRewardTon()
+                },
+                locale
+            ));
+        }
+        return message.toString();
     }
 
     public int getLastMax(User user, ExerciseType exerciseType) {
