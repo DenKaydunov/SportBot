@@ -19,4 +19,18 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
 
     boolean existsByFollowerAndFollowing(User follower, User following);
     void deleteByFollowerAndFollowing(User follower, User following);
+
+    /**
+     * Count number of users following this user (subscribers/followers).
+     * Used for SOCIAL_FOLLOWER achievements.
+     */
+    @Query("SELECT COUNT(s) FROM Subscription s WHERE s.following = :user")
+    Long countFollowersByUser(@Param("user") User user);
+
+    /**
+     * Count number of users this user is following (subscriptions).
+     * Used for SOCIAL_FOLLOWING achievements.
+     */
+    @Query("SELECT COUNT(s) FROM Subscription s WHERE s.follower = :user")
+    Long countFollowingByUser(@Param("user") User user);
 }
