@@ -1,6 +1,7 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.bot.SportBot;
+import com.github.sportbot.config.SupportedLanguagesProvider;
 import com.github.sportbot.dto.WorkoutEvent;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
@@ -9,6 +10,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.integration.store.MessageGroup;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.LocaleResolver;
 
 import java.util.List;
 import java.util.Locale;
@@ -19,21 +21,20 @@ import java.util.stream.Collectors;
 public class WorkoutNotificationService implements MessageLocalizer {
 
     private final UserRepository userRepository;
-    private final UserService userService;
     private final SportBot sportBot;
     private final MessageSource messageSource;
     private final EntityLocalizationService entityLocalizationService;
+    private final SupportedLanguagesProvider languagesProvider;
 
     public WorkoutNotificationService(UserRepository userRepository,
-                                      UserService userService,
                                       @Lazy SportBot sportBot,
                                       MessageSource messageSource,
-                                      EntityLocalizationService entityLocalizationService) {
+                                      EntityLocalizationService entityLocalizationService, LocaleResolver localeResolver, SupportedLanguagesProvider supportedLanguagesProvider) {
         this.userRepository = userRepository;
-        this.userService = userService;
         this.sportBot = sportBot;
         this.messageSource = messageSource;
         this.entityLocalizationService = entityLocalizationService;
+        this.languagesProvider = supportedLanguagesProvider;
     }
 
     public void processBatch(MessageGroup group) {
@@ -75,7 +76,7 @@ public class WorkoutNotificationService implements MessageLocalizer {
         User owner = userRepository.findById(ownerId).orElseThrow();
         User follower = userRepository.findById(followerId).orElseThrow();
 
-        Locale locale = userService.getUserLocale(follower);
+        Locale locale = languagesProvider.getLocale(follower.getLanguage());
 
         String message = buildMessage(owner, exercises, locale);
 
@@ -87,14 +88,14 @@ public class WorkoutNotificationService implements MessageLocalizer {
                                 Locale locale) {
 
         String header = localize(
-                "notification.friend.workout",
+                "notification.subscription.workout.completed.title",
                 new Object[]{user.getFullName()},
                 locale
         );
 
         String body = exercises.entrySet().stream()
                 .map(e -> localize(
-                        "notification.friend.workout.exercise",
+                        "notification.subscription.workout.completed.exercise",
                         new Object[]{
                                 entityLocalizationService.getExerciseTypeTitle(e.getKey(), locale),
                                 e.getValue()
