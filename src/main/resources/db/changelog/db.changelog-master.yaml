@@ -43,3 +43,7 @@ databaseChangeLog:
       file: db/changelog/changes/0023-assign-locales-to-existing-motivations.sql
   - include:
       file: db/changelog/changes/0024-add-translated-motivations.sql
+  - include:
+      file: db/changelog/changes/0025-unified-achievement-system.sql
+  - include:
+      file: db/changelog/changes/0026-drop-deprecated-achievement-tables.sql
