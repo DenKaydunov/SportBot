@@ -152,17 +152,27 @@ public class UnifiedAchievementService {
             case EXERCISE_RECORDED -> List.of(
                     AchievementCategory.TOTAL_REPS,
                     AchievementCategory.MAX_REPS,
-                    AchievementCategory.WORKOUT_COUNT
+                    AchievementCategory.WORKOUT_COUNT,
+                    AchievementCategory.LEADERBOARD
             );
             case WORKOUT_COMPLETED -> List.of(
                     AchievementCategory.STREAK,
                     AchievementCategory.WORKOUT_COUNT
             );
+            case SUBSCRIPTION_CHANGED -> List.of(
+                    AchievementCategory.SOCIAL
+            );
+            case LEADERBOARD_UPDATED -> List.of(
+                    AchievementCategory.LEADERBOARD
+            );
             case MANUAL -> List.of(
                     AchievementCategory.STREAK,
                     AchievementCategory.REFERRAL,
                     AchievementCategory.TOTAL_REPS,
-                    AchievementCategory.WORKOUT_COUNT
+                    AchievementCategory.MAX_REPS,
+                    AchievementCategory.WORKOUT_COUNT,
+                    AchievementCategory.SOCIAL,
+                    AchievementCategory.LEADERBOARD
             );
         };
     }

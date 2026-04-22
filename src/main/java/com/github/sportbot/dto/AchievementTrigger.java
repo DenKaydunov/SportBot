@@ -58,6 +58,16 @@ public class AchievementTrigger {
         EXERCISE_RECORDED,
 
         /**
+         * User subscribed/unsubscribed to another user (triggers social achievements)
+         */
+        SUBSCRIPTION_CHANGED,
+
+        /**
+         * Leaderboard positions were recalculated (triggers leaderboard achievements)
+         */
+        LEADERBOARD_UPDATED,
+
+        /**
          * Manual check (e.g., admin trigger or system maintenance)
          */
         MANUAL
