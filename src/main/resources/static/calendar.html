@@ -2,13 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SportBot Calendar</title>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/locales-all.global.min.js"></script>
 
 
-    <link rel="stylesheet" href="calendar.css"> <!-- отдельный CSS -->
+    <link rel="stylesheet" href="calendar.css">
 </head>
 <body>
 
@@ -19,6 +21,7 @@
 <script>
     const BACKEND_URL = "https://sportbot-485510.ew.r.appspot.com";
     const tg = globalThis.Telegram.WebApp;
+    tg.ready();
     tg.expand();
 
     let calendar;
@@ -30,8 +33,8 @@
     // -------------------- Resize --------------------
     function resizeCalendar() {
         const width = calendarEl.offsetWidth;
-        const cellWidth = width / 7;
-        const height = cellWidth * 6;
+        const cellWidth = width / 9;
+        const height = cellWidth * 8.7;
         calendarEl.style.height = height + 'px';
         if (calendar) calendar.updateSize();
     }
@@ -39,7 +42,7 @@
     // -------------------- Инициализация календаря --------------------
     function initCalendar(locale) {
 
-        const todayStr = new Date().toLocaleDateString('sv-SE');
+        const todayStr = new Date().toISOString().split('T')[0];
 
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
@@ -83,6 +86,7 @@
             datesSet: function(info) {
                 resizeCalendar();
                 fetchMonthData(info.start, info.end);
+                 // ✔ сюда лучше
             }
 
         });
@@ -108,12 +112,10 @@
 
     // -------------------- Получаем данные месяца --------------------
     function fetchMonthData(startDate, endDate) {
-        const telegramId = tg.initDataUnsafe.user?.id;
+        const telegramId = tg.initDataUnsafe?.user?.id;
         const year = startDate.getFullYear();
         const month = startDate.getMonth() + 1;
 
-        console.log('Fetching month data:', { telegramId, year, month });
-        console.log('tg.initDataUnsafe:', tg.initDataUnsafe);
 
         if (!telegramId) {
             console.error('Telegram ID not found!');
@@ -130,8 +132,9 @@
             })
             .then(data => {
                 console.log('Received data:', data);
-                monthData = data; // обновляем глобальный объект
-                highlightTrainingDays(); // <-- именно здесь вызываем подсветку
+                monthData = data;
+                highlightTrainingDays();
+                highlightToday();
             })
             .catch(err => {
                 console.error('Fetch error:', err);
@@ -148,7 +151,7 @@
             if (!numberEl) return;
 
             if (monthData[dateStr]) {
-                numberEl.classList.add('training-day'); // добавляем круг к числу
+                numberEl.classList.add('training-day');
             }
 
             const todayStr = new Date().toISOString().split('T')[0];
@@ -161,7 +164,7 @@
     // -------------------- Выделение выбранной даты --------------------
     function highlightSelectedDate(dayEl) {
         if (selectedDateEl) selectedDateEl.classList.remove('selected-date');
-        const numberEl = dayEl.querySelector('.fc-daygrid-day-number'); // на круг навешиваем
+        const numberEl = dayEl.querySelector('.fc-daygrid-day-number');
         numberEl.classList.add('selected-date');
         selectedDateEl = numberEl;
     }
@@ -178,17 +181,25 @@
         const responseEl = document.getElementById("response");
 
         if (!exercises) {
-            // Получаем локализованное сообщение с сервера
-                    // fallback на английский
-                    responseEl.innerHTML = `<p><b>${formatDate(dateStr)}</b></p>` +
-                        `<div class="line"></div>`;
+            responseEl.innerHTML =
+                `<p><b>${formatDate(dateStr)}</b></p>` +
+                `<div class="line"></div>`;
             return;
         }
 
-        const html = exercises.map(e => `<p>${e.exerciseType}: ${e.totalCount}</p>`).join('');
+        const html = `
+<div class="exercise-table">
+    ${exercises.map(e => `
+        <div class="exercise-row">
+            <div class="exercise-type">${e.exerciseType}:</div>
+            <div class="exercise-count">${e.totalCount}</div>
+        </div>
+    `).join('')}
+</div>
+`;
+
         responseEl.innerHTML = `<p><b>${formatDate(dateStr)}</b></p>` + html;
     }
-
 
 
     // -------------------- Получаем локаль с бекенда --------------------
@@ -206,17 +217,20 @@
     fetch(`${BACKEND_URL}/api/v1/users/${telegramId}/locale`)
         .then(res => {
             console.log('Locale response status:', res.status);
-            return res.json();
+            if (!res.ok) {
+                throw new Error(`HTTP error! Status: ${res.status}`);
+            }
+            return res.text();
         })
-        .then(locale => {
-            console.log('User locale:', locale);
-            currentLocale = locale || 'ru'; // сохраняем локаль
-            document.documentElement.lang = currentLocale; // обновляем lang атрибут для accessibility
+        .then(localeString => {
+            console.log('User locale:', localeString);
+            currentLocale = localeString || 'ru';
+            document.documentElement.lang = currentLocale;
             initCalendar(currentLocale);
         })
         .catch((err) => {
             console.error('Locale fetch error:', err);
-            currentLocale = 'ru';
+            currentLocale = 'en';
             document.documentElement.lang = currentLocale;
             initCalendar(currentLocale);
         });
