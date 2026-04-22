@@ -117,7 +117,7 @@ class UnifiedAchievementServiceIntegrationTest {
 
         AchievementTrigger trigger = AchievementTrigger.builder()
                 .user(testUser)
-                .type(AchievementTrigger.TriggerType.EXERCISE_RECORDED)
+                .type(AchievementTrigger.TriggerType.MAX_REPS_UPDATED)
                 .exerciseType(pushupType)
                 .reps(50)
                 .build();
@@ -125,7 +125,7 @@ class UnifiedAchievementServiceIntegrationTest {
         // When: Check achievements
         List<UserAchievement> newAchievements = unifiedAchievementService.checkAchievements(trigger);
 
-        // Then: User unlocks PUSHUP_MAX_20 and PUSHUP_MAX_50 achievements (and possibly TOTAL_REPS too)
+        // Then: User unlocks PUSHUP_MAX_20 and PUSHUP_MAX_50 achievements
         assertThat(newAchievements)
                 .hasSizeGreaterThanOrEqualTo(2)
                 .anyMatch(ua -> ua.getAchievementDefinition().getCode().equals("PUSHUP_MAX_20"))
@@ -342,13 +342,28 @@ class UnifiedAchievementServiceIntegrationTest {
         // Given: User has 50 push-ups (not enough for 100)
         recordExercise(testUser, pushupType, 50, LocalDate.now());
 
-        AchievementTrigger trigger = AchievementTrigger.builder()
+        // First check EXERCISE_RECORDED achievements (TOTAL_REPS, WORKOUT_COUNT, LEADERBOARD)
+        AchievementTrigger exerciseTrigger = AchievementTrigger.builder()
                 .user(testUser)
                 .type(AchievementTrigger.TriggerType.EXERCISE_RECORDED)
                 .exerciseType(pushupType)
                 .build();
 
-        List<UserAchievement> unlockedAchievements = unifiedAchievementService.checkAchievements(trigger);
+        List<UserAchievement> exerciseAchievements = unifiedAchievementService.checkAchievements(exerciseTrigger);
+
+        // Then check MAX_REPS achievements (when user updates personal record)
+        AchievementTrigger maxRepsTrigger = AchievementTrigger.builder()
+                .user(testUser)
+                .type(AchievementTrigger.TriggerType.MAX_REPS_UPDATED)
+                .exerciseType(pushupType)
+                .reps(50)
+                .build();
+
+        List<UserAchievement> maxRepsAchievements = unifiedAchievementService.checkAchievements(maxRepsTrigger);
+
+        // Combine all unlocked achievements
+        List<UserAchievement> allUnlockedAchievements = new java.util.ArrayList<>(exerciseAchievements);
+        allUnlockedAchievements.addAll(maxRepsAchievements);
 
         // When: Check user achievement progress for PUSHUP_TOTAL_100
         UserAchievement progress = userAchievementRepository.findAll().stream()
@@ -366,7 +381,7 @@ class UnifiedAchievementServiceIntegrationTest {
         // - PUSHUP_MAX_50 (5 TON reward)
         // - WORKOUT_FIRST (1 TON reward)
         // - LEADERBOARD_GOLD (10 TON reward) - user becomes first in leaderboard
-        assertThat(unlockedAchievements)
+        assertThat(allUnlockedAchievements)
                 .hasSize(4)
                 .extracting(ua -> ua.getAchievementDefinition().getCode())
                 .containsExactlyInAnyOrder("PUSHUP_MAX_20", "PUSHUP_MAX_50", "WORKOUT_FIRST", "LEADERBOARD_GOLD");

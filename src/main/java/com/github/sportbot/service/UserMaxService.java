@@ -1,18 +1,23 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.dto.AchievementTrigger;
 import com.github.sportbot.dto.ExerciseEntryRequest;
+import com.github.sportbot.event.AchievementUnlockedEvent;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
+import com.github.sportbot.model.UserAchievement;
 import com.github.sportbot.model.UserMaxHistory;
 import com.github.sportbot.repository.ExerciseRecordRepository;
 import com.github.sportbot.repository.UserMaxHistoryRepository;
 import com.github.sportbot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Locale;
 
 @Service
@@ -29,6 +34,8 @@ public class UserMaxService {
     private final UserMaxHistoryRepository userMaxHistoryRepository;
     private final MessageSource messageSource;
     private final EntityLocalizationService entityLocalizationService;
+    private final UnifiedAchievementService unifiedAchievementService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Transactional
@@ -54,6 +61,20 @@ public class UserMaxService {
 
         exerciseService.saveExerciseResult(new ExerciseEntryRequest(telegramId, exerciseType.getCode(), maxValue));
         userRepository.save(user);
+
+        // Check MAX_REPS achievements when user updates their personal record
+        AchievementTrigger trigger = AchievementTrigger.builder()
+                .user(user)
+                .type(AchievementTrigger.TriggerType.MAX_REPS_UPDATED)
+                .exerciseType(exerciseType)
+                .reps(maxValue)
+                .build();
+        List<UserAchievement> newAchievements = unifiedAchievementService.checkAchievements(trigger);
+
+        // Publish event for notifications
+        if (!newAchievements.isEmpty()) {
+            eventPublisher.publishEvent(new AchievementUnlockedEvent(user, newAchievements));
+        }
 
         int totalReps = exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(user, exerciseType);
         return messageSource.getMessage(

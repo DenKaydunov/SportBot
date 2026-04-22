@@ -1,10 +1,12 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.dto.ExerciseEntryRequest;
+import com.github.sportbot.event.AchievementUnlockedEvent;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
+import com.github.sportbot.model.UserAchievement;
 import com.github.sportbot.model.UserMaxHistory;
 import com.github.sportbot.repository.UserMaxHistoryRepository;
 import com.github.sportbot.repository.UserRepository;
@@ -15,10 +17,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -48,6 +52,12 @@ class UserMaxServiceTest {
 
     @Mock
     private EntityLocalizationService entityLocalizationService;
+
+    @Mock
+    private UnifiedAchievementService unifiedAchievementService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private UserMaxService userMaxService;
@@ -89,6 +99,7 @@ class UserMaxServiceTest {
         final int max = 100;
         when(userService.getUserLocale(testUser)).thenReturn(Locale.forLanguageTag("ru"));
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(testUser, testExerciseType)).thenReturn(max);
+        when(unifiedAchievementService.checkAchievements(any())).thenReturn(List.of());
         LocalDateTime now = LocalDateTime.now();
 
         // When
@@ -97,6 +108,7 @@ class UserMaxServiceTest {
         // Then
         verify(userService).getUserByTelegramId(123456L);
         verify(userRepository).save(testUser);
+        verify(unifiedAchievementService).checkAchievements(any());
 
         assertEquals(1, testUser.getMaxHistory().size());
         UserMaxHistory savedMax = testUser.getMaxHistory().getFirst();
@@ -195,5 +207,53 @@ class UserMaxServiceTest {
         assertEquals(200, lastMax);
         verify(exerciseTypeService).getExerciseType("push_up");
         verify(userMaxHistoryRepository).findTopByUserAndExerciseTypeOrderByDateDesc(user, exerciseType);
+    }
+
+    @Test
+    void saveExerciseMaxResult_TriggersMaxRepsAchievements() {
+        // Given
+        when(userService.getUserByTelegramId(123456L)).thenReturn(testUser);
+        when(exerciseTypeService.getExerciseType(any(ExerciseEntryRequest.class))).thenReturn(testExerciseType);
+        when(userService.getUserLocale(testUser)).thenReturn(Locale.forLanguageTag("ru"));
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(testUser, testExerciseType)).thenReturn(100);
+        when(unifiedAchievementService.checkAchievements(any())).thenReturn(List.of());
+
+        ExerciseEntryRequest request = new ExerciseEntryRequest(123456L, "pushup", 50);
+
+        // When
+        userMaxService.saveExerciseMaxResult(request);
+
+        // Then
+        verify(unifiedAchievementService).checkAchievements(argThat(trigger ->
+                trigger.getType() == com.github.sportbot.dto.AchievementTrigger.TriggerType.MAX_REPS_UPDATED
+                        && trigger.getUser().equals(testUser)
+                        && trigger.getExerciseType().equals(testExerciseType)
+                        && trigger.getReps() == 50
+        ));
+        verifyNoMoreInteractions(eventPublisher);
+    }
+
+    @Test
+    void saveExerciseMaxResult_PublishesEventWhenAchievementsUnlocked() {
+        // Given
+        when(userService.getUserByTelegramId(123456L)).thenReturn(testUser);
+        when(exerciseTypeService.getExerciseType(any(ExerciseEntryRequest.class))).thenReturn(testExerciseType);
+        when(userService.getUserLocale(testUser)).thenReturn(Locale.forLanguageTag("ru"));
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(testUser, testExerciseType)).thenReturn(100);
+
+        UserAchievement mockAchievement = UserAchievement.builder().build();
+        when(unifiedAchievementService.checkAchievements(any())).thenReturn(List.of(mockAchievement));
+
+        ExerciseEntryRequest request = new ExerciseEntryRequest(123456L, "pushup", 50);
+
+        // When
+        userMaxService.saveExerciseMaxResult(request);
+
+        // Then
+        verify(eventPublisher).publishEvent(argThat((Object event) ->
+                event instanceof AchievementUnlockedEvent achievementEvent
+                        && achievementEvent.getUser().equals(testUser)
+                        && achievementEvent.getUnlockedAchievements().size() == 1
+        ));
     }
 }
