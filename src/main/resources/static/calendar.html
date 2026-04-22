@@ -24,6 +24,10 @@
     tg.ready();
     tg.expand();
 
+    tg.onEvent('viewportChanged', () => {
+        resizeCalendar();
+    });
+
     let calendar;
     let currentLocale;
     let selectedDateEl = null;
@@ -92,7 +96,9 @@
         });
 
         calendar.render();
-        resizeCalendar();
+        setTimeout(() => {
+            resizeCalendar();
+        }, 100);
 
         highlightToday();
     }
