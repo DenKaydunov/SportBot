@@ -82,6 +82,13 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
     @Query("SELECT COUNT(DISTINCT er.date) FROM ExerciseRecord er WHERE er.user = :user")
     Long countDistinctWorkoutDaysByUser(@Param("user") User user);
 
+    /**
+     * Find maximum reps in a single workout for a user and specific exercise type.
+     * Used for MAX_REPS achievements.
+     */
+    @Query("SELECT COALESCE(MAX(er.count), 0) FROM ExerciseRecord er WHERE er.user = :user AND er.exerciseType = :exerciseType")
+    int findMaxRepsByUserAndExerciseType(@Param("user") User user, @Param("exerciseType") ExerciseType exerciseType);
+
     @Query("""
        SELECT er.date AS date,
               et.title AS exerciseType,

@@ -2,10 +2,13 @@ package com.github.sportbot.service;
 
 import com.github.sportbot.dto.AchievementTrigger;
 import com.github.sportbot.dto.ExerciseEntryRequest;
+import com.github.sportbot.event.AchievementUnlockedEvent;
+import com.github.sportbot.event.WorkoutRecordedEvent;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,11 +30,11 @@ public class ExerciseService {
     private final RankService rankService;
     private final StreakService streakService;
     private final AchievementService achievementService;
-    private final NotificationService notificationService;
     private final UserService userService;
     private final EntityLocalizationService entityLocalizationService;
     private final UnifiedAchievementService unifiedAchievementService;
     private final AchievementDefinitionRepository achievementDefinitionRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Transactional
@@ -50,19 +53,38 @@ public class ExerciseService {
 
         user.getExerciseRecords().add(exercise);
 
-        notificationService.notifyFollowersAboutWorkout(user, exerciseType, req.count());
-
         // Обновляем стрик пользователя
         streakService.updateStreak(user, exercise.getDate());
 
-        String achievement = getAchievementUpdateMessage(user);
-
         // Check achievements using unified service
-        AchievementTrigger trigger = AchievementTrigger.builder()
+        // Check streak achievements
+        AchievementTrigger streakTrigger = AchievementTrigger.builder()
                 .user(user)
                 .type(AchievementTrigger.TriggerType.STREAK_UPDATED)
                 .build();
-        unifiedAchievementService.checkAchievements(trigger);
+        List<UserAchievement> streakAchievements = unifiedAchievementService.checkAchievements(streakTrigger);
+
+        // Check exercise-related achievements (total reps, max reps, workout count)
+        AchievementTrigger exerciseTrigger = AchievementTrigger.builder()
+                .user(user)
+                .type(AchievementTrigger.TriggerType.EXERCISE_RECORDED)
+                .exerciseType(exerciseType)
+                .reps(req.count())
+                .build();
+        List<UserAchievement> exerciseAchievements = unifiedAchievementService.checkAchievements(exerciseTrigger);
+
+        // Combine all newly unlocked achievements
+        List<UserAchievement> allNewAchievements = new java.util.ArrayList<>(streakAchievements);
+        allNewAchievements.addAll(exerciseAchievements);
+
+        // Publish events after transaction commit (notifications will be sent asynchronously)
+        if (!allNewAchievements.isEmpty()) {
+            eventPublisher.publishEvent(new AchievementUnlockedEvent(user, allNewAchievements));
+        }
+        eventPublisher.publishEvent(new WorkoutRecordedEvent(user, exerciseType, req.count()));
+
+        // Format achievement notifications
+        String achievementMessage = formatAchievementNotifications(allNewAchievements, locale);
 
         // Перезагружаем пользователя для получения обновленных данных стрика
         user = userRepository.findByTelegramId(req.telegramId())
@@ -79,10 +101,34 @@ public class ExerciseService {
         // Добавляем информацию о стрике, если он изменился
         String streakMessage = getStreakUpdateMessage(user, exercise.getDate());
 
-
         String nextAchievement = getNextAchievementUpdateMessage(user);
 
-        return message + rankMessage + streakMessage + achievement + nextAchievement;
+        return message + rankMessage + streakMessage + achievementMessage + nextAchievement;
+    }
+
+    /**
+     * Format achievement notifications for newly unlocked achievements
+     */
+    private String formatAchievementNotifications(List<UserAchievement> achievements, Locale locale) {
+        if (achievements == null || achievements.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder message = new StringBuilder();
+        for (UserAchievement ua : achievements) {
+            AchievementDefinition def = ua.getAchievementDefinition();
+            message.append("\n").append(messageLocalizer.localize(
+                "exercise.achievement.congrats",
+                new Object[]{
+                    def.getTargetValue(),
+                    entityLocalizationService.getAchievementTitle(def, locale),
+                    entityLocalizationService.getAchievementDescription(def, locale),
+                    def.getRewardTon()
+                },
+                locale
+            ));
+        }
+        return message.toString();
     }
 
     public int getTotalReps(User user, String exerciseCode) {
@@ -111,41 +157,6 @@ public class ExerciseService {
         }
 
         return "";
-    }
-
-    private String getAchievementUpdateMessage(User user){
-        int currentStreak = user.getCurrentStreak();
-        Locale locale = userService.getUserLocale(user);
-
-        // Get all streak achievement definitions, sorted by target value
-        List<AchievementDefinition> streakDefinitions = achievementDefinitionRepository
-                .findByCategoryAndIsActiveTrueOrderBySortOrder(AchievementCategory.STREAK);
-
-        // Get user's completed achievements
-        List<UserAchievement> completedAchievements = unifiedAchievementService
-                .getCompletedAchievements(user.getId());
-
-        List<Long> completedDefinitionIds = completedAchievements.stream()
-                .map(ua -> ua.getAchievementDefinition().getId())
-                .toList();
-
-        StringBuilder message = new StringBuilder();
-
-        for(AchievementDefinition def : streakDefinitions) {
-            if (!completedDefinitionIds.contains(def.getId()) && currentStreak >= def.getTargetValue()) {
-                message.append("\n").append(messageLocalizer.localize(
-                    "exercise.achievement.congrats",
-                    new Object[]{
-                        def.getTargetValue(),
-                        entityLocalizationService.getAchievementTitle(def, locale),
-                        entityLocalizationService.getAchievementDescription(def, locale),
-                        def.getRewardTon()
-                    },
-                    locale
-                ));
-            }
-        }
-        return message.toString();
     }
 
     private String getNextAchievementUpdateMessage(User user) {

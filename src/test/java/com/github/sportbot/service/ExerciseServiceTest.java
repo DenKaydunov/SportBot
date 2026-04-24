@@ -1,6 +1,8 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.dto.ExerciseEntryRequest;
+import com.github.sportbot.event.AchievementUnlockedEvent;
+import com.github.sportbot.event.WorkoutRecordedEvent;
 import com.github.sportbot.exception.UnknownExerciseCodeException;
 import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.ExerciseType;
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.support.ResourceBundleMessageSource;
 
 import java.time.LocalDate;
@@ -47,9 +50,6 @@ class ExerciseServiceTest {
     private RankService rankService;
 
     @Mock
-    private NotificationService notificationService;
-
-    @Mock
     private StreakService streakService;
 
     @Mock
@@ -66,6 +66,9 @@ class ExerciseServiceTest {
 
     @Mock
     private AchievementDefinitionRepository achievementDefinitionRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     private ExerciseService exerciseService;
 
@@ -113,11 +116,11 @@ class ExerciseServiceTest {
             rankService,
             streakService,
             achievementService,
-            notificationService,
             userService,
             entityLocalizationService,
             unifiedAchievementService,
-            achievementDefinitionRepository
+            achievementDefinitionRepository,
+            eventPublisher
         );
 
         // Setup common message source mocks
@@ -143,6 +146,7 @@ class ExerciseServiceTest {
         when(rankService.assignRankIfEligible(any(User.class)))
                 .thenReturn("");
         doNothing().when(streakService).updateStreak(any(User.class), any(LocalDate.class));
+        when(unifiedAchievementService.checkAchievements(any())).thenReturn(new ArrayList<>());
         when(unifiedAchievementService.getCompletedAchievements(any())).thenReturn(new ArrayList<>());
 
         // When
@@ -151,7 +155,7 @@ class ExerciseServiceTest {
         // Then
         verify(userRepository, times(2)).findByTelegramId(TELEGRAM_ID); // Called twice: initial load and reload after streak update
         verify(exerciseTypeService).getExerciseType(testRequest);
-        verify(notificationService).notifyFollowersAboutWorkout(testUser, testExerciseType, 10);
+        verify(eventPublisher).publishEvent(any(WorkoutRecordedEvent.class)); // Event published instead of direct notification
         verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(testUser, testExerciseType);
         verify(rankService).assignRankIfEligible(testUser);
 
@@ -175,6 +179,7 @@ class ExerciseServiceTest {
         when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(any(User.class), any()))
                 .thenReturn(120);
         doNothing().when(streakService).updateStreak(any(User.class), any(LocalDate.class));
+        when(unifiedAchievementService.checkAchievements(any())).thenReturn(new ArrayList<>());
         when(unifiedAchievementService.getCompletedAchievements(any())).thenReturn(new ArrayList<>());
 
         String promotion = "\nПоздравляю! Твой ранг повышен: — → Новичок";
@@ -241,6 +246,57 @@ class ExerciseServiceTest {
         assertEquals(150, totalReps);
         verify(exerciseTypeService).getExerciseType("push_up");
         verify(exerciseRecordRepository).sumTotalRepsByUserAndExerciseType(user, testExerciseType);
+    }
+
+    @Test
+    void saveExerciseResult_WithNewAchievements_PublishesAchievementEvent() {
+        // Given
+        when(userRepository.findByTelegramId(TELEGRAM_ID)).thenReturn(Optional.of(testUser));
+        when(exerciseTypeService.getExerciseType(testRequest)).thenReturn(testExerciseType);
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(any(User.class), any()))
+                .thenReturn(100);
+        when(rankService.assignRankIfEligible(any(User.class))).thenReturn("");
+        doNothing().when(streakService).updateStreak(any(User.class), any(LocalDate.class));
+        when(unifiedAchievementService.getCompletedAchievements(any())).thenReturn(new ArrayList<>());
+
+        // Mock achievement unlocking with proper AchievementDefinition
+        var mockDefinition = mock(com.github.sportbot.model.AchievementDefinition.class);
+        when(mockDefinition.getTargetValue()).thenReturn(10);
+        when(mockDefinition.getRewardTon()).thenReturn(1);
+
+        var mockAchievement = mock(com.github.sportbot.model.UserAchievement.class);
+        when(mockAchievement.getAchievementDefinition()).thenReturn(mockDefinition);
+
+        when(unifiedAchievementService.checkAchievements(any())).thenReturn(List.of(mockAchievement));
+        when(entityLocalizationService.getAchievementTitle(any(), any())).thenReturn("Test Achievement");
+        when(entityLocalizationService.getAchievementDescription(any(), any())).thenReturn("Test Description");
+
+        // When
+        exerciseService.saveExerciseResult(testRequest);
+
+        // Then
+        verify(eventPublisher).publishEvent(any(WorkoutRecordedEvent.class));
+        verify(eventPublisher).publishEvent(any(AchievementUnlockedEvent.class));
+    }
+
+    @Test
+    void saveExerciseResult_WithoutNewAchievements_OnlyPublishesWorkoutEvent() {
+        // Given
+        when(userRepository.findByTelegramId(TELEGRAM_ID)).thenReturn(Optional.of(testUser));
+        when(exerciseTypeService.getExerciseType(testRequest)).thenReturn(testExerciseType);
+        when(exerciseRecordRepository.sumTotalRepsByUserAndExerciseType(any(User.class), any()))
+                .thenReturn(100);
+        when(rankService.assignRankIfEligible(any(User.class))).thenReturn("");
+        doNothing().when(streakService).updateStreak(any(User.class), any(LocalDate.class));
+        when(unifiedAchievementService.checkAchievements(any())).thenReturn(new ArrayList<>());
+        when(unifiedAchievementService.getCompletedAchievements(any())).thenReturn(new ArrayList<>());
+
+        // When
+        exerciseService.saveExerciseResult(testRequest);
+
+        // Then
+        verify(eventPublisher).publishEvent(any(WorkoutRecordedEvent.class));
+        verify(eventPublisher, never()).publishEvent(any(AchievementUnlockedEvent.class));
     }
 
 }

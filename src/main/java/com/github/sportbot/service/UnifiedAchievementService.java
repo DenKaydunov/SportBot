@@ -129,7 +129,6 @@ public class UnifiedAchievementService {
      * @return List of newly unlocked achievements
      */
     @Transactional
-    @SuppressWarnings("java:S6809") // Both methods are @Transactional, so this is safe
     public List<UserAchievement> checkAchievementsByTelegramId(Long telegramId, AchievementTrigger.TriggerType triggerType) {
         User user = userRepository.findByTelegramId(telegramId)
                 .orElseThrow(UserNotFoundException::new);
@@ -143,7 +142,7 @@ public class UnifiedAchievementService {
     }
 
     /**
-     * Determine which achievement categories should be checked based on trigger type
+     * Determine which achievement categories should be checked based on a trigger type
      */
     private List<AchievementCategory> getCategoriesToCheck(AchievementTrigger.TriggerType triggerType) {
         return switch (triggerType) {
@@ -151,18 +150,30 @@ public class UnifiedAchievementService {
             case REFERRAL_REGISTERED -> List.of(AchievementCategory.REFERRAL);
             case EXERCISE_RECORDED -> List.of(
                     AchievementCategory.TOTAL_REPS,
-                    AchievementCategory.MAX_REPS,
-                    AchievementCategory.WORKOUT_COUNT
+                    AchievementCategory.WORKOUT_COUNT,
+                    AchievementCategory.LEADERBOARD
+            );
+            case MAX_REPS_UPDATED -> List.of(
+                    AchievementCategory.MAX_REPS
             );
             case WORKOUT_COMPLETED -> List.of(
                     AchievementCategory.STREAK,
                     AchievementCategory.WORKOUT_COUNT
             );
+            case SUBSCRIPTION_CHANGED -> List.of(
+                    AchievementCategory.SOCIAL
+            );
+            case LEADERBOARD_UPDATED -> List.of(
+                    AchievementCategory.LEADERBOARD
+            );
             case MANUAL -> List.of(
                     AchievementCategory.STREAK,
                     AchievementCategory.REFERRAL,
                     AchievementCategory.TOTAL_REPS,
-                    AchievementCategory.WORKOUT_COUNT
+                    AchievementCategory.MAX_REPS,
+                    AchievementCategory.WORKOUT_COUNT,
+                    AchievementCategory.SOCIAL,
+                    AchievementCategory.LEADERBOARD
             );
         };
     }

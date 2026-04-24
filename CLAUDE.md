@@ -86,18 +86,19 @@ mvn wrapper:wrapper
 
 **Service Layer (`service/` package)**
 - `ExerciseService`: Core business logic for exercise recording and retrieval
-- `AchievementService`: Manages two types of achievements:
-  - **Streak achievements** (via `milestone` field in `Achievement`)
-  - **Referral achievements** (via `referralMilestone` field in `Achievement`)
-  - CRITICAL: When querying achievements, always filter by the relevant milestone type (e.g., `.filter(a -> a.getMilestone() != null)` for streak achievements)
-- `AchievementAggregationService`: Aggregates monthly achievements and sends congratulations to subscribed users
+- `UnifiedAchievementService`: New unified achievement system with 80+ achievements
+  - Uses `AchievementDefinition` and `UserAchievement` tables
+  - Supports multiple categories: STREAK, TOTAL_REPS, MAX_REPS, REFERRAL, WORKOUT_COUNT, SOCIAL, LEADERBOARD
+  - Achievement checkers for different types (TotalRepsAchievementChecker, MaxRepsAchievementChecker, etc.)
+- `AchievementAdminService`: Admin service for managing achievement localizations and metadata via REST API
+- `EntityLocalizationService`: Provides localized titles for achievements (loads from `achievements` table in database, not properties files)
+- `AchievementAggregationService`: Aggregates monthly achievements and sends congratulations to subscribed users (DEPRECATED - uses old system)
 - `StreakService`: Tracks user workout streaks (current and best)
 - `LeaderboardService`: Calculates and ranks users by exercise totals
 - `UserService`: User management and profile operations
 - `RankService`: Manages user ranking system based on exercise performance
 - `SubscriptionService`: Handles user subscriptions to follow other users
 - `NotificationService`: Sends scheduled reminders to users
-- `EntityLocalizationService`: Provides localized titles for milestones
 
 **Controllers (`controller/` package)**
 - REST API endpoints for all operations
@@ -105,17 +106,22 @@ mvn wrapper:wrapper
 - `UserController`: User registration and management
 - `LeaderboardController`: Ranking and statistics
 - `AchievementController`: Achievement retrieval
+- `AchievementAdminController`: Admin API for managing achievements (in `controller/admin/` package)
 - `AchievementAggregationController`: Monthly achievement generation and sending
 - `SubscriptionController`: Subscription management
 
 **Models (`model/` package)**
 - `User`: Central entity with `telegramId`, streaks, referral info, balance, and localization fields
 - `ExerciseRecord`: Individual exercise entries
-- `Achievement`: Can represent either streak OR referral achievements (never both)
-  - Has nullable `milestone` (for streak achievements)
-  - Has nullable `referralMilestone` (for referral achievements)
-- `StreakMilestone`: Defines streak-based achievement thresholds
-- `ReferralMilestone`: Defines referral-based achievement thresholds
+- `AchievementDefinition`: Defines available achievements (code, category, emoji, targetValue, rewardTon, sortOrder, isLegendary)
+  - Categories: STREAK, TOTAL_REPS, MAX_REPS, REFERRAL, WORKOUT_COUNT, SOCIAL, LEADERBOARD
+  - Links to ExerciseType for exercise-specific achievements
+- `Achievement`: Stores localized achievement texts (title, description) for each language in database
+  - Links to AchievementDefinition via achievement_definition_id
+  - Supports multiple languages (ru, en, uk, etc.)
+- `UserAchievement`: Tracks user progress and unlocked achievements
+  - Links User to AchievementDefinition
+  - Stores currentProgress and achievedDate
 - `ExerciseType`: Types of exercises (push-ups, squats, pull-ups, abs)
 - `UserProgram`: Links users to exercise programs
 - `Rank`: User ranking system
@@ -133,9 +139,10 @@ mvn wrapper:wrapper
 **Key Tables:**
 - `users`: User profiles with streak tracking and localization
 - `exercise_records`: Exercise logs
-- `achievements`: Polymorphic table for streak and referral achievements
-- `streak_milestones`: Streak achievement definitions
-- `referral_milestones`: Referral achievement definitions
+- `achievement_definitions`: Master list of all available achievements (metadata: code, category, emoji, target, reward, sort_order)
+- `achievements`: Localized achievement texts (title, description) for each language
+- `user_achievements`: User progress and unlocked achievements
+- `exercise_type`: Exercise types with localization support
 - `subscriptions`: User following relationships
 - `ranks`: Ranking system
 - `user_programs`: User-program associations
@@ -148,7 +155,10 @@ mvn wrapper:wrapper
 
 **Key Services:**
 - `MessageLocalizer`: Resolves localized messages based on user's `language` field
-- `EntityLocalizationService`: Provides localized titles for milestones and achievements
+- `EntityLocalizationService`: Provides localized titles and descriptions for achievements
+  - **IMPORTANT:** Loads achievement texts from `achievements` table in database, NOT from properties files
+  - Fallback strategy: requested language → Russian → achievement code
+  - Uses AchievementRepository to fetch localized texts
 
 **User Language:** Stored in `User.language` field, defaults to "ru" if invalid/missing
 
@@ -162,26 +172,60 @@ mvn wrapper:wrapper
 
 ## Important Patterns & Conventions
 
-### Achievement System
+### Achievement System (New Unified System)
 
-The `Achievement` entity supports two mutually exclusive types:
-1. **Streak achievements**: `milestone` is set, `referralMilestone` is null
-2. **Referral achievements**: `referralMilestone` is set, `milestone` is null
+The new unified achievement system uses three main tables:
+1. **achievement_definitions** - metadata (code, category, emoji, targetValue, rewardTon, sortOrder, isLegendary, exerciseTypeId)
+2. **achievements** - localized texts (title, description) stored in database for each language
+3. **user_achievements** - user progress and unlocked achievements
 
-**CRITICAL:** When processing achievements, always filter by the relevant type to avoid NullPointerExceptions:
-```java
-// For streak achievements
-achievementStream.filter(a -> a.getMilestone() != null)
-                 .map(a -> a.getMilestone().getId())
+**Achievement Categories:**
+- `STREAK`: Consecutive days achievements (5, 10, 20, 50, 100 days)
+- `TOTAL_REPS`: Total repetitions across all time (100, 500, 1000, 5000, 10000, 50000, 100000)
+- `MAX_REPS`: Maximum repetitions in single workout (20, 50, 100, 200, 500)
+- `REFERRAL`: Referral count achievements (1, 3, 5, 10, 30, 100, 250)
+- `WORKOUT_COUNT`: Total workout count (1, 10, 50, 100, 250, 500, 1000)
+- `SOCIAL`: Social features (following, followers)
+- `LEADERBOARD`: Leaderboard position achievements
 
-// For referral achievements
-achievementStream.filter(a -> a.getReferralMilestone() != null)
-                 .map(a -> a.getReferralMilestone().getId())
-```
+**Exercise-Specific Achievements:**
+Some achievements are linked to specific exercises via `exercise_type_id`:
+- 1 = Push-ups
+- 2 = Pull-ups
+- 3 = Squats
+- 4 = Abs
+- NULL = General achievements (not exercise-specific)
+
+**Achievement Localization:**
+- Texts stored in `achievements` table (NOT in properties files)
+- Use `EntityLocalizationService.getAchievementTitle()` and `getAchievementDescription()` to get localized texts
+- Admin API available at `/admin/achievements` for managing localizations without deployment
+
+**Achievement Checking:**
+- `UnifiedAchievementService.checkAchievements()` processes achievement triggers
+- Uses strategy pattern with AchievementChecker implementations (TotalRepsAchievementChecker, MaxRepsAchievementChecker, etc.)
+- Each checker calculates progress for specific achievement category
 
 ### Localization
 
-Always use `MessageSource` or helper services (`MessageLocalizer`, `EntityLocalizationService`) for user-facing text. Never hardcode messages in Russian/English/Ukrainian outside of property files.
+Achievement localization is stored in database (`achievements` table), not in properties files. Use `EntityLocalizationService` to get localized achievement texts:
+
+```java
+String title = entityLocalizationService.getAchievementTitle(definition, locale);
+String description = entityLocalizationService.getAchievementDescription(definition, locale);
+```
+
+For other UI messages, use `MessageSource` or `MessageLocalizer`. Never hardcode messages in Russian/English/Ukrainian outside of property files or database.
+
+### Admin API for Achievement Management
+
+Use `/admin/achievements` endpoints to manage achievement localizations without deployment:
+- `GET /admin/achievements` - list all achievements with all localizations
+- `PUT /admin/achievements/{id}/localization` - add/update localization
+- `PATCH /admin/achievements/{id}` - update metadata (reward, emoji, sortOrder)
+- `DELETE /admin/achievements/{id}/localization/{language}` - remove localization
+
+Available via Swagger UI at `http://localhost:8080/swagger-ui/index.html`
 
 ### Repository Queries
 

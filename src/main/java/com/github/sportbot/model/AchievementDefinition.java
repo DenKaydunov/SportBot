@@ -43,18 +43,6 @@ public class AchievementDefinition {
     private String emoji;
 
     /**
-     * i18n key for the achievement title (e.g., "achievement.streak.30.title")
-     */
-    @Column(name = "title_key", nullable = false, length = 200)
-    private String titleKey;
-
-    /**
-     * i18n key for the achievement description (e.g., "achievement.streak.30.description")
-     */
-    @Column(name = "description_key", nullable = false, length = 200)
-    private String descriptionKey;
-
-    /**
      * Target value to unlock this achievement (e.g., 30 days, 1000 reps, 50 referrals)
      */
     @Column(name = "target_value", nullable = false)

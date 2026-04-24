@@ -33,6 +33,9 @@ class SubscriptionServiceTest {
     private NotificationService notificationService;
 
     @Mock
+    private UnifiedAchievementService achievementService;
+
+    @Mock
     private MessageSource messageSource;
 
     @InjectMocks

@@ -6,8 +6,10 @@ import com.github.sportbot.repository.AchievementDefinitionRepository;
 import com.github.sportbot.repository.UserAchievementRepository;
 import com.github.sportbot.repository.UserRepository;
 import com.github.sportbot.service.achievement.AchievementChecker;
+import com.github.sportbot.service.achievement.MaxRepsAchievementChecker;
 import com.github.sportbot.service.achievement.ReferralAchievementChecker;
 import com.github.sportbot.service.achievement.StreakAchievementChecker;
+import com.github.sportbot.service.achievement.TotalRepsAchievementChecker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +44,12 @@ class UnifiedAchievementServiceTest {
     private ReferralAchievementChecker referralChecker;
 
     @Mock
+    private MaxRepsAchievementChecker maxRepsChecker;
+
+    @Mock
+    private TotalRepsAchievementChecker totalRepsChecker;
+
+    @Mock
     private org.springframework.context.MessageSource messageSource;
 
     @Mock
@@ -51,9 +59,11 @@ class UnifiedAchievementServiceTest {
     private UnifiedAchievementService unifiedAchievementService;
 
     private User user;
+    private ExerciseType exerciseType;
     private AchievementDefinition streakDefinition10;
     private AchievementDefinition streakDefinition20;
     private AchievementDefinition referralDefinition3;
+    private AchievementDefinition maxRepsDefinition50;
 
     @BeforeEach
     void setUp() {
@@ -63,14 +73,18 @@ class UnifiedAchievementServiceTest {
         user.setCurrentStreak(10);
         user.setBalanceTon(0);
 
+        exerciseType = ExerciseType.builder()
+                .id(1L)
+                .code("pullup")
+                .title("Подтягивания")
+                .build();
+
         // Create streak achievement definitions
         streakDefinition10 = AchievementDefinition.builder()
                 .id(1L)
                 .code("STREAK_10_DAYS")
                 .category(AchievementCategory.STREAK)
                 .emoji("🔥")
-                .titleKey("achievement.streak.10.title")
-                .descriptionKey("achievement.streak.10.description")
                 .targetValue(10)
                 .rewardTon(5)
                 .sortOrder(1)
@@ -82,8 +96,6 @@ class UnifiedAchievementServiceTest {
                 .code("STREAK_20_DAYS")
                 .category(AchievementCategory.STREAK)
                 .emoji("💪")
-                .titleKey("achievement.streak.20.title")
-                .descriptionKey("achievement.streak.20.description")
                 .targetValue(20)
                 .rewardTon(10)
                 .sortOrder(2)
@@ -95,16 +107,26 @@ class UnifiedAchievementServiceTest {
                 .code("REFERRAL_3")
                 .category(AchievementCategory.REFERRAL)
                 .emoji("👥")
-                .titleKey("achievement.referral.3.title")
-                .descriptionKey("achievement.referral.3.description")
                 .targetValue(3)
                 .rewardTon(0)
                 .sortOrder(1)
                 .isActive(true)
                 .build();
 
+        maxRepsDefinition50 = AchievementDefinition.builder()
+                .id(4L)
+                .code("MAX_REPS_50_PULLUP")
+                .category(AchievementCategory.MAX_REPS)
+                .exerciseType(exerciseType)
+                .emoji("💪")
+                .targetValue(50)
+                .rewardTon(10)
+                .sortOrder(1)
+                .isActive(true)
+                .build();
+
         // Set up the checkers list
-        List<AchievementChecker> checkers = List.of(streakChecker, referralChecker);
+        List<AchievementChecker> checkers = List.of(streakChecker, referralChecker, maxRepsChecker, totalRepsChecker);
         unifiedAchievementService = new UnifiedAchievementService(
                 achievementDefinitionRepository,
                 userAchievementRepository,
@@ -117,6 +139,8 @@ class UnifiedAchievementServiceTest {
         // Setup checker behavior using lenient() to avoid UnnecessaryStubbingException
         lenient().when(streakChecker.getCategory()).thenReturn(AchievementCategory.STREAK);
         lenient().when(referralChecker.getCategory()).thenReturn(AchievementCategory.REFERRAL);
+        lenient().when(maxRepsChecker.getCategory()).thenReturn(AchievementCategory.MAX_REPS);
+        lenient().when(totalRepsChecker.getCategory()).thenReturn(AchievementCategory.TOTAL_REPS);
     }
 
     @Test
@@ -321,5 +345,60 @@ class UnifiedAchievementServiceTest {
         assertTrue(achievement1.getNotified());
         assertTrue(achievement2.getNotified());
         verify(userAchievementRepository, times(2)).save(any(UserAchievement.class));
+    }
+
+    @Test
+    void shouldCheckMaxRepsAchievementsOnlyOnMaxRepsUpdatedTrigger() {
+        // Given: User updates their max reps
+        when(achievementDefinitionRepository.findByCategoryAndIsActiveTrueOrderBySortOrder(AchievementCategory.MAX_REPS))
+                .thenReturn(List.of(maxRepsDefinition50));
+        when(maxRepsChecker.calculateProgress(user, maxRepsDefinition50)).thenReturn(50);
+        when(userAchievementRepository.findByUserAndAchievementDefinition(user, maxRepsDefinition50))
+                .thenReturn(Optional.empty());
+        when(userAchievementRepository.save(any(UserAchievement.class))).thenAnswer(i -> i.getArgument(0));
+
+        AchievementTrigger trigger = AchievementTrigger.builder()
+                .user(user)
+                .type(AchievementTrigger.TriggerType.MAX_REPS_UPDATED)
+                .exerciseType(exerciseType)
+                .reps(50)
+                .build();
+
+        // When
+        List<UserAchievement> newlyUnlocked = unifiedAchievementService.checkAchievements(trigger);
+
+        // Then
+        assertEquals(1, newlyUnlocked.size());
+        UserAchievement unlocked = newlyUnlocked.getFirst();
+        assertEquals(maxRepsDefinition50, unlocked.getAchievementDefinition());
+        assertEquals(50, unlocked.getCurrentProgress());
+        assertNotNull(unlocked.getAchievedDate());
+
+        // Verify MAX_REPS checker was called
+        verify(maxRepsChecker).calculateProgress(user, maxRepsDefinition50);
+        verify(achievementDefinitionRepository).findByCategoryAndIsActiveTrueOrderBySortOrder(AchievementCategory.MAX_REPS);
+    }
+
+    @Test
+    void shouldNotCheckMaxRepsAchievementsOnExerciseRecordedTrigger() {
+        // Given: User records an exercise (not updating max)
+        AchievementTrigger trigger = AchievementTrigger.builder()
+                .user(user)
+                .type(AchievementTrigger.TriggerType.EXERCISE_RECORDED)
+                .exerciseType(exerciseType)
+                .reps(30)
+                .build();
+
+        // When
+        unifiedAchievementService.checkAchievements(trigger);
+
+        // Then: MAX_REPS category should NOT be checked
+        verify(achievementDefinitionRepository, never())
+                .findByCategoryAndIsActiveTrueOrderBySortOrder(AchievementCategory.MAX_REPS);
+        verify(maxRepsChecker, never()).calculateProgress(any(), any());
+
+        // But TOTAL_REPS should be checked
+        verify(achievementDefinitionRepository)
+                .findByCategoryAndIsActiveTrueOrderBySortOrder(AchievementCategory.TOTAL_REPS);
     }
 }

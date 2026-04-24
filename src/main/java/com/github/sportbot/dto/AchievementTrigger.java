@@ -53,9 +53,24 @@ public class AchievementTrigger {
         REFERRAL_REGISTERED,
 
         /**
-         * Exercise was recorded (may trigger total reps or max reps achievements)
+         * Exercise was recorded (triggers total reps and workout count achievements)
          */
         EXERCISE_RECORDED,
+
+        /**
+         * User updated their personal record for an exercise (triggers max reps achievements)
+         */
+        MAX_REPS_UPDATED,
+
+        /**
+         * User subscribed/unsubscribed to another user (triggers social achievements)
+         */
+        SUBSCRIPTION_CHANGED,
+
+        /**
+         * Leaderboard positions were recalculated (triggers leaderboard achievements)
+         */
+        LEADERBOARD_UPDATED,
 
         /**
          * Manual check (e.g., admin trigger or system maintenance)

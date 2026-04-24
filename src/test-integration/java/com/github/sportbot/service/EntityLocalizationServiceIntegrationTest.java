@@ -293,8 +293,6 @@ class EntityLocalizationServiceIntegrationTest {
                 .code("TEST_ACHIEVEMENT")
                 .category(AchievementCategory.STREAK)
                 .emoji("🏆")
-                .titleKey("non.existent.title.key")
-                .descriptionKey("non.existent.description.key")
                 .targetValue(100)
                 .rewardTon(10)
                 .isActive(true)
@@ -309,7 +307,7 @@ class EntityLocalizationServiceIntegrationTest {
                 Locale.forLanguageTag("en")
         );
 
-        // Then - Should fallback to achievement code
+        // Then - Should fallback to achievement code (no localization exists)
         assertThat(result).isEqualTo("TEST_ACHIEVEMENT");
     }
 
@@ -320,8 +318,6 @@ class EntityLocalizationServiceIntegrationTest {
                 .code("TEST_ACHIEVEMENT_2")
                 .category(AchievementCategory.REFERRAL)
                 .emoji("🎯")
-                .titleKey("non.existent.title.key.2")
-                .descriptionKey("non.existent.description.key.2")
                 .targetValue(50)
                 .rewardTon(5)
                 .isActive(true)
@@ -336,7 +332,7 @@ class EntityLocalizationServiceIntegrationTest {
                 Locale.forLanguageTag("en")
         );
 
-        // Then - Should fallback to empty string
+        // Then - Should fallback to empty string (no localization exists)
         assertThat(result).isEmpty();
     }
 

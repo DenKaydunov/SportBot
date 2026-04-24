@@ -9,15 +9,23 @@ html,body {
 
 #calendar {
     width: 95%;
-    max-width: 1000px;
-    max-height: 800px;
-    margin: 20px auto;
+    max-width: 390px;
+    max-height: 390px;
+    margin: 5px auto;
     background: #353940;
     border-radius: 30px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     color: #f2f4f8;
-    padding: 10px;
+    padding: 5px;
     border: 5px;
+}
+
+element.style {
+    height: 390px;
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 3px;
 }
 
 .fc-daygrid {
@@ -40,6 +48,10 @@ html,body {
     border: none;
 }
 
+.fc .fc-scrollgrid-section, .fc .fc-scrollgrid-section table, .fc .fc-scrollgrid-section > td {
+    padding-top: 0px;
+}
+
 .fc-scrollgrid td:last-child,
 .fc-scrollgrid th:last-child {
     border-right: none !important;
@@ -54,27 +66,27 @@ html,body {
 
 /* Круглые номера дней */
 .fc .fc-daygrid-day-number {
-    width: 20vw;
-    height: 20vw;
-    max-width: 70px;
-    max-height: 70px;
+    width: 10vw;
+    height: 10vw;
+    max-width: 35px;
+    max-height: 35px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin:  auto;
+    margin:  0px;
     border-radius: 50%;
     cursor: pointer;
     transition: background 0.3s, color 0.3s;
     line-height: 1 !important;  /* важно для центрирования текста */
 
-    font-size: clamp(24px, 4vw, 36px);   /* ограничение сверху */
+    font-size: clamp(12px, 4vw, 18px);
 }
 
 .fc .fc-daygrid-day-frame {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding-top: 30px !important;
+    padding-top: 0px !important;
 
 
 }
@@ -97,20 +109,21 @@ html,body {
 
 
 .fc .fc-toolbar-title {
-    font-size: clamp(36px, 3vw, 48px); /* минимум 18px, максимум 36px, адаптивно */
+    font-size: clamp(15px, 3vw, 18px);
 }
 
 .fc-col-header-cell {
-    font-size: clamp(18px, 3vw, 42px);
+    font-size: clamp(12px, 3vw, 18px);
     font-weight: 600; /* обычный вес */
     text-align: center;
     border: none !important;
     background: transparent;
+    margin-top: -15px;
 }
 
 /* Отступ между заголовком дней недели и датами */
 .fc-col-header {
-    padding-bottom: 20px; /* уменьшено с 100px до разумного значения */
+    padding-bottom: 0px;
 }
 
 
@@ -121,22 +134,16 @@ html,body {
     color: #F2F4F8 !important;
 }
 
-/* Маленький кружок с количеством упражнений */
+/* Кружок с количеством упражнений */
 .exercise-count {
     display: block;
-    margin-top: 4px;
+    margin-top: 0px;
     font-size: 0.7em;
     text-align: center;
     color: #333;
 }
 
-/* Ответ с упражнениями */
-#response {
-    text-align: center;
-    color: white;
-    margin-top: 10px;
-    font-size: clamp(24px, 4vw, 36px);;
-}
+
 
 .fc-toolbar-chunk {
     display: flex;
@@ -168,10 +175,10 @@ html,body {
     border-radius: 50% !important;       /* полностью круглые */
     background: none;      /* цвет кнопки */
     color: white !important;             /* цвет текста */
-    width: 30vw;
-    height: 30vw;
-    max-width: 50px;
-    max-height: 50px;                        /* высота */
+    width: 15vw;
+    height: 15vw;
+    max-width: 15px;
+    max-height: 15px;                        /* высота */
     padding: 0;                           /* убираем внутренние отступы */
     display: flex;
     align-items: center;
@@ -179,6 +186,9 @@ html,body {
     transition: box-shadow 0.3s ease;
 }
 
+.fc .fc-button .fc-icon {
+    font-size: 22px;
+}
 
 .fc-toolbar .fc-button:active {
     box-shadow: 0 6px 12px rgba(207, 207, 207, 100);
@@ -187,9 +197,9 @@ html,body {
 
 .calendar-title {
     text-align: center;      /* выравнивание по центру */
-    font-size: clamp(36px, 3vw, 48px); /* адаптивный размер */
-    margin-top: 20px;        /* отступ сверху */
-    margin-bottom: 15px;     /* отступ снизу */
+    font-size: clamp(24px, 3vw, 36px); /* адаптивный размер */
+    margin-top: 0;        /* отступ сверху */
+    margin-bottom: 0;     /* отступ снизу */
     font-weight: 500;        /* если нужно не жирный */
     color: white;          /* цвет текста */
 }
@@ -200,9 +210,42 @@ html,body {
     box-shadow:0 0 8px #7CFF6B;
 }
 
+/* Ответ с упражнениями */
+#response {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+}
+
 .line {
     width:250px;
     height: 3px;
     background: #ddd;
     margin: 10px auto;
 }
+
+.exercise-table {
+    display: grid;
+    grid-template-columns: max-content max-content;
+    justify-content: center;
+    column-gap: 10px;
+}
+
+.exercise-row {
+    display: contents;
+}
+
+.exercise-type {
+    text-align: right;
+    color: white;
+    font-size: clamp(16px, 3vw, 24px);
+}
+
+.exercise-count {
+    text-align: left;
+    color: white;
+    font-size: clamp(16px, 3vw, 24px);
+}
+
+

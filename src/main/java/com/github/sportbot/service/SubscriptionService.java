@@ -1,5 +1,6 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.dto.AchievementTrigger;
 import com.github.sportbot.exception.SubscriptionException;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.ExerciseRecordRepository;
@@ -25,6 +26,7 @@ public class SubscriptionService {
     private final NotificationService notificationService;
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final ExerciseTypeService exerciseTypeService;
+    private final UnifiedAchievementService achievementService;
     private final org.springframework.context.MessageSource messageSource;
     private final EntityLocalizationService entityLocalizationService;
 
@@ -48,6 +50,21 @@ public class SubscriptionService {
                     .build();
             subscriptionRepository.save(subscription);
             notificationService.notifySubscription(follower, following);
+
+            // Trigger social achievements for both users
+            achievementService.checkAchievements(
+                AchievementTrigger.builder()
+                    .user(follower)
+                    .type(AchievementTrigger.TriggerType.SUBSCRIPTION_CHANGED)
+                    .build()
+            );
+            achievementService.checkAchievements(
+                AchievementTrigger.builder()
+                    .user(following)
+                    .type(AchievementTrigger.TriggerType.SUBSCRIPTION_CHANGED)
+                    .build()
+            );
+
             message = localize(SUBSCRIBED, following, locale);
         } else {
             message = localize(ALREADY_SUBSCRIBED, following, locale);
@@ -73,6 +90,21 @@ public class SubscriptionService {
                     .build();
             subscriptionRepository.save(subscription);
             notificationService.notifySubscription(follower, following);
+
+            // Trigger social achievements for both users
+            achievementService.checkAchievements(
+                AchievementTrigger.builder()
+                    .user(follower)
+                    .type(AchievementTrigger.TriggerType.SUBSCRIPTION_CHANGED)
+                    .build()
+            );
+            achievementService.checkAchievements(
+                AchievementTrigger.builder()
+                    .user(following)
+                    .type(AchievementTrigger.TriggerType.SUBSCRIPTION_CHANGED)
+                    .build()
+            );
+
             message = localize(SUBSCRIBED, following, locale);
         } else {
             message = localize(ALREADY_SUBSCRIBED, following, locale);
@@ -89,6 +121,21 @@ public class SubscriptionService {
         String message;
         if (subscriptionRepository.existsByFollowerAndFollowing(follower, following)) {
             subscriptionRepository.deleteByFollowerAndFollowing(follower, following);
+
+            // Trigger social achievements for both users (follower count decreased for following)
+            achievementService.checkAchievements(
+                AchievementTrigger.builder()
+                    .user(follower)
+                    .type(AchievementTrigger.TriggerType.SUBSCRIPTION_CHANGED)
+                    .build()
+            );
+            achievementService.checkAchievements(
+                AchievementTrigger.builder()
+                    .user(following)
+                    .type(AchievementTrigger.TriggerType.SUBSCRIPTION_CHANGED)
+                    .build()
+            );
+
             message = localize(UNSUBSCRIBED, following, locale);
         } else {
             message = localize(NOT_SUBSCRIBED, following, locale);
