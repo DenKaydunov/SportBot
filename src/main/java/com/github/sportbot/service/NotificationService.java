@@ -1,11 +1,14 @@
 package com.github.sportbot.service;
 
 import com.github.sportbot.bot.SportBot;
+import com.github.sportbot.dto.WorkoutEvent;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.MessageSource;
+import org.springframework.integration.support.MessageBuilder;
+import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Service;
 
 import java.util.Locale;
@@ -20,17 +23,19 @@ public class NotificationService implements MessageLocalizer {
     private final MessageSource messageSource;
     private final UserService userService;
     private final EntityLocalizationService entityLocalizationService;
+    private final MessageChannel workoutChannel;
 
     public NotificationService(@Lazy SportBot sportBot,
                                @Lazy SubscriptionService subscriptionService,
                                MessageSource messageSource,
                                UserService userService,
-                               EntityLocalizationService entityLocalizationService) {
+                               EntityLocalizationService entityLocalizationService, MessageChannel workoutChannel) {
         this.sportBot = sportBot;
         this.subscriptionService = subscriptionService;
         this.messageSource = messageSource;
         this.userService = userService;
         this.entityLocalizationService = entityLocalizationService;
+        this.workoutChannel = workoutChannel;
     }
 
     public void notifySubscription(User follower, User following) {
@@ -51,16 +56,23 @@ public class NotificationService implements MessageLocalizer {
                 });
     }
 
-    public void notifyFollowersAboutWorkout(User user, ExerciseType exerciseType, int count) {
+    public void notifyFollowersAboutWorkout(User user,
+                                            ExerciseType exerciseType,
+                                            int count) {
+
         subscriptionService.getFollowers(user.getTelegramId())
                 .forEach(follower -> {
-                    Locale locale = userService.getUserLocale(follower);
-                    String message = messageSource.getMessage(
-                        "notification.friend.workout",
-                        new Object[]{user.getFullName(), entityLocalizationService.getExerciseTypeTitle(exerciseType, locale), count},
-                        locale
+
+                    WorkoutEvent event = new WorkoutEvent(
+                            user.getId(),
+                            follower.getId(),
+                            exerciseType,
+                            count
                     );
-                    sportBot.sendTgMessage(follower.getTelegramId(), message);
+
+                    workoutChannel.send(
+                            MessageBuilder.withPayload(event).build()
+                    );
                 });
     }
 

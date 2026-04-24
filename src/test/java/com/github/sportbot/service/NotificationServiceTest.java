@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
+import org.springframework.messaging.MessageChannel;
 
 import java.util.List;
 import java.util.Locale;
@@ -34,6 +35,9 @@ class NotificationServiceTest {
 
     @Mock
     private EntityLocalizationService entityLocalizationService;
+
+    @Mock
+    private MessageChannel workoutChannel;
 
     @InjectMocks
     private NotificationService notificationService;
@@ -105,29 +109,24 @@ class NotificationServiceTest {
     }
 
     @Test
-    void notifyFollowersAboutWorkout_SendsMessagesToAllFollowers() {
+    void notifyFollowersAboutWorkout_SendsEventsToChannel() {
+
         // Given
-        User follower1 = User.builder().id(3).telegramId(300L).fullName("Follower 1").build();
-        User follower2 = User.builder().id(4).telegramId(400L).fullName("Follower 2").build();
+        User follower1 = User.builder().id(3).telegramId(300L).build();
+        User follower2 = User.builder().id(4).telegramId(400L).build();
 
         when(subscriptionService.getFollowers(following.getTelegramId()))
                 .thenReturn(List.of(follower1, follower2));
 
         // When
-        notificationService.notifyFollowersAboutWorkout(following, exerciseType, 50);
+        notificationService.notifyFollowersAboutWorkout(
+                following,
+                exerciseType,
+                50
+        );
 
         // Then
-        verify(sportBot, times(2)).sendTgMessage(anyLong(), (String) any());
-        verify(sportBot).sendTgMessage(eq(300L), argThat((String message) ->
-                message.contains("Following User") &&
-                message.contains("Отжимания") &&
-                message.contains("50")
-        ));
-        verify(sportBot).sendTgMessage(eq(400L), argThat((String message) ->
-                message.contains("Following User") &&
-                message.contains("Отжимания") &&
-                message.contains("50")
-        ));
+        verify(workoutChannel, times(2)).send(any());
     }
 
     @Test

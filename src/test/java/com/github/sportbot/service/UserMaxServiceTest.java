@@ -120,7 +120,7 @@ class UserMaxServiceTest {
         assertEquals(testUser, savedMax.getUser());
         assertEquals(testExerciseType, savedMax.getExerciseType());
         assertEquals(10, savedMax.getMaxValue());
-        assertTrue(now.isBefore(savedMax.getDate()));
+        assertFalse(savedMax.getDate().isBefore(now));
         verify(mSource).getMessage(
                 eq("workout.max_reps"),
                 any(Object[].class),

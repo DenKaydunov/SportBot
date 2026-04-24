@@ -3,6 +3,7 @@ package com.github.sportbot.bot;
 import com.github.sportbot.dto.UserResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -22,7 +23,7 @@ public class SportBot extends TelegramLongPollingBot {
     private final InlineKeyboardFactory keyboardFactory;
 
     public SportBot(@Value("${bot.token}") String botToken,
-                    CallbackRouter callbackRouter,
+                    @Lazy CallbackRouter callbackRouter,
                     InlineKeyboardFactory keyboardFactory) {
         super(botToken);
         this.callbackRouter = callbackRouter;
