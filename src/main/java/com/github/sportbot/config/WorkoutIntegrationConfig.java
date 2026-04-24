@@ -32,8 +32,9 @@ public class WorkoutIntegrationConfig {
                         .correlationStrategy(message ->
                                 ((WorkoutEvent) message.getPayload()).followerId()
                         )
-                        .groupTimeout(Duration.ofHours(1).toMillis())
-                        .releaseStrategy(group -> true)
+                        .groupTimeout(Duration.ofMinutes(60).toMillis())
+                        .sendPartialResultOnExpiry(true)
+                        .releaseStrategy(group -> false)
                 )
                 .handle(workoutNotificationService, "processBatch")
                 .get();

@@ -76,10 +76,7 @@ class WorkoutNotificationServiceTest {
         WorkoutEvent event1 = new WorkoutEvent(1, 2, exerciseType, 20);
         WorkoutEvent event2 = new WorkoutEvent(1, 2, exerciseType, 30);
 
-        Message<WorkoutEvent> m1 = MessageBuilder.withPayload(event1).build();
-        Message<WorkoutEvent> m2 = MessageBuilder.withPayload(event2).build();
-
-        MessageGroup group = new SimpleMessageGroup(List.of(m1, m2), "test");
+        List<WorkoutEvent> events = List.of(event1, event2);
 
         when(userRepository.findById(1)).thenReturn(Optional.of(owner));
         when(userRepository.findById(2)).thenReturn(Optional.of(follower));
@@ -99,7 +96,7 @@ class WorkoutNotificationServiceTest {
                 });
 
         // when
-        workoutNotificationService.processBatch(group);
+        workoutNotificationService.processBatch(events);
 
         // then
         verify(sportBot, times(1))

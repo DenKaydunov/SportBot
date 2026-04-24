@@ -8,7 +8,6 @@ import com.github.sportbot.model.User;
 import com.github.sportbot.repository.UserRepository;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.integration.store.MessageGroup;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.LocaleResolver;
 
@@ -37,11 +36,8 @@ public class WorkoutNotificationService implements MessageLocalizer {
         this.languagesProvider = supportedLanguagesProvider;
     }
 
-    public void processBatch(MessageGroup group) {
-
-        List<WorkoutEvent> events = extractEvents(group);
-
-        if (events.isEmpty()) return;
+    public void processBatch(List<WorkoutEvent> events) {
+        if (events == null || events.isEmpty()) return;
 
         WorkoutEvent context = events.getFirst();
 
@@ -52,13 +48,6 @@ public class WorkoutNotificationService implements MessageLocalizer {
                 context.followerId(),
                 grouped
         );
-    }
-
-    private List<WorkoutEvent> extractEvents(MessageGroup group) {
-        return group.getMessages()
-                .stream()
-                .map(m -> (WorkoutEvent) m.getPayload())
-                .toList();
     }
 
     private Map<ExerciseType, Integer> groupEvents(List<WorkoutEvent> events) {
@@ -73,8 +62,10 @@ public class WorkoutNotificationService implements MessageLocalizer {
                                     Integer followerId,
                                     Map<ExerciseType, Integer> exercises) {
 
-        User owner = userRepository.findById(ownerId).orElseThrow();
-        User follower = userRepository.findById(followerId).orElseThrow();
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new RuntimeException("Owner not found: " + ownerId));
+        User follower = userRepository.findById(followerId)
+                .orElseThrow(() -> new RuntimeException("follower not found: " + followerId));
 
         Locale locale = languagesProvider.getLocale(follower.getLanguage());
 
