@@ -24,8 +24,8 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Копируем готовый JAR-файл из стадии 'builder'
-# Ваше имя файла: SportBot-0.0.1-SNAPSHOT.jar
-COPY --from=builder /app/target/SportBot-0.0.1-SNAPSHOT.jar SportBot.jar
+# Ваше имя файла: SportBot-0.0.2.jar
+COPY --from=builder /app/target/SportBot-0.0.2.jar SportBot.jar
 
 # Cloud Run требует, чтобы контейнер слушал порт, указанный в переменной окружения $PORT.
 # По умолчанию это 8080.
