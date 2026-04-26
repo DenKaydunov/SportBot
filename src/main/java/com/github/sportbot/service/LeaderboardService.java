@@ -176,7 +176,7 @@ public class LeaderboardService {
         User user = userService.getUserByTelegramId(telegramId);
         Locale locale = userService.getUserLocale(user);
         int userPosition = userPosition(scoreList, user);
-        String allRating = messageBuildRating(scoreList, userPosition, locale);
+        String allRating = messageBuildRating(scoreList, userPosition, period.getDisplayName(), locale);
         String userRating = messageBuildUserRating(scoreList, userPosition);
         return allRating + userRating;
     }
@@ -232,19 +232,37 @@ public class LeaderboardService {
      *
      * @param scoreList List of {@link UserScore} representing all users’ scores, sorted in descending order.
      * @param userPosition Position of the target user in the leaderboard (zero-based index), or -1 if not found.
+     * @param periodDisplay Display name of the period (e.g., "За месяц", "За все время").
+     * @param locale Locale for message formatting.
      * @return A formatted string displaying the top 5 leaderboard. If the target user is in the top 5,
      *         they are marked with ⬅️. Example output:
      *         🏆Top 5:
+     *         Период: За месяц
      *         🥇 1. Иван - 110
      *         🥈 2. Андрей - 98
      *         🥉 3. Сергей - 86 ⬅️
      *         ⭐ 4. Анна - 75
      *         ⭐ 5. Николай - 74
      */
-    private String messageBuildRating(List<UserScore> scoreList, int userPosition, Locale locale) {
+    private String messageBuildRating(List<UserScore> scoreList, int userPosition, String periodDisplay, Locale locale) {
         StringBuilder message = new StringBuilder(
             messageSource.getMessage("leaderboard.rating.header", null, locale)
         );
+
+        // Add period information
+        if (periodDisplay != null && !periodDisplay.isBlank()) {
+            message.append("\n");
+            message.append(messageSource.getMessage("leaderboard.period.label",
+                new Object[]{periodDisplay}, locale));
+        }
+
+        // Check if rating is empty
+        if (scoreList.isEmpty()) {
+            message.append("\n\n");
+            message.append(messageSource.getMessage("leaderboard.rating.no.data", null, locale));
+            return message.toString();
+        }
+
         String[] medals = {"🥇", "🥈", "🥉"};
         int count = 1;
 

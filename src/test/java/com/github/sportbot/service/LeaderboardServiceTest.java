@@ -104,6 +104,8 @@ class LeaderboardServiceTest {
                 });
         lenient().when(messageSource.getMessage(eq("leaderboard.rating.header"), any(), any(Locale.class)))
                 .thenReturn("🏆Top 5:");
+        lenient().when(messageSource.getMessage(eq("leaderboard.rating.no.data"), any(), any(Locale.class)))
+                .thenReturn("Пока никто не сделал ни одного упражнения. Будь первым!");
     }
 
     @Test
@@ -377,6 +379,29 @@ class LeaderboardServiceTest {
 
         // Then
         assertTrue(result.contains("🏆Top 5:"));
+        verify(leaderBoardRepository).getTotalUsersRatingByPeriod(isNull(), any(LocalDate.class));
+    }
+
+    @Test
+    void getRatingByPeriod_EmptyRating_ShowsNoDataMessage() {
+        // Given
+        User user1 = User.builder()
+                .id(1)
+                .telegramId(1000001L)
+                .fullName("User 1")
+                .isSubscribed(true)
+                .build();
+
+        when(leaderBoardRepository.getTotalUsersRatingByPeriod(isNull(), any(LocalDate.class)))
+                .thenReturn(Collections.emptyList());
+        when(userService.getUserByTelegramId(1000001L)).thenReturn(user1);
+
+        // When
+        String result = leaderboardService.getRatingByPeriod(1000001L, "all");
+
+        // Then
+        assertTrue(result.contains("🏆Top 5:"));
+        assertTrue(result.contains("Пока никто не сделал ни одного упражнения. Будь первым!"));
         verify(leaderBoardRepository).getTotalUsersRatingByPeriod(isNull(), any(LocalDate.class));
     }
 }
