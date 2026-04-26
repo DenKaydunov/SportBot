@@ -27,4 +27,6 @@ spring:
     change-log: db/changelog/db.changelog-master.yaml
 
 bot:
+  name: SquatMasterBot
   token: ${TG_BOT_TOKEN}
+  

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SportBot is a Java-based Telegram bot for tracking fitness challenges (push-ups, squats, pull-ups, abs). It migrated from SendPulse & Google Sheets to a full Spring Boot backend with PostgreSQL.
 
-**Live Bot:** [@PushupsWardengzBot](https://t.me/PushupsWardengzBot)
+**Live Bot:** [@SquatMasterBot](https://t.me/SquatMasterBot)
 
 ## Build & Run Commands
 

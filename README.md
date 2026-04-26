@@ -6,8 +6,8 @@ Originally built using SendPulse & Google Sheets, now migrated to a full Java ba
 
 ## Telegram Bot
 
-Запусти бота 👉 [@PushupsWardengzBot](https://t.me/PushupsWardengzBot)  
-Web-site: https://pushupswardengzbot.tg.pulse.is/
+Запусти бота 👉 [@SquatMasterBot](https://t.me/SquatMasterBot)  
+Web-site: https://squatmasterbot.tg.pulse.is/
 
 ## Features
 
