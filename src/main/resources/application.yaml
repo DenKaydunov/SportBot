@@ -4,8 +4,8 @@ spring:
   cloud:
     gcp:
       sql:
-        database-name: sportbot_db
-        instance-connection-name: sportbot-485510:europe-west1:sportbotdb
+        database-name: sporbotdb
+        instance-connection-name: project-5a088b17-0e88-41b0-a00:europe-west1:sporbotdb
   datasource:
     username: postgres
     password: ${DB_PASSWORD}
