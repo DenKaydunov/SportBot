@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working with This Project
+
+**IMPORTANT:** The project owner has granted permission to make code changes without asking for approval on each edit. Proceed with file modifications confidently once the task is clear. Only ask for clarification if requirements are ambiguous or if making risky/destructive changes (e.g., deleting files, force-pushing, dropping database tables).
+
 ## Project Overview
 
 SportBot is a Java-based Telegram bot for tracking fitness challenges (push-ups, squats, pull-ups, abs). It migrated from SendPulse & Google Sheets to a full Spring Boot backend with PostgreSQL.

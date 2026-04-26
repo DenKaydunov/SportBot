@@ -165,7 +165,10 @@ public class LeaderboardController {
     public String getRating(
             @RequestParam
             @Parameter(example = "1000001")
-            Long telegramId){
-        return leaderboardService.getRating(telegramId);
+            Long telegramId,
+            @RequestParam(required = false)
+            @Parameter(example = "month", description = "Period code: today, yesterday, week, month, all (default: all)")
+            String period){
+        return leaderboardService.getRatingByPeriod(telegramId, period);
     }
 }

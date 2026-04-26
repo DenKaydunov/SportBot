@@ -1,8 +1,12 @@
 package com.github.sportbot.service;
 
+import com.github.sportbot.config.ReferralProperties;
+import com.github.sportbot.config.WorkoutProperties;
 import com.github.sportbot.model.ExerciseType;
 import com.github.sportbot.model.User;
+import com.github.sportbot.model.UserExerciseSummary;
 import com.github.sportbot.repository.LeaderBoardRepository;
+import com.github.sportbot.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -44,6 +49,15 @@ class LeaderboardServiceTest {
 
     @Mock
     private EntityLocalizationService entityLocalizationService;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private WorkoutProperties workoutProperties;
+
+    @Mock
+    private ReferralProperties referralProperties;
 
     @InjectMocks
     private LeaderboardService leaderboardService;
@@ -88,6 +102,8 @@ class LeaderboardServiceTest {
                     Object[] args = invocation.getArgument(1);
                     return "c " + args[0] + " по " + args[1];
                 });
+        lenient().when(messageSource.getMessage(eq("leaderboard.rating.header"), any(), any(Locale.class)))
+                .thenReturn("🏆Top 5:");
     }
 
     @Test
@@ -253,5 +269,114 @@ class LeaderboardServiceTest {
         verify(leaderBoardRepository).findTopUsersByExerciseTypeAndDate(
                 eq(1L), isNull(), eq(5), any(LocalDate.class), any(LocalDate.class)
         );
+    }
+
+    @Test
+    void getRating_DefaultPeriod_ReturnsFormattedRating() {
+        // Given
+        ExerciseType pushUpType = ExerciseType.builder()
+                .id(1L)
+                .code("push_up")
+                .title("Отжимания")
+                .build();
+
+        User user1 = User.builder()
+                .id(1)
+                .telegramId(1000001L)
+                .fullName("User 1")
+                .isSubscribed(true)
+                .build();
+
+        User user2 = User.builder()
+                .id(2)
+                .telegramId(1000002L)
+                .fullName("User 2")
+                .isSubscribed(true)
+                .build();
+
+        List<UserExerciseSummary> totals = Arrays.asList(
+                new UserExerciseSummary(user1, pushUpType, 100L),
+                new UserExerciseSummary(user2, pushUpType, 80L)
+        );
+
+        when(leaderBoardRepository.getTotalUsersRatingByPeriod(isNull(), any(LocalDate.class))).thenReturn(totals);
+        when(userService.getUserByTelegramId(1000001L)).thenReturn(user1);
+        when(workoutProperties.getCoefficient("push_up")).thenReturn(1.0);
+        when(userRepository.countByReferrerTelegramId(anyLong())).thenReturn(0);
+
+        // When
+        String result = leaderboardService.getRating(1000001L);
+
+        // Then
+        assertTrue(result.contains("🏆Top 5:"));
+        verify(leaderBoardRepository).getTotalUsersRatingByPeriod(isNull(), any(LocalDate.class));
+    }
+
+    @Test
+    void getRatingByPeriod_MonthPeriod_UsesCorrectRepository() {
+        // Given
+        ExerciseType pushUpType = ExerciseType.builder()
+                .id(1L)
+                .code("push_up")
+                .title("Отжимания")
+                .build();
+
+        User user1 = User.builder()
+                .id(1)
+                .telegramId(1000001L)
+                .fullName("User 1")
+                .isSubscribed(true)
+                .build();
+
+        List<UserExerciseSummary> totals = Arrays.asList(
+                new UserExerciseSummary(user1, pushUpType, 50L)
+        );
+
+        when(leaderBoardRepository.getTotalUsersRatingByPeriod(any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(totals);
+        when(userService.getUserByTelegramId(1000001L)).thenReturn(user1);
+        when(workoutProperties.getCoefficient("push_up")).thenReturn(1.0);
+        when(userRepository.countByReferrerTelegramId(anyLong())).thenReturn(0);
+
+        // When
+        String result = leaderboardService.getRatingByPeriod(1000001L, "month");
+
+        // Then
+        assertTrue(result.contains("🏆Top 5:"));
+        verify(leaderBoardRepository).getTotalUsersRatingByPeriod(any(LocalDate.class), any(LocalDate.class));
+        verify(leaderBoardRepository, never()).getTotalUsersRating();
+    }
+
+    @Test
+    void getRatingByPeriod_AllTimePeriod_UsesCorrectRepository() {
+        // Given
+        ExerciseType pushUpType = ExerciseType.builder()
+                .id(1L)
+                .code("push_up")
+                .title("Отжимания")
+                .build();
+
+        User user1 = User.builder()
+                .id(1)
+                .telegramId(1000001L)
+                .fullName("User 1")
+                .isSubscribed(true)
+                .build();
+
+        List<UserExerciseSummary> totals = Arrays.asList(
+                new UserExerciseSummary(user1, pushUpType, 100L)
+        );
+
+        when(leaderBoardRepository.getTotalUsersRatingByPeriod(isNull(), any(LocalDate.class))).thenReturn(totals);
+        when(userService.getUserByTelegramId(1000001L)).thenReturn(user1);
+        when(workoutProperties.getCoefficient("push_up")).thenReturn(1.0);
+        when(userRepository.countByReferrerTelegramId(anyLong())).thenReturn(0);
+
+        // When
+        String result = leaderboardService.getRatingByPeriod(1000001L, "all");
+
+        // Then
+        assertTrue(result.contains("🏆Top 5:"));
+        verify(leaderBoardRepository).getTotalUsersRatingByPeriod(isNull(), any(LocalDate.class));
     }
 }

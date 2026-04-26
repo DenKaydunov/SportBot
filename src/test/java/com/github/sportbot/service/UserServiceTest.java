@@ -476,7 +476,8 @@ class UserServiceTest {
         when(languagesProvider.getLocale("ru")).thenReturn(locale);
         when(userRepository.save(userWithReferrer)).thenReturn(userWithReferrer);
         when(userRepository.findByTelegramId(referrerTelegramId)).thenReturn(Optional.of(referrerUser));
-        doThrow(new RuntimeException("Achievement service error")).when(unifiedAchievementService).checkAchievements(any(AchievementTrigger.class));
+        doThrow(new RuntimeException("TEST ERROR: Simulated achievement service failure for testing error handling"))
+                .when(unifiedAchievementService).checkAchievements(any(AchievementTrigger.class));
         when(messageSource.getMessage("user.registered", null, locale))
                 .thenReturn("Пользователь успешно зарегистрирован");
 

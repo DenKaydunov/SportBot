@@ -35,3 +35,7 @@ build/
 # GCP deployment config with secrets
 app.yaml
 .DS_Store
+
+# Claude Code local settings
+.claude/settings.local.json
+

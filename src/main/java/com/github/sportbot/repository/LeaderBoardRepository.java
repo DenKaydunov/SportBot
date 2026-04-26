@@ -82,4 +82,16 @@ public interface LeaderBoardRepository extends ExerciseRecordRepository {
 """)
     List<UserExerciseSummary> getTotalUsersRating();
 
+    @Query("""
+    SELECT new com.github.sportbot.model.UserExerciseSummary(er.user, er.exerciseType, SUM(er.count))
+    FROM ExerciseRecord er
+    WHERE (coalesce(:startDate, er.date) <= er.date)
+        AND (coalesce(:endDate, er.date) >= er.date)
+    GROUP BY er.user, er.exerciseType
+""")
+    List<UserExerciseSummary> getTotalUsersRatingByPeriod(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
 }
