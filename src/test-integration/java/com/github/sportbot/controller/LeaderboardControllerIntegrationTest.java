@@ -153,13 +153,13 @@ class LeaderboardControllerIntegrationTest {
 
     @Test
     void shouldCallServiceWithCorrectParams() throws Exception {
-        when(leaderboardService.getRating(anyLong()))
+        when(leaderboardService.getRatingByPeriod(anyLong(), any()))
                 .thenReturn("ok");
 
         mockMvc.perform(get("/api/v1/leaderboards/rating")
                         .param("telegramId", "1000001"))
                 .andExpect(status().isOk());
 
-        verify(leaderboardService).getRating(1000001L);
+        verify(leaderboardService).getRatingByPeriod(1000001L, null);
     }
 }

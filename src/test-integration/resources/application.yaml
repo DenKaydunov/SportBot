@@ -17,3 +17,7 @@ spring:
     gcp:
       sql:
         enabled: false
+
+bot:
+  token: test-token
+  name: SquatMasterBot
