@@ -162,7 +162,15 @@ public class LeaderboardService {
     }
 
     public String getRating(Long telegramId) {
-        List<UserExerciseSummary> totals = leaderBoardRepository.getTotalUsersRating();
+        return getRatingByPeriod(telegramId, null);
+    }
+
+    public String getRatingByPeriod(Long telegramId, String periodCode) {
+        Period period = Period.fromCode(periodCode);
+        LocalDate startDate = period.getStartDate();
+        LocalDate endDate = LocalDate.now();
+
+        List<UserExerciseSummary> totals = leaderBoardRepository.getTotalUsersRatingByPeriod(startDate, endDate);
         Map<User, Double> userTotals = sumUserScore(totals);
         List<UserScore> scoreList = getTopUser(userTotals);
         User user = userService.getUserByTelegramId(telegramId);
