@@ -24,5 +24,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
         WHERE u.referrerTelegramId = :referrerTelegramId
     """)
     Integer countByReferrerTelegramId(@Param("referrerTelegramId") Long referrerTelegramId);
+
+    List<User> findAllByReferrerTelegramId(Long referrerTelegramId);
 }
 

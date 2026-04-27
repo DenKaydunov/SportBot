@@ -24,6 +24,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
 
 import java.time.LocalTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -593,4 +595,194 @@ class UserServiceTest {
                 Arguments.of("uk", "uk", "Мова успішно змінена")
         );
     }
+
+    @Test
+    void getReferredUsersInfo_WithMultipleReferrals_ReturnsFormattedString() {
+        // Given
+        Long referrerTelegramId = 123456L;
+        User referrer = User.builder()
+                .id(1)
+                .telegramId(referrerTelegramId)
+                .fullName("Referrer User")
+                .language("ru")
+                .build();
+
+        User referral1 = User.builder()
+                .id(2)
+                .telegramId(111111L)
+                .fullName("Иван Иванов")
+                .referrerTelegramId(referrerTelegramId)
+                .build();
+
+        User referral2 = User.builder()
+                .id(3)
+                .telegramId(222222L)
+                .fullName("Петр Петров")
+                .referrerTelegramId(referrerTelegramId)
+                .build();
+
+        User referral3 = User.builder()
+                .id(4)
+                .telegramId(333333L)
+                .fullName("Сергей Сергеев")
+                .referrerTelegramId(referrerTelegramId)
+                .build();
+
+        List<User> referrals = List.of(referral1, referral2, referral3);
+        Locale locale = Locale.forLanguageTag("ru");
+
+        when(userRepository.findByTelegramId(referrerTelegramId)).thenReturn(Optional.of(referrer));
+        when(languagesProvider.getLocale("ru")).thenReturn(locale);
+        when(userRepository.findAllByReferrerTelegramId(referrerTelegramId)).thenReturn(referrals);
+        when(messageSource.getMessage(eq("referral.list.info"), any(Object[].class), eq(locale)))
+                .thenAnswer(invocation -> {
+                    Object[] args = invocation.getArgument(1);
+                    return String.format("Всего приглашено: %s\n%s", args[0], args[1]);
+                });
+
+        // When
+        String result = userService.getReferredUsersInfo(referrerTelegramId);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.contains("Всего приглашено: 3"));
+        assertTrue(result.contains("Иван Иванов"));
+        assertTrue(result.contains("Петр Петров"));
+        assertTrue(result.contains("Сергей Сергеев"));
+        assertTrue(result.contains(", ")); // Check that names are comma-separated
+
+        verify(userRepository).findByTelegramId(referrerTelegramId);
+        verify(languagesProvider).getLocale("ru");
+        verify(userRepository).findAllByReferrerTelegramId(referrerTelegramId);
+        verify(messageSource).getMessage(eq("referral.list.info"), any(Object[].class), eq(locale));
+    }
+
+    @Test
+    void getReferredUsersInfo_WithNoReferrals_ReturnsEmptyMessage() {
+        // Given
+        Long referrerTelegramId = 123456L;
+        User referrer = User.builder()
+                .id(1)
+                .telegramId(referrerTelegramId)
+                .fullName("Referrer User")
+                .language("en")
+                .build();
+
+        Locale locale = Locale.forLanguageTag("en");
+
+        when(userRepository.findByTelegramId(referrerTelegramId)).thenReturn(Optional.of(referrer));
+        when(languagesProvider.getLocale("en")).thenReturn(locale);
+        when(userRepository.findAllByReferrerTelegramId(referrerTelegramId)).thenReturn(Collections.emptyList());
+        when(messageSource.getMessage(eq("referral.list.info"), any(Object[].class), eq(locale)))
+                .thenAnswer(invocation -> {
+                    Object[] args = invocation.getArgument(1);
+                    return String.format("Total invited: %s\n%s", args[0], args[1]);
+                });
+
+        // When
+        String result = userService.getReferredUsersInfo(referrerTelegramId);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.contains("Total invited: 0"));
+
+        verify(userRepository).findByTelegramId(referrerTelegramId);
+        verify(languagesProvider).getLocale("en");
+        verify(userRepository).findAllByReferrerTelegramId(referrerTelegramId);
+        verify(messageSource).getMessage(eq("referral.list.info"), any(Object[].class), eq(locale));
+    }
+
+    @Test
+    void getReferredUsersInfo_WithSingleReferral_ReturnsFormattedString() {
+        // Given
+        Long referrerTelegramId = 123456L;
+        User referrer = User.builder()
+                .id(1)
+                .telegramId(referrerTelegramId)
+                .fullName("Referrer User")
+                .language("uk")
+                .build();
+
+        User referral = User.builder()
+                .id(2)
+                .telegramId(111111L)
+                .fullName("Олександр Олександрович")
+                .referrerTelegramId(referrerTelegramId)
+                .build();
+
+        List<User> referrals = List.of(referral);
+        Locale locale = Locale.forLanguageTag("uk");
+
+        when(userRepository.findByTelegramId(referrerTelegramId)).thenReturn(Optional.of(referrer));
+        when(languagesProvider.getLocale("uk")).thenReturn(locale);
+        when(userRepository.findAllByReferrerTelegramId(referrerTelegramId)).thenReturn(referrals);
+        when(messageSource.getMessage(eq("referral.list.info"), any(Object[].class), eq(locale)))
+                .thenAnswer(invocation -> {
+                    Object[] args = invocation.getArgument(1);
+                    return String.format("Всього запрошено: %s\n%s", args[0], args[1]);
+                });
+
+        // When
+        String result = userService.getReferredUsersInfo(referrerTelegramId);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.contains("Всього запрошено: 1"));
+        assertTrue(result.contains("Олександр Олександрович"));
+        assertFalse(result.contains(", ")); // No comma for single user
+
+        verify(userRepository).findByTelegramId(referrerTelegramId);
+        verify(languagesProvider).getLocale("uk");
+        verify(userRepository).findAllByReferrerTelegramId(referrerTelegramId);
+        verify(messageSource).getMessage(eq("referral.list.info"), any(Object[].class), eq(locale));
+    }
+
+    @Test
+    void getReferredUsersInfo_UserNotFound_ThrowsException() {
+        // Given
+        Long referrerTelegramId = 999999L;
+        when(userRepository.findByTelegramId(referrerTelegramId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(UserNotFoundException.class,
+                () -> userService.getReferredUsersInfo(referrerTelegramId));
+
+        verify(userRepository).findByTelegramId(referrerTelegramId);
+        verify(languagesProvider, never()).getLocale(anyString());
+        verify(userRepository, never()).findAllByReferrerTelegramId(anyLong());
+        verifyNoInteractions(messageSource);
+    }
+
+    @Test
+    void getReferredUsers_ReturnsListOfUsers() {
+        // Given
+        Long referrerTelegramId = 123456L;
+        User referral1 = User.builder()
+                .id(2)
+                .telegramId(111111L)
+                .fullName("User 1")
+                .referrerTelegramId(referrerTelegramId)
+                .build();
+
+        User referral2 = User.builder()
+                .id(3)
+                .telegramId(222222L)
+                .fullName("User 2")
+                .referrerTelegramId(referrerTelegramId)
+                .build();
+
+        List<User> expectedReferrals = List.of(referral1, referral2);
+
+        when(userRepository.findAllByReferrerTelegramId(referrerTelegramId)).thenReturn(expectedReferrals);
+
+        // When
+        List<User> result = userService.getReferredUsers(referrerTelegramId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals(expectedReferrals, result);
+        verify(userRepository).findAllByReferrerTelegramId(referrerTelegramId);
+    }
 }
+

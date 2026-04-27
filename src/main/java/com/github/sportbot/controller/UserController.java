@@ -66,4 +66,15 @@ public class UserController {
             @PathVariable Long telegramId){
         return userService.unsubscribeUser(telegramId);
     }
+
+    @Operation(
+            summary = "Получить список приглашенных пользователей",
+            description = "Возвращает локализованную строку с количеством и списком имен приглашенных пользователей"
+    )
+    @GetMapping("/{telegramId}/referrals")
+    public String getReferredUsers(
+            @Parameter(description = "Telegram ID реферера", required = true, example = "1000001")
+            @PathVariable Long telegramId) {
+        return userService.getReferredUsersInfo(telegramId);
+    }
 }

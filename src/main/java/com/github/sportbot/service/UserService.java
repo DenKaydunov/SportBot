@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Locale;
 
 @Slf4j
@@ -135,5 +136,23 @@ public class UserService{
 
         // Return localized message in the NEW language
         return getMessage("language.changed", newLocale);
+    }
+
+    public List<User> getReferredUsers(Long referrerTelegramId) {
+        return userRepository.findAllByReferrerTelegramId(referrerTelegramId);
+    }
+
+    public String getReferredUsersInfo(Long referrerTelegramId) {
+        User referrer = getUserByTelegramId(referrerTelegramId);
+        Locale locale = getUserLocale(referrer);
+        List<User> referredUsers = userRepository.findAllByReferrerTelegramId(referrerTelegramId);
+
+        String names = referredUsers.isEmpty() ? "" : referredUsers.stream()
+                .map(User::getFullName)
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("");
+
+        return messageSource.getMessage("referral.list.info",
+                new Object[]{referredUsers.size(), names}, locale);
     }
 }
