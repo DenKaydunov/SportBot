@@ -5,15 +5,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@Transactional
 class MealEntryRepositoryTest {
 
     @Autowired
@@ -25,7 +26,7 @@ class MealEntryRepositoryTest {
     @Test
     void testSumCaloriesByUserAndDate() {
         // Given
-        User user = createAndPersistUser("Test User", 1000001L);
+        User user = createAndPersistUser("Test User", 9000001L);
         LocalDate today = LocalDate.now();
 
         MealEntry meal1 = createMealEntry(user, "Breakfast", 300.0f, 20.0f, 30.0f, 10.0f, today);
@@ -47,7 +48,7 @@ class MealEntryRepositoryTest {
     @Test
     void testSumMacrosByUserAndDate() {
         // Given
-        User user = createAndPersistUser("Test User", 1000002L);
+        User user = createAndPersistUser("Test User", 9000002L);
         LocalDate today = LocalDate.now();
 
         MealEntry meal1 = createMealEntry(user, "Meal1", 300.0f, 20.0f, 30.0f, 10.0f, today);
@@ -70,7 +71,7 @@ class MealEntryRepositoryTest {
     @Test
     void testFindByUserTelegramIdAndDate() {
         // Given
-        User user = createAndPersistUser("Test User", 1000003L);
+        User user = createAndPersistUser("Test User", 9000003L);
         LocalDate today = LocalDate.now();
 
         MealEntry meal1 = createMealEntry(user, "Breakfast", 300.0f, 20.0f, 30.0f, 10.0f, today);
@@ -94,7 +95,7 @@ class MealEntryRepositoryTest {
     @Test
     void testFindByUserTelegramIdAndPeriod() {
         // Given
-        User user = createAndPersistUser("Test User", 1000004L);
+        User user = createAndPersistUser("Test User", 9000004L);
         LocalDate startDate = LocalDate.now().minusDays(7);
         LocalDate endDate = LocalDate.now();
 
@@ -120,7 +121,7 @@ class MealEntryRepositoryTest {
     @Test
     void testCountDistinctMealDaysByUser() {
         // Given
-        User user = createAndPersistUser("Test User", 1000005L);
+        User user = createAndPersistUser("Test User", 9000005L);
         LocalDate today = LocalDate.now();
         LocalDate thirtyDaysAgo = today.minusDays(30);
 
@@ -142,7 +143,7 @@ class MealEntryRepositoryTest {
     @Test
     void testSumCaloriesByUserAndDate_NoMeals() {
         // Given
-        User user = createAndPersistUser("Test User", 1000006L);
+        User user = createAndPersistUser("Test User", 9000006L);
         LocalDate today = LocalDate.now();
 
         // When
@@ -174,7 +175,7 @@ class MealEntryRepositoryTest {
 
     private MealEntry createMealEntry(User user, String foodName, Float calories,
                                      Float protein, Float carbs, Float fat, LocalDate date) {
-        return MealEntry.builder()
+        MealEntry entry = MealEntry.builder()
                 .user(user)
                 .foodName(foodName)
                 .calories(calories)
@@ -183,5 +184,7 @@ class MealEntryRepositoryTest {
                 .fat(fat)
                 .date(date)
                 .build();
+        entry.setCreatedAt(LocalDateTime.now());
+        return entry;
     }
 }

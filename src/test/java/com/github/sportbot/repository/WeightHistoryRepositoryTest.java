@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,10 +25,12 @@ class WeightHistoryRepositoryTest {
     @Autowired
     private WeightHistoryRepository weightHistoryRepository;
 
+    private static final AtomicLong TELEGRAM_ID_COUNTER = new AtomicLong(System.currentTimeMillis());
+
     @Test
     void testFindByUserTelegramIdOrderByDateDesc() {
         // Given
-        User user = createAndPersistUser("Test User", 1000001L);
+        User user = createAndPersistUser("Test User");
 
         WeightHistory weight1 = createWeightEntry(user, 100.0f, LocalDate.now().minusDays(10));
         WeightHistory weight2 = createWeightEntry(user, 98.0f, LocalDate.now().minusDays(5));
@@ -51,7 +54,7 @@ class WeightHistoryRepositoryTest {
     @Test
     void testFindFirstByUserTelegramIdOrderByDateDesc() {
         // Given
-        User user = createAndPersistUser("Test User", 1000002L);
+        User user = createAndPersistUser("Test User");
 
         WeightHistory weight1 = createWeightEntry(user, 100.0f, LocalDate.now().minusDays(10));
         WeightHistory weight2 = createWeightEntry(user, 98.0f, LocalDate.now().minusDays(5));
@@ -74,7 +77,7 @@ class WeightHistoryRepositoryTest {
     @Test
     void testFindByUserTelegramIdAndDateBetween() {
         // Given
-        User user = createAndPersistUser("Test User", 1000003L);
+        User user = createAndPersistUser("Test User");
         LocalDate startDate = LocalDate.now().minusDays(7);
         LocalDate endDate = LocalDate.now();
 
@@ -107,7 +110,7 @@ class WeightHistoryRepositoryTest {
     @Test
     void testFindFirstByUserTelegramIdOrderByDateDesc_NoEntries() {
         // Given
-        User user = createAndPersistUser("Test User", 1000004L);
+        User user = createAndPersistUser("Test User");
         // No weight entries
 
         // When
@@ -117,11 +120,11 @@ class WeightHistoryRepositoryTest {
         assertFalse(latestWeight.isPresent());
     }
 
-    private User createAndPersistUser(String name, Long telegramId) {
+    private User createAndPersistUser(String name) {
         LocalDateTime now = LocalDateTime.now();
         User user = User.builder()
                 .fullName(name)
-                .telegramId(telegramId)
+                .telegramId(TELEGRAM_ID_COUNTER.incrementAndGet())
                 .age(30)
                 .sex(Sex.MAN)
                 .language("ru")
@@ -138,10 +141,12 @@ class WeightHistoryRepositoryTest {
     }
 
     private WeightHistory createWeightEntry(User user, Float weight, LocalDate date) {
-        return WeightHistory.builder()
+        WeightHistory weightHistory = WeightHistory.builder()
                 .user(user)
                 .weight(weight)
                 .date(date)
                 .build();
+        weightHistory.setCreatedAt(LocalDateTime.now());
+        return weightHistory;
     }
 }
