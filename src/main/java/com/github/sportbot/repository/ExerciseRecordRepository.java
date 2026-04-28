@@ -83,6 +83,13 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
     Long countDistinctWorkoutDaysByUser(@Param("user") User user);
 
     /**
+     * Count distinct workout days for a user after a specific date.
+     * Used for nutrition recommendations based on recent activity.
+     */
+    @Query("SELECT COUNT(DISTINCT er.date) FROM ExerciseRecord er WHERE er.user = :user AND er.date > :after")
+    Long countDistinctWorkoutDaysByUserAfterDate(@Param("user") User user, @Param("after") LocalDate after);
+
+    /**
      * Find maximum reps in a single workout for a user and specific exercise type.
      * Used for MAX_REPS achievements.
      */

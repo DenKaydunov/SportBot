@@ -86,4 +86,7 @@ public class User {
     @JoinColumn(name = "user_id")
     @Builder.Default
     private List<UserMaxHistory> maxHistory = new ArrayList<>();
+
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "user")
+    private NutritionProfile nutritionProfile;
 }
