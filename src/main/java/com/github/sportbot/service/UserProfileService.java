@@ -118,7 +118,7 @@ public class UserProfileService {
         Locale locale = userService.getUserLocale(user);
         return messageSource.getMessage(
                 "profile.updated",
-                new Object[]{user.getFullName()},
+                null,
                 locale
         );
     }

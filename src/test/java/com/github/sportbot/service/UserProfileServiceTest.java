@@ -147,23 +147,25 @@ class UserProfileServiceTest {
         Long telegramId = 123456L;
         User user = new User();
         user.setFullName("Test User");
+        user.setLanguage("ru");
 
         when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("ru"));
 
         var request = new UpdateProfileRequest(
                 telegramId,
                 25,
                 Sex.WOMAN,
-                "Test User",
+                "Updated User",
                 "en"
         );
 
         String result = userProfileService.updateProfile(request);
 
-        assertTrue(result.contains("Профиль Test User обновлён."));
+        assertTrue(result.contains("Профиль обновлён")); // profile.updated message
         assertEquals(25, user.getAge());
         assertEquals(Sex.WOMAN, user.getSex());
-        assertEquals("Test User", user.getFullName());
+        assertEquals("Updated User", user.getFullName());
         assertEquals("en", user.getLanguage());
         verify(userRepository).save(user);
     }
@@ -176,6 +178,7 @@ class UserProfileServiceTest {
         user.setLanguage("ru"); // existing
 
         when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("ru"));
 
         var request = new UpdateProfileRequest(
                 telegramId,
@@ -187,11 +190,175 @@ class UserProfileServiceTest {
 
         String result = userProfileService.updateProfile(request);
 
-        assertTrue(result.contains("Профиль null обновлён."));
+        assertTrue(result.contains("Профиль обновлён")); // profile.updated message
         assertNull(user.getLanguage()); // cleared
         assertNull(user.getAge()); // unchanged and still null
         assertNull(user.getFullName()); // unchanged and still null
         assertNull(user.getSex()); // unchanged and still null
         verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateProfile_OnlyUpdatesProvidedFields() {
+        Long telegramId = 123456L;
+        User user = new User();
+        user.setFullName("Original Name");
+        user.setAge(25);
+        user.setSex(Sex.MAN);
+        user.setLanguage("ru");
+
+        when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("ru"));
+
+        // Only update age, leave other fields untouched
+        var request = new UpdateProfileRequest(
+                telegramId,
+                30,
+                null,
+                null,
+                null
+        );
+
+        userProfileService.updateProfile(request);
+
+        assertEquals(30, user.getAge()); // updated
+        assertEquals("Original Name", user.getFullName()); // unchanged
+        assertEquals(Sex.MAN, user.getSex()); // unchanged
+        assertEquals("ru", user.getLanguage()); // unchanged
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateProfile_NormalizesLanguageToLowercase() {
+        Long telegramId = 123456L;
+        User user = new User();
+        user.setLanguage("ru");
+
+        when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("ru"));
+
+        var request = new UpdateProfileRequest(
+                telegramId,
+                null,
+                null,
+                null,
+                "EN" // uppercase language code
+        );
+
+        userProfileService.updateProfile(request);
+
+        assertEquals("en", user.getLanguage()); // normalized to lowercase
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateProfile_TrimsWhitespaceFromLanguage() {
+        Long telegramId = 123456L;
+        User user = new User();
+        user.setLanguage("ru");
+
+        when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("ru"));
+
+        var request = new UpdateProfileRequest(
+                telegramId,
+                null,
+                null,
+                null,
+                "  en  " // language with whitespace
+        );
+
+        userProfileService.updateProfile(request);
+
+        assertEquals("en", user.getLanguage()); // trimmed and normalized
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void getProfile_ShowsUnknownValueForNullFields() {
+        Long telegramId = 123456L;
+        User user = new User();
+        user.setFullName("Test User");
+        user.setAge(null);
+        user.setSex(null);
+        user.setLanguage(null);
+        user.setRemindTime(null);
+
+        when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("ru"));
+        when(exerciseService.getTotalReps(user, "push_up")).thenReturn(0);
+        when(exerciseService.getTotalReps(user, "pull_up")).thenReturn(0);
+        when(exerciseService.getTotalReps(user, "squat")).thenReturn(0);
+        when(exerciseService.getTotalReps(user, "abs")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "push_up")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "pull_up")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "squat")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "abs")).thenReturn(0);
+        when(rankService.getRankTitle(eq(user), any(Locale.class))).thenReturn("-");
+        when(rankService.calculateTotalXP(user)).thenReturn(0.0);
+        when(streakService.getStreakInfo(user)).thenReturn("🔥 Стрик: 0 дней");
+
+        String profile = userProfileService.getProfile(telegramId);
+
+        assertTrue(profile.contains("не указан")); // unknown value for null fields
+    }
+
+    @Test
+    void getProfile_DisplaysEnglishLocalizationCorrectly() {
+        Long telegramId = 123456L;
+        User user = new User();
+        user.setFullName("John Doe");
+        user.setLanguage("en");
+        user.setAge(30);
+        user.setSex(Sex.MAN);
+        user.setBalanceTon(10);
+
+        when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("en"));
+        when(exerciseService.getTotalReps(user, "push_up")).thenReturn(1000);
+        when(exerciseService.getTotalReps(user, "pull_up")).thenReturn(500);
+        when(exerciseService.getTotalReps(user, "squat")).thenReturn(750);
+        when(exerciseService.getTotalReps(user, "abs")).thenReturn(600);
+        when(userMaxService.getLastMaxByExerciseCode(user, "push_up")).thenReturn(50);
+        when(userMaxService.getLastMaxByExerciseCode(user, "pull_up")).thenReturn(20);
+        when(userMaxService.getLastMaxByExerciseCode(user, "squat")).thenReturn(100);
+        when(userMaxService.getLastMaxByExerciseCode(user, "abs")).thenReturn(40);
+        when(rankService.getRankTitle(eq(user), any(Locale.class))).thenReturn("Warrior");
+        when(rankService.calculateTotalXP(user)).thenReturn(2500.5);
+        when(streakService.getStreakInfo(user)).thenReturn("🔥 Streak: 10 days");
+
+        String profile = userProfileService.getProfile(telegramId);
+
+        assertTrue(profile.contains("John Doe"));
+        assertTrue(profile.contains("1,000")); // English number formatting
+        assertTrue(profile.contains("2500")); // XP display
+    }
+
+    @Test
+    void getProfile_ShowsBalanceAndXP() {
+        Long telegramId = 123456L;
+        User user = new User();
+        user.setFullName("Test User");
+        user.setBalanceTon(50);
+        user.setLanguage("ru");
+
+        when(userService.getUserByTelegramId(telegramId)).thenReturn(user);
+        when(userService.getUserLocale(user)).thenReturn(Locale.forLanguageTag("ru"));
+        when(exerciseService.getTotalReps(user, "push_up")).thenReturn(0);
+        when(exerciseService.getTotalReps(user, "pull_up")).thenReturn(0);
+        when(exerciseService.getTotalReps(user, "squat")).thenReturn(0);
+        when(exerciseService.getTotalReps(user, "abs")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "push_up")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "pull_up")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "squat")).thenReturn(0);
+        when(userMaxService.getLastMaxByExerciseCode(user, "abs")).thenReturn(0);
+        when(rankService.getRankTitle(eq(user), any(Locale.class))).thenReturn("-");
+        when(rankService.calculateTotalXP(user)).thenReturn(1234.5);
+        when(streakService.getStreakInfo(user)).thenReturn("🔥 Стрик: 0 дней");
+
+        String profile = userProfileService.getProfile(telegramId);
+
+        assertTrue(profile.contains("50")); // balance
+        assertTrue(profile.contains("1234")); // XP
     }
 }
