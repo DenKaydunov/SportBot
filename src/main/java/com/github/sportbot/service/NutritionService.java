@@ -14,24 +14,32 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class NutritionService {
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-    private static final float CALORIES_PER_KG = 7700f; // kcal per kg of body fat
+    private static final float WEEKS_IN_MONTH = 30f / 7f; // ~4.3 weeks
+    private static final float MIN_WEIGHT_KG = 25f;
+    private static final float MAX_WEIGHT_KG = 300f;
+    private static final float MIN_HEIGHT_CM = 100f;
+    private static final float MAX_HEIGHT_CM = 250f;
+    private static final float MAX_WEIGHT_CHANGE_KG = 100f;
+    private static final float MAX_PROTEIN_PER_MEAL_G = 200f;
+    private static final float MAX_CARBS_PER_MEAL_G = 500f;
+    private static final float MAX_FAT_PER_MEAL_G = 200f;
+    private static final float MAX_CALORIES_PER_MEAL = 5000f;
+    private static final float MIN_MACRO_VALUE = 0.01f;
 
     private final UserRepository userRepository;
     private final NutritionProfileRepository nutritionProfileRepository;
     private final MealEntryRepository mealEntryRepository;
     private final WeightHistoryRepository weightHistoryRepository;
     private final ExerciseRecordRepository exerciseRecordRepository;
-    private final MessageLocalizer messageLocalizer;
     private final UserService userService;
+    private final NutritionCalculator calculator;
+    private final NutritionResponseFormatter formatter;
 
     @Transactional
     public String createOrUpdateProfile(NutritionProfileRequest request) {
@@ -49,12 +57,12 @@ public class NutritionService {
         Locale locale = userService.getUserLocale(user);
 
         // Calculate all targets
-        GoalType goalType = determineGoalType(request.currentWeight(), request.targetWeight());
-        float bmr = calculateBMR(user.getSex(), user.getAge(), request.currentWeight(), request.height());
-        float tdee = calculateTDEE(bmr, request.activityLevel());
-        float dailyCalories = adjustCaloriesForGoal(tdee, goalType, request.weightChangeSpeed());
-        MacroTargets macros = calculateMacroTargets(dailyCalories, goalType);
-        LocalDate goalDeadline = calculateGoalDeadline(
+        GoalType goalType = calculator.determineGoalType(request.currentWeight(), request.targetWeight());
+        float bmr = calculator.calculateBMR(user.getSex(), user.getAge(), request.currentWeight(), request.height());
+        float tdee = calculator.calculateTDEE(bmr, request.activityLevel());
+        float dailyCalories = calculator.adjustCaloriesForGoal(tdee, goalType, request.weightChangeSpeed());
+        NutritionCalculator.MacroTargets macros = calculator.calculateMacroTargets(dailyCalories, goalType);
+        LocalDate goalDeadline = calculator.calculateGoalDeadline(
             request.currentWeight(),
             request.targetWeight(),
             request.weightChangeSpeed()
@@ -72,31 +80,25 @@ public class NutritionService {
         profile.setWeightChangeSpeed(request.weightChangeSpeed());
         profile.setGoalType(goalType);
         profile.setDailyCalorieTarget(dailyCalories);
-        profile.setProteinTarget(macros.protein);
-        profile.setCarbsTarget(macros.carbs);
-        profile.setFatTarget(macros.fat);
+        profile.setProteinTarget(macros.protein());
+        profile.setCarbsTarget(macros.carbs());
+        profile.setFatTarget(macros.fat());
         profile.setGoalDeadline(goalDeadline);
 
         nutritionProfileRepository.save(profile);
 
-        // Format response
-        float weightDelta = request.targetWeight() - request.currentWeight();
-        String goalTypeLocalized = messageLocalizer.localize("nutrition.goal." + goalType.name().toLowerCase(), new Object[]{}, locale);
-        String activityLevelLocalized = messageLocalizer.localize("nutrition.activity." + request.activityLevel().name().toLowerCase(), new Object[]{}, locale);
+        ProfileCreatedData data = ProfileCreatedData.builder()
+            .currentWeight(request.currentWeight())
+            .targetWeight(request.targetWeight())
+            .goalDeadline(goalDeadline)
+            .weightChangeSpeed(request.weightChangeSpeed())
+            .dailyCalories(dailyCalories)
+            .macros(macros)
+            .activityLevel(request.activityLevel())
+            .goalType(goalType)
+            .build();
 
-        return messageLocalizer.localize("nutrition.profile.created", new Object[]{
-            request.currentWeight(),
-            request.targetWeight(),
-            Math.abs(weightDelta),
-            goalDeadline.format(DATE_FORMATTER),
-            request.weightChangeSpeed().getKgPerWeek(),
-            Math.round(dailyCalories),
-            Math.round(macros.protein),
-            Math.round(macros.fat),
-            Math.round(macros.carbs),
-            activityLevelLocalized,
-            goalTypeLocalized
-        }, locale);
+        return formatter.formatProfileCreated(data, locale);
     }
 
     @Transactional
@@ -110,8 +112,8 @@ public class NutritionService {
         // Validate meal macros
         validateMealMacros(request);
 
-        // Calculate calories from macronutrients: protein(4 kcal/g) + carbs(4 kcal/g) + fat(9 kcal/g)
-        float calculatedCalories = (request.protein() * 4) + (request.carbs() * 4) + (request.fat() * 9);
+        // Calculate calories from macronutrients
+        float calculatedCalories = calculator.calculateCaloriesFromMacros(request.protein(), request.carbs(), request.fat());
 
         MealEntry meal = MealEntry.builder()
                 .user(user)
@@ -133,34 +135,23 @@ public class NutritionService {
         // Check if profile exists for comparison
         NutritionProfile profile = nutritionProfileRepository.findByUserTelegramId(request.telegramId()).orElse(null);
 
-        if (profile != null) {
-            int percentage = Math.round((totalCalories / profile.getDailyCalorieTarget()) * 100);
+        int percentage = profile != null
+            ? calculator.calculateCaloriePercentage(totalCalories, profile.getDailyCalorieTarget())
+            : 0;
 
-            return messageLocalizer.localize("nutrition.meal.logged", new Object[]{
-                request.foodName(),
-                Math.round(calculatedCalories),
-                Math.round(request.protein()),
-                Math.round(request.fat()),
-                Math.round(request.carbs()),
-                Math.round(totalCalories),
-                Math.round(profile.getDailyCalorieTarget()),
-                percentage,
-                Math.round(macros.getProtein()),
-                Math.round(profile.getProteinTarget()),
-                Math.round(macros.getFat()),
-                Math.round(profile.getFatTarget()),
-                Math.round(macros.getCarbs()),
-                Math.round(profile.getCarbsTarget())
-            }, locale);
-        } else {
-            return messageLocalizer.localize("nutrition.meal.logged.no_profile", new Object[]{
-                request.foodName(),
-                Math.round(calculatedCalories),
-                Math.round(request.protein()),
-                Math.round(request.fat()),
-                Math.round(request.carbs())
-            }, locale);
-        }
+        MealLoggedData data = MealLoggedData.builder()
+            .foodName(request.foodName())
+            .calculatedCalories(calculatedCalories)
+            .protein(request.protein())
+            .fat(request.fat())
+            .carbs(request.carbs())
+            .totalCalories(totalCalories)
+            .macros(macros)
+            .profile(profile)
+            .percentage(percentage)
+            .build();
+
+        return formatter.formatMealLogged(data, locale);
     }
 
     public String getDailySummary(Long telegramId, LocalDate date) {
@@ -173,36 +164,13 @@ public class NutritionService {
         Float totalCalories = mealEntryRepository.sumCaloriesByUserAndDate(user, targetDate);
         MacroProjection macros = mealEntryRepository.sumMacrosByUserAndDate(user, targetDate);
 
-        if (totalCalories == 0) {
-            return messageLocalizer.localize("nutrition.summary.no_meals", new Object[]{}, locale);
-        }
-
         NutritionProfile profile = nutritionProfileRepository.findByUserTelegramId(telegramId).orElse(null);
 
-        if (profile != null) {
-            int percentage = Math.round((totalCalories / profile.getDailyCalorieTarget()) * 100);
+        int percentage = profile != null && totalCalories != null
+            ? calculator.calculateCaloriePercentage(totalCalories, profile.getDailyCalorieTarget())
+            : 0;
 
-            return messageLocalizer.localize("nutrition.summary.daily", new Object[]{
-                targetDate.format(DATE_FORMATTER),
-                Math.round(totalCalories),
-                Math.round(profile.getDailyCalorieTarget()),
-                percentage,
-                Math.round(macros.getProtein()),
-                Math.round(profile.getProteinTarget()),
-                Math.round(macros.getFat()),
-                Math.round(profile.getFatTarget()),
-                Math.round(macros.getCarbs()),
-                Math.round(profile.getCarbsTarget())
-            }, locale);
-        } else {
-            return messageLocalizer.localize("nutrition.summary.daily.no_profile", new Object[]{
-                targetDate.format(DATE_FORMATTER),
-                Math.round(totalCalories),
-                Math.round(macros.getProtein()),
-                Math.round(macros.getFat()),
-                Math.round(macros.getCarbs())
-            }, locale);
-        }
+        return formatter.formatDailySummary(targetDate, totalCalories, macros, profile, percentage, locale);
     }
 
     @Transactional
@@ -211,8 +179,8 @@ public class NutritionService {
                 .orElseThrow(UserNotFoundException::new);
 
         // Validate weight value
-        if (request.weight() < 25 || request.weight() > 300) {
-            throw new InvalidNutritionDataException("Weight must be between 25 and 300 kg");
+        if (request.weight() < MIN_WEIGHT_KG || request.weight() > MAX_WEIGHT_KG) {
+            throw new InvalidNutritionDataException("Weight must be between " + MIN_WEIGHT_KG + " and " + MAX_WEIGHT_KG + " kg");
         }
 
         Locale locale = userService.getUserLocale(user);
@@ -244,29 +212,18 @@ public class NutritionService {
         }
 
         // Get first weight to calculate change
-        WeightHistory firstEntry = weightHistoryRepository.findByUserTelegramIdOrderByDateDesc(request.telegramId())
-                .stream()
-                .reduce((first, second) -> second)
+        WeightHistory firstEntry = weightHistoryRepository.findFirstByUserTelegramIdOrderByDateAsc(request.telegramId())
                 .orElse(null);
 
         String changeMessage;
-        if (firstEntry != null && !firstEntry.getId().equals(weightEntry.getId())) {
+        if (firstEntry != null && !firstEntry.getDate().equals(weightEntry.getDate())) {
             float delta = request.weight() - firstEntry.getWeight();
-            if (Math.abs(delta) < 0.1f) {
-                changeMessage = messageLocalizer.localize("nutrition.weight.change.same", new Object[]{}, locale);
-            } else if (delta < 0) {
-                changeMessage = messageLocalizer.localize("nutrition.weight.change.loss", new Object[]{Math.abs(delta)}, locale);
-            } else {
-                changeMessage = messageLocalizer.localize("nutrition.weight.change.gain", new Object[]{delta}, locale);
-            }
+            changeMessage = formatter.formatWeightChange(delta, locale);
         } else {
-            changeMessage = messageLocalizer.localize("nutrition.weight.change.same", new Object[]{}, locale);
+            changeMessage = formatter.formatWeightChange(0f, locale);
         }
 
-        return messageLocalizer.localize("nutrition.weight.logged", new Object[]{
-            request.weight(),
-            changeMessage
-        }, locale);
+        return formatter.formatWeightLogged(request.weight(), changeMessage, locale);
     }
 
     public String getRecommendations(Long telegramId) {
@@ -278,176 +235,67 @@ public class NutritionService {
         NutritionProfile profile = nutritionProfileRepository.findByUserTelegramId(telegramId)
                 .orElseThrow(() -> new NutritionProfileNotFoundException("nutrition.error.profile_not_found"));
 
-        String goalTypeLocalized = messageLocalizer.localize("nutrition.goal." + profile.getGoalType().name().toLowerCase(), new Object[]{}, locale);
-
         // Count meal logging days in last 30 days
         LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
         Long mealDays = mealEntryRepository.countDistinctMealDaysByUser(user, thirtyDaysAgo);
 
         // Count workout frequency using optimized repository query
         Long workoutDays = exerciseRecordRepository.countDistinctWorkoutDaysByUserAfterDate(user, thirtyDaysAgo);
-        float workoutsPerWeek = workoutDays / 4.3f;
+        float workoutsPerWeek = workoutDays / WEEKS_IN_MONTH;
 
-        StringBuilder recommendations = new StringBuilder();
-        recommendations.append(messageLocalizer.localize("nutrition.rec.header", new Object[]{}, locale)).append("\n");
-        recommendations.append(messageLocalizer.localize("nutrition.rec.goal", new Object[]{goalTypeLocalized}, locale)).append("\n");
-        recommendations.append(messageLocalizer.localize("nutrition.rec.progress", new Object[]{mealDays}, locale)).append("\n");
-
-        // Consistency advice
-        if (mealDays >= 20) {
-            recommendations.append(messageLocalizer.localize("nutrition.rec.advice.consistent", new Object[]{}, locale)).append("\n");
-        } else {
-            recommendations.append(messageLocalizer.localize("nutrition.rec.advice.start", new Object[]{}, locale)).append("\n");
-        }
-
-        // Protein advice based on workouts
-        if (workoutsPerWeek >= 3) {
-            recommendations.append(messageLocalizer.localize("nutrition.rec.advice.protein", new Object[]{
-                Math.round(workoutsPerWeek),
-                Math.round(profile.getProteinTarget())
-            }, locale));
-        }
-
-        return recommendations.toString();
-    }
-
-    // Calculator methods
-
-    private GoalType determineGoalType(Float currentWeight, Float targetWeight) {
-        float diff = targetWeight - currentWeight;
-        if (Math.abs(diff) <= 2.0f) {
-            return GoalType.MAINTAIN;
-        } else if (diff < 0) {
-            return GoalType.LOSS;
-        } else {
-            return GoalType.GAIN;
-        }
-    }
-
-    /**
-     * Mifflin-St Jeor equation (1990)
-     * Men: BMR = (10 × weight_kg) + (6.25 × height_cm) - (5 × age) + 5
-     * Women: BMR = (10 × weight_kg) + (6.25 × height_cm) - (5 × age) - 161
-     */
-    private float calculateBMR(Sex sex, Integer age, Float weight, Float height) {
-        float bmr = (10 * weight) + (6.25f * height) - (5 * age);
-        return sex == Sex.MAN ? bmr + 5 : bmr - 161;
-    }
-
-    private float calculateTDEE(float bmr, ActivityLevel activityLevel) {
-        return switch (activityLevel) {
-            case SEDENTARY -> bmr * 1.2f;
-            case LIGHT -> bmr * 1.375f;
-            case MODERATE -> bmr * 1.55f;
-            case ACTIVE -> bmr * 1.725f;
-            case VERY_ACTIVE -> bmr * 1.9f;
-        };
-    }
-
-    private float adjustCaloriesForGoal(float tdee, GoalType goalType, WeightChangeSpeed speed) {
-        if (goalType == GoalType.MAINTAIN) {
-            return tdee;
-        }
-
-        float weeklyCalorieDelta = speed.getKgPerWeek() * CALORIES_PER_KG;
-        float dailyCalorieDelta = weeklyCalorieDelta / 7;
-
-        return goalType == GoalType.LOSS ? tdee - dailyCalorieDelta : tdee + dailyCalorieDelta;
-    }
-
-    private MacroTargets calculateMacroTargets(float dailyCalories, GoalType goalType) {
-        float proteinPercent, carbsPercent, fatPercent;
-
-        switch (goalType) {
-            case LOSS -> {
-                proteinPercent = 0.40f;
-                carbsPercent = 0.30f;
-                fatPercent = 0.30f;
-            }
-            case GAIN -> {
-                proteinPercent = 0.35f;
-                carbsPercent = 0.45f;
-                fatPercent = 0.20f;
-            }
-            default -> { // MAINTAIN
-                proteinPercent = 0.30f;
-                carbsPercent = 0.40f;
-                fatPercent = 0.30f;
-            }
-        }
-
-        float proteinGrams = (dailyCalories * proteinPercent) / 4;
-        float carbsGrams = (dailyCalories * carbsPercent) / 4;
-        float fatGrams = (dailyCalories * fatPercent) / 9;
-
-        return new MacroTargets(proteinGrams, carbsGrams, fatGrams);
-    }
-
-    private LocalDate calculateGoalDeadline(Float currentWeight, Float targetWeight, WeightChangeSpeed speed) {
-        float weightDelta = Math.abs(targetWeight - currentWeight);
-
-        // If weight delta is negligible (maintenance goal), return today
-        if (weightDelta < 0.1f) {
-            return LocalDate.now();
-        }
-
-        float weeks = weightDelta / speed.getKgPerWeek();
-        long days = Math.round(weeks * 7);
-
-        // Cap maximum goal deadline at 2 years (730 days)
-        if (days > 730) {
-            days = 730;
-        }
-
-        return LocalDate.now().plusDays(days);
+        return formatter.formatRecommendations(
+            profile.getGoalType(),
+            mealDays,
+            workoutsPerWeek,
+            profile.getProteinTarget(),
+            locale
+        );
     }
 
     // Validation methods
 
     private void validateNutritionProfile(NutritionProfileRequest request) {
-        // Weight validations (25-300 kg range)
-        if (request.currentWeight() < 25 || request.currentWeight() > 300) {
-            throw new InvalidNutritionDataException("Current weight must be between 25 and 300 kg");
+        // Weight validations
+        if (request.currentWeight() < MIN_WEIGHT_KG || request.currentWeight() > MAX_WEIGHT_KG) {
+            throw new InvalidNutritionDataException("Current weight must be between " + MIN_WEIGHT_KG + " and " + MAX_WEIGHT_KG + " kg");
         }
-        if (request.targetWeight() < 25 || request.targetWeight() > 300) {
-            throw new InvalidNutritionDataException("Target weight must be between 25 and 300 kg");
-        }
-
-        // Height validations (100-250 cm range)
-        if (request.height() < 100 || request.height() > 250) {
-            throw new InvalidNutritionDataException("Height must be between 100 and 250 cm");
+        if (request.targetWeight() < MIN_WEIGHT_KG || request.targetWeight() > MAX_WEIGHT_KG) {
+            throw new InvalidNutritionDataException("Target weight must be between " + MIN_WEIGHT_KG + " and " + MAX_WEIGHT_KG + " kg");
         }
 
-        // Validate weight change is reasonable (max 100kg difference)
+        // Height validations
+        if (request.height() < MIN_HEIGHT_CM || request.height() > MAX_HEIGHT_CM) {
+            throw new InvalidNutritionDataException("Height must be between " + MIN_HEIGHT_CM + " and " + MAX_HEIGHT_CM + " cm");
+        }
+
+        // Validate weight change is reasonable
         float weightDelta = Math.abs(request.targetWeight() - request.currentWeight());
-        if (weightDelta > 100) {
-            throw new InvalidNutritionDataException("Weight change goal cannot exceed 100 kg");
+        if (weightDelta > MAX_WEIGHT_CHANGE_KG) {
+            throw new InvalidNutritionDataException("Weight change goal cannot exceed " + MAX_WEIGHT_CHANGE_KG + " kg");
         }
     }
 
     private void validateMealMacros(MealEntryRequest request) {
-        // Max macro values per meal (reasonable upper bounds)
-        if (request.protein() > 200) {
-            throw new InvalidNutritionDataException("Protein per meal cannot exceed 200g");
+        // Max macro values per meal
+        if (request.protein() > MAX_PROTEIN_PER_MEAL_G) {
+            throw new InvalidNutritionDataException("Protein per meal cannot exceed " + MAX_PROTEIN_PER_MEAL_G + "g");
         }
-        if (request.carbs() > 500) {
-            throw new InvalidNutritionDataException("Carbs per meal cannot exceed 500g");
+        if (request.carbs() > MAX_CARBS_PER_MEAL_G) {
+            throw new InvalidNutritionDataException("Carbs per meal cannot exceed " + MAX_CARBS_PER_MEAL_G + "g");
         }
-        if (request.fat() > 200) {
-            throw new InvalidNutritionDataException("Fat per meal cannot exceed 200g");
+        if (request.fat() > MAX_FAT_PER_MEAL_G) {
+            throw new InvalidNutritionDataException("Fat per meal cannot exceed " + MAX_FAT_PER_MEAL_G + "g");
         }
 
-        // Calculate total calories and validate reasonable meal size (max 5000 kcal)
-        float totalCalories = (request.protein() * 4) + (request.carbs() * 4) + (request.fat() * 9);
-        if (totalCalories > 5000) {
-            throw new InvalidNutritionDataException("Meal cannot exceed 5000 kcal");
+        // Calculate total calories and validate reasonable meal size
+        float totalCalories = calculator.calculateCaloriesFromMacros(request.protein(), request.carbs(), request.fat());
+        if (totalCalories > MAX_CALORIES_PER_MEAL) {
+            throw new InvalidNutritionDataException("Meal cannot exceed " + MAX_CALORIES_PER_MEAL + " kcal");
         }
 
         // Validate at least one macro is present
-        if (request.protein() == 0 && request.carbs() == 0 && request.fat() == 0) {
+        if (request.protein() < MIN_MACRO_VALUE && request.carbs() < MIN_MACRO_VALUE && request.fat() < MIN_MACRO_VALUE) {
             throw new InvalidNutritionDataException("At least one macronutrient must be greater than zero");
         }
     }
-
-    private record MacroTargets(float protein, float carbs, float fat) {}
 }

@@ -17,6 +17,9 @@ public interface WeightHistoryRepository extends JpaRepository<WeightHistory, Lo
     @Query("SELECT wh FROM WeightHistory wh WHERE wh.user.telegramId = :telegramId ORDER BY wh.date DESC LIMIT 1")
     Optional<WeightHistory> findFirstByUserTelegramIdOrderByDateDesc(@Param("telegramId") Long telegramId);
 
+    @Query("SELECT wh FROM WeightHistory wh WHERE wh.user.telegramId = :telegramId ORDER BY wh.date ASC LIMIT 1")
+    Optional<WeightHistory> findFirstByUserTelegramIdOrderByDateAsc(@Param("telegramId") Long telegramId);
+
     @Query("""
         SELECT wh FROM WeightHistory wh
         WHERE wh.user.telegramId = :telegramId

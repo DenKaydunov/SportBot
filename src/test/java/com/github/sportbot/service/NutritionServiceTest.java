@@ -5,7 +5,6 @@ import com.github.sportbot.dto.NutritionProfileRequest;
 import com.github.sportbot.dto.WeightEntryRequest;
 import com.github.sportbot.exception.NutritionProfileNotFoundException;
 import com.github.sportbot.exception.UserDataInsufficientException;
-import com.github.sportbot.exception.UserNotFoundException;
 import com.github.sportbot.model.*;
 import com.github.sportbot.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +17,6 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,6 +62,8 @@ class NutritionServiceTest {
     @BeforeEach
     void setUp() {
         messageLocalizer = createRealMessageLocalizer();
+        NutritionCalculator calculator = new NutritionCalculator();
+        NutritionResponseFormatter formatter = new NutritionResponseFormatter(messageLocalizer);
 
         nutritionService = new NutritionService(
                 userRepository,
@@ -71,8 +71,9 @@ class NutritionServiceTest {
                 mealEntryRepository,
                 weightHistoryRepository,
                 exerciseRecordRepository,
-                messageLocalizer,
-                userService
+                userService,
+                calculator,
+                formatter
         );
 
         // Setup male user (matching our test case from plan: 36 years, 107kg, 186cm)
@@ -382,8 +383,8 @@ class NutritionServiceTest {
             wh.setId(2L);
             return wh;
         });
-        when(weightHistoryRepository.findByUserTelegramIdOrderByDateDesc(TELEGRAM_ID_MALE))
-                .thenReturn(Arrays.asList(firstEntry));
+        when(weightHistoryRepository.findFirstByUserTelegramIdOrderByDateAsc(TELEGRAM_ID_MALE))
+                .thenReturn(Optional.of(firstEntry));
         when(nutritionProfileRepository.findByUserTelegramId(TELEGRAM_ID_MALE)).thenReturn(Optional.of(profile));
         when(nutritionProfileRepository.save(any(NutritionProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -531,11 +532,11 @@ class NutritionServiceTest {
             return saved;
         });
 
-        when(weightHistoryRepository.findByUserTelegramIdOrderByDateDesc(TELEGRAM_ID_MALE))
-                .thenReturn(Arrays.asList(existingEntry));
+        when(weightHistoryRepository.findFirstByUserTelegramIdOrderByDateAsc(TELEGRAM_ID_MALE))
+                .thenReturn(Optional.of(existingEntry));
 
         // When: log weight first time
-        String result1 = nutritionService.logWeight(firstRequest);
+        nutritionService.logWeight(firstRequest);
 
         // Then: verify save was called
         verify(weightHistoryRepository, times(1)).save(any(WeightHistory.class));

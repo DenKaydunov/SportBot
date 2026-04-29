@@ -23,6 +23,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyFloat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,9 +42,11 @@ class NutritionServiceValidationTest {
     @Mock
     private ExerciseRecordRepository exerciseRecordRepository;
     @Mock
-    private MessageLocalizer messageLocalizer;
-    @Mock
     private UserService userService;
+    @Mock
+    private NutritionCalculator calculator;
+    @Mock
+    private NutritionResponseFormatter formatter;
 
     @InjectMocks
     private NutritionService nutritionService;
@@ -57,6 +62,21 @@ class NutritionServiceValidationTest {
                 .sex(Sex.MAN)
                 .language("ru")
                 .build();
+
+        // Setup lenient calculator mocks for validation methods
+        lenient().when(calculator.calculateCaloriesFromMacros(anyFloat(), anyFloat(), anyFloat()))
+                .thenAnswer(invocation -> {
+                    float protein = invocation.getArgument(0);
+                    float carbs = invocation.getArgument(1);
+                    float fat = invocation.getArgument(2);
+                    return (protein * 4f) + (carbs * 4f) + (fat * 9f);
+                });
+
+        // Setup lenient formatter mocks
+        lenient().when(formatter.formatWeightChange(anyFloat(), any(Locale.class)))
+                .thenReturn("Вес не изменился");
+        lenient().when(userService.getUserLocale(testUser))
+                .thenReturn(new Locale("ru"));
     }
 
     // Weight validations
@@ -258,59 +278,41 @@ class NutritionServiceValidationTest {
     }
 
     @Test
-    void testLogMeal_CaloriesExceedLimit() {
-        MealEntryRequest request = new MealEntryRequest(
+    void testLogMeal_EdgeCaseMaxMacrosUnderCalorieLimit() {
+        // Test edge case: all macros at max but under total calorie limit (should pass)
+        MealEntryRequest edgeCaseRequest = new MealEntryRequest(
                 1000001L,
-                "Huge meal",
-                200.0f,  // 800 kcal
-                400.0f,  // 1600 kcal
-                200.0f,  // 1800 kcal
-                null     // total: 4200 kcal (within limit)
+                "Edge case",
+                200.0f,  // 800 kcal (max protein)
+                500.0f,  // 2000 kcal (max carbs)
+                200.0f,  // 1800 kcal (max fat)
+                null     // total: 4600 kcal (under 5000 limit, should pass validation)
         );
 
         when(userRepository.findByTelegramId(1000001L)).thenReturn(Optional.of(testUser));
         when(userService.getUserLocale(testUser)).thenReturn(new Locale("ru"));
-
-        // This should NOT throw as it's under 5000 kcal limit
-        // But let's test one that exceeds
-        MealEntryRequest excessiveRequest = new MealEntryRequest(
-                1000001L,
-                "Excessive meal",
-                200.0f,  // 800 kcal
-                500.0f,  // 2000 kcal
-                200.0f,  // 1800 kcal
-                null     // total: 4600 kcal, but individual macros within limits
-        );
-
-        // Actually this won't exceed because of macro limits
-        // Let's test edge case: all macros at max
-        MealEntryRequest edgeCaseRequest = new MealEntryRequest(
-                1000001L,
-                "Edge case",
-                200.0f,  // 800 kcal
-                500.0f,  // 2000 kcal
-                200.0f,  // 1800 kcal
-                null     // total: 4600 kcal (under 5000, should pass validation)
-        );
-
-        // This should pass
         when(mealEntryRepository.save(org.mockito.ArgumentMatchers.any())).thenReturn(null);
-        when(mealEntryRepository.sumCaloriesByUserAndDate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(0f);
+        when(mealEntryRepository.sumCaloriesByUserAndDate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(4600f);
         when(mealEntryRepository.sumMacrosByUserAndDate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
                 .thenReturn(new com.github.sportbot.repository.MacroProjection() {
                     @Override
-                    public Float getProtein() { return 0f; }
+                    public Float getProtein() { return 200f; }
                     @Override
-                    public Float getCarbs() { return 0f; }
+                    public Float getCarbs() { return 500f; }
                     @Override
-                    public Float getFat() { return 0f; }
+                    public Float getFat() { return 200f; }
                 });
         when(nutritionProfileRepository.findByUserTelegramId(1000001L)).thenReturn(Optional.empty());
-        when(messageLocalizer.localize(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn("test");
+        when(formatter.formatMealLogged(org.mockito.ArgumentMatchers.any(MealLoggedData.class),
+                org.mockito.ArgumentMatchers.any(Locale.class)))
+                .thenReturn("Meal logged: test");
 
-        // Should not throw
-        nutritionService.logMeal(edgeCaseRequest);
+        // When: log meal at edge of limits
+        String result = nutritionService.logMeal(edgeCaseRequest);
+
+        // Then: should NOT throw and return valid result
+        assertNotNull(result);
+        assertTrue(result.contains("test"));
     }
 
     @Test
@@ -393,10 +395,13 @@ class NutritionServiceValidationTest {
         when(weightHistoryRepository.findByUserTelegramIdAndDate(1000001L, LocalDate.now().plusDays(1)))
                 .thenReturn(Optional.empty());
         when(weightHistoryRepository.save(org.mockito.ArgumentMatchers.any())).thenReturn(null);
-        when(weightHistoryRepository.findByUserTelegramIdOrderByDateDesc(1000001L))
-                .thenReturn(java.util.Collections.emptyList());
-        when(messageLocalizer.localize(org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.any(),
+        when(weightHistoryRepository.findFirstByUserTelegramIdOrderByDateAsc(1000001L))
+                .thenReturn(Optional.empty());
+        when(formatter.formatWeightLogged(org.mockito.ArgumentMatchers.anyFloat(),
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any()))
+                .thenReturn("test");
+        when(formatter.formatWeightChange(org.mockito.ArgumentMatchers.anyFloat(),
                 org.mockito.ArgumentMatchers.any()))
                 .thenReturn("test");
 
